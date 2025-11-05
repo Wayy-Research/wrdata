@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wrdata"
+version = "0.1.0"
+description = "WR Data - Universal data gathering package for financial and market data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Wayy Research", email = "research@wayy.com"}
+]
+keywords = ["finance", "data", "market-data", "crypto", "stocks", "forex"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Office/Business :: Financial",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "requests>=2.31.0",
+    "pandas>=2.0.0",
+    "polars>=0.20.0",
+    "pydantic>=2.6.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "ccxt>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/wayy-research/wrdata"
+Documentation = "https://github.com/wayy-research/wrdata"
+Repository = "https://github.com/wayy-research/wrdata"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wrdata*"]
+exclude = ["tests*"]
