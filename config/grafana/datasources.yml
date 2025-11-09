@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: TimescaleDB
+    type: postgres
+    url: timescaledb:5432
+    database: wrdata
+    user: wrdata_user
+    secureJsonData:
+      password: wrdata_dev_password
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: true
+    editable: true
+    isDefault: true

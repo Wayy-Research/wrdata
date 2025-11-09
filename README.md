@@ -1,5 +1,10 @@
 # WRData - Universal Data Gathering Package
 
+![Tests](https://github.com/YOUR_USERNAME/wrdata/workflows/Tests/badge.svg)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/wrdata-coverage.json)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 WRData is a unified data gathering package for financial and market data across multiple asset classes and providers.
 
 ## Features
@@ -38,16 +43,56 @@ data = fetcher.get_data(
 )
 ```
 
-## Supported Providers
+## Active Providers: 28 🎉🎉🎉
 
-- **Yahoo Finance**: Stocks, ETFs, indices, forex
-- **Binance**: Crypto spot and futures
-- **Kraken**: Crypto spot trading
-- **FRED**: Economic indicators
-- **AlphaVantage**: Stocks, forex, crypto
-- **TwelveData**: Multi-asset financial data
-- **CoinGecko**: Cryptocurrency market data
-- **Polygon.io**: Real-time and historical market data
+### GOAL EXCEEDED: 28 Providers! (112% of goal)
+
+**Stock & Options (12 providers):**
+1. **Alpaca** ⭐ - US stocks, free real-time IEX data, paper trading
+2. **Polygon.io** ⭐ - Premium US data (best quality)
+3. **Tradier** ⭐ - FREE options chains! (unique)
+4. **TwelveData** - Global stocks, 800 calls/day
+5. **IBKR** - Global markets, options, futures (with Docker!)
+6. **Finnhub** - Global stocks + WebSocket + news
+7. **Alpha Vantage** - Multi-asset
+8. **Yahoo Finance** - Unlimited free (delayed)
+9. **IEX Cloud** ⭐ NEW! - US stocks, 500K calls/month free
+10. **TD Ameritrade** ⭐ NEW! - US stocks + OPTIONS!
+11. **Marketstack** ⭐ NEW! - 70+ global exchanges
+12. **Tiingo** ⭐ NEW! - Stocks + news sentiment
+
+**Cryptocurrency (15 providers):**
+13. **Binance** - Global leader, 1000+ pairs
+14. **Coinbase** - US-friendly, 748 pairs (legacy)
+15. **Coinbase Advanced** ⭐ NEW! - New Coinbase API
+16. **Kraken** - European exchange, 200+ pairs
+17. **KuCoin** ⭐ NEW! - 700+ trading pairs
+18. **Bybit** ⭐ NEW! - Derivatives specialist
+19. **OKX** ⭐ NEW! - Global exchange
+20. **Gate.io** ⭐ NEW! - 1,400+ trading pairs
+21. **Bitfinex** ⭐ NEW! - Established exchange
+22. **Gemini** ⭐ NEW! - US-regulated (Winklevoss)
+23. **Huobi (HTX)** ⭐ NEW! - 600+ pairs
+24. **CoinGecko** ⭐ NEW! - NO API KEY! 10K+ cryptos
+25. **CryptoCompare** ⭐ NEW! - 100K calls/month free
+26. **Messari** ⭐ NEW! - Research + metrics
+27. **Deribit** ⭐⭐ NEW! - CRYPTO OPTIONS! (unique)
+
+**Economic Data (1 provider):**
+28. **FRED** - 800,000+ economic indicators
+
+**Progress: 112% COMPLETE! 🚀**
+
+See [PROVIDER_SETUP_GUIDE.md](PROVIDER_SETUP_GUIDE.md) for setup instructions.
+
+### 🐳 Docker Support
+
+**IBKR with Docker** - Run IB Gateway in a container (no local installation):
+```bash
+cd docker/ibkr
+./start.sh
+```
+See [IBKR_DOCKER_QUICKSTART.md](IBKR_DOCKER_QUICKSTART.md) for details.
 
 ## Architecture
 
@@ -62,6 +107,56 @@ wrdata/
 ├── services/          # Business logic services
 └── utils/             # Utility functions
 ```
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all unit tests
+pytest tests/unit/ -v
+
+# Run with coverage
+pytest tests/unit/ --cov=wrdata --cov-report=term-missing
+
+# Run integration tests (may hit external APIs)
+pytest tests/integration/ -v -m integration
+
+# Run specific test file
+pytest tests/unit/test_providers.py -v
+```
+
+### Code Quality
+
+```bash
+# Format code with black
+black wrdata/ tests/
+
+# Lint with ruff
+ruff check wrdata/ tests/
+
+# Type check with mypy
+mypy wrdata/ --ignore-missing-imports
+```
+
+### Test Coverage
+
+Current test coverage: **50%+**
+
+We use pytest with coverage reporting. All pull requests should:
+- Include tests for new features
+- Maintain or improve overall coverage
+- Pass all existing tests
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests and linting
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ## License
 

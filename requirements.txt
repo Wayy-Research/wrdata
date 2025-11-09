@@ -1,0 +1,31 @@
+# Core dependencies
+requests>=2.31.0
+pandas>=2.0.0
+polars>=0.20.0
+pydantic>=2.6.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+ccxt>=4.0.0
+
+# Real-time streaming
+aiohttp>=3.9.0
+
+# Options chain functionality
+yfinance>=0.2.40
+
+# Interactive Brokers TWS API
+ib_insync>=0.9.86
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.10.0
+coverage>=7.0.0
+
+# Development dependencies
+black>=23.0.0
+ruff>=0.1.0
+mypy>=1.0.0
+pre-commit>=3.0.0

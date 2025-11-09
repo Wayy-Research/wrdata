@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # TimescaleDB - PostgreSQL with time-series extensions
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: wrdata-timescaledb
+    environment:
+      POSTGRES_DB: wrdata
+      POSTGRES_USER: wrdata_user
+      POSTGRES_PASSWORD: wrdata_dev_password  # Change in production!
+      TIMESCALEDB_TELEMETRY: 'off'
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./scripts/init_timescale.sql:/docker-entrypoint-initdb.d/init_timescale.sql
+    networks:
+      - wrdata-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wrdata_user -d wrdata"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis - For caching and pub/sub (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: wrdata-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wrdata-network
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # PgAdmin - Web UI for database management (optional for dev)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: wrdata-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@wrdata.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - wrdata-network
+    depends_on:
+      - timescaledb
+    restart: unless-stopped
+    profiles:
+      - dev  # Only start with: docker-compose --profile dev up
+
+  # Grafana - For visualizing time-series data (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: wrdata-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - wrdata-network
+    depends_on:
+      - timescaledb
+    restart: unless-stopped
+    profiles:
+      - dev  # Only start with: docker-compose --profile dev up
+
+volumes:
+  timescaledb_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  wrdata-network:
+    driver: bridge

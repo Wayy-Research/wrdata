@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # IB Gateway - Headless Interactive Brokers gateway
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:latest
+    container_name: ib-gateway
+    restart: unless-stopped
+
+    environment:
+      # IBKR Credentials
+      TWS_USERID: ${IBKR_USERNAME}
+      TWS_PASSWORD: ${IBKR_PASSWORD}
+
+      # Trading mode
+      TRADING_MODE: ${IBKR_TRADING_MODE:-paper}  # paper or live
+
+      # API Settings
+      READ_ONLY_API: ${IBKR_READONLY:-yes}  # yes or no
+
+      # Gateway settings
+      VNC_SERVER_PASSWORD: ${VNC_PASSWORD:-password}
+      TIME_ZONE: ${TZ:-America/New_York}
+
+    ports:
+      # IB Gateway API ports
+      - "4001:4001"  # Live trading port
+      - "4002:4002"  # Paper trading port
+
+      # VNC port (for GUI access if needed)
+      - "5900:5900"
+
+    volumes:
+      # Persist IB Gateway settings
+      - ib-gateway-settings:/root/Jts
+
+    networks:
+      - ibkr-network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5900"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Your trading application
+  # Uncomment if you want to run your app in the same stack
+  # trading-app:
+  #   build: ../../
+  #   container_name: trading-app
+  #   depends_on:
+  #     - ib-gateway
+  #   environment:
+  #     IBKR_HOST: ib-gateway
+  #     IBKR_PORT: 4002  # 4002 for paper, 4001 for live
+  #   networks:
+  #     - ibkr-network
+  #   volumes:
+  #     - ../../:/app
+
+volumes:
+  ib-gateway-settings:
+    driver: local
+
+networks:
+  ibkr-network:
+    driver: bridge
