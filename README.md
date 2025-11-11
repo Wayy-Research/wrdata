@@ -10,11 +10,13 @@ WRData is a unified data gathering package for financial and market data across 
 ## Features
 
 - **Multi-Asset Support**: Stocks, crypto, forex, economic data, bonds, commodities
-- **Multiple Providers**: Yahoo Finance, Binance, Kraken, FRED, AlphaVantage, TwelveData, CoinGecko, and more
-- **Symbol Management**: Automated symbol discovery and caching
+- **28 Data Providers**: Yahoo Finance, Binance, Kraken, FRED, Polygon, Alpaca, and 22 more
+- **Symbol Discovery**: Cross-provider symbol search with coverage tracking (100,000+ symbols)
+- **Coverage Analysis**: Find symbols available from multiple providers
 - **Unified API**: Consistent interface across all data providers
 - **Database Integration**: Built-in SQLAlchemy models for symbol storage
 - **Type Safety**: Full Pydantic v2 support
+- **Options Data**: Support for equity and crypto options chains
 
 ## Installation
 
@@ -24,14 +26,41 @@ pip install -e /path/to/wrdata
 
 ## Quick Start
 
+### Symbol Discovery & Coverage
+
+```bash
+# Sync symbols from all 28 providers
+python scripts/sync_all_symbols.py
+
+# Analyze coverage
+python scripts/sync_all_symbols.py --analyze-only
+```
+
 ```python
-from wrdata import SymbolManager, DataFetcher
+from wrdata.services import SymbolDiscoveryService
 
-# Initialize symbol manager
-manager = SymbolManager(db_session)
+# Find symbols with coverage info
+discovery = SymbolDiscoveryService(db_session)
 
-# Sync symbols from all providers
-await manager.sync_all_providers()
+# Get all providers supporting a symbol
+aapl_coverage = discovery.get_symbol_details_with_coverage('AAPL')
+print(f"AAPL available from {aapl_coverage['coverage_count']} providers")
+
+# Search with coverage filtering
+btc_results = discovery.search_with_coverage(
+    query='BTC',
+    asset_type='crypto',
+    min_providers=3  # Must be on 3+ exchanges
+)
+
+# Find most popular symbols
+popular = discovery.get_popular_symbols(asset_type='stock', limit=100)
+```
+
+### Data Fetching
+
+```python
+from wrdata import DataFetcher
 
 # Fetch data
 fetcher = DataFetcher()
@@ -42,6 +71,8 @@ data = fetcher.get_data(
     end_date="2024-12-31"
 )
 ```
+
+**See [SYMBOL_DISCOVERY.md](SYMBOL_DISCOVERY.md) for complete documentation.**
 
 ## Active Providers: 28 🎉🎉🎉
 
