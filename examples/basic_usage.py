@@ -36,14 +36,14 @@ print(df.head())
 
 
 # ============================================================================
-# EXAMPLE 3: Crypto data
+# EXAMPLE 3: Crypto data (auto-detected!)
 # ============================================================================
 print("\n" + "=" * 60)
 print("EXAMPLE 3: Crypto data")
 print("=" * 60)
 
-# Get Bitcoin data (automatically uses Binance)
-df = stream.get("BTCUSDT", asset_type="crypto", start="2024-01-01")
+# Get Bitcoin data (asset type auto-detected from USDT suffix)
+df = stream.get("BTCUSDT", start="2024-01-01")
 print(f"\nBTC data shape: {df.shape}")
 print(df.head())
 

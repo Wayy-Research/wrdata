@@ -1,194 +1,218 @@
-# WRData - Universal Data Gathering Package
+# WRData - Dead Simple Market Data
 
-![Tests](https://github.com/YOUR_USERNAME/wrdata/workflows/Tests/badge.svg)
-![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/YOUR_USERNAME/GIST_ID/raw/wrdata-coverage.json)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-WRData is a unified data gathering package for financial and market data across multiple asset classes and providers.
-
-## Features
-
-- **Multi-Asset Support**: Stocks, crypto, forex, economic data, bonds, commodities
-- **28 Data Providers**: Yahoo Finance, Binance, Kraken, FRED, Polygon, Alpaca, and 22 more
-- **Symbol Discovery**: Cross-provider symbol search with coverage tracking (100,000+ symbols)
-- **Coverage Analysis**: Find symbols available from multiple providers
-- **Unified API**: Consistent interface across all data providers
-- **Database Integration**: Built-in SQLAlchemy models for symbol storage
-- **Type Safety**: Full Pydantic v2 support
-- **Options Data**: Support for equity and crypto options chains
+Get stock, crypto, forex, and economic data with one simple API. No database required.
 
 ## Installation
 
 ```bash
-pip install -e /path/to/wrdata
+pip install wrdata
 ```
 
 ## Quick Start
 
-### Symbol Discovery & Coverage
-
-```bash
-# Sync symbols from all 28 providers
-python scripts/sync_all_symbols.py
-
-# Analyze coverage
-python scripts/sync_all_symbols.py --analyze-only
-```
-
 ```python
-from wrdata.services import SymbolDiscoveryService
+from wrdata import DataStream
 
-# Find symbols with coverage info
-discovery = SymbolDiscoveryService(db_session)
+stream = DataStream()
 
-# Get all providers supporting a symbol
-aapl_coverage = discovery.get_symbol_details_with_coverage('AAPL')
-print(f"AAPL available from {aapl_coverage['coverage_count']} providers")
+# Get stock data
+df = stream.get("AAPL")
 
-# Search with coverage filtering
-btc_results = discovery.search_with_coverage(
-    query='BTC',
-    asset_type='crypto',
-    min_providers=3  # Must be on 3+ exchanges
-)
+# Get crypto data (auto-detected!)
+df = stream.get("BTCUSDT")
 
-# Find most popular symbols
-popular = discovery.get_popular_symbols(asset_type='stock', limit=100)
+# Get options chain
+chain = stream.options("SPY")
+
+# That's it!
 ```
 
-### Data Fetching
+## Usage
+
+### Get Historical Data
 
 ```python
 from wrdata import DataStream
 
-# Fetch data
 stream = DataStream()
-data = stream.get(
-    symbol="AAPL",
-    asset_type="equity",
-    start="2024-01-01",
-    end="2024-12-31"
+
+# Default: 1 year of daily data
+df = stream.get("AAPL")
+
+# Custom date range
+df = stream.get("AAPL", start="2024-01-01", end="2024-12-31")
+
+# Intraday data
+df = stream.get("AAPL", interval="5m", start="2024-11-19")
+```
+
+### Get Multiple Symbols
+
+```python
+data = stream.get_many(["AAPL", "GOOGL", "MSFT"])
+
+for symbol, df in data.items():
+    print(f"{symbol}: {len(df)} rows")
+```
+
+### Get Options Data
+
+```python
+# Get available expiration dates
+expirations = stream.get_expirations("SPY")
+
+# Get options chain
+chain = stream.options("SPY")
+
+# Filter options
+calls = stream.options("SPY", option_type="call", strike_min=580, strike_max=600)
+```
+
+### Use Your API Keys
+
+Add your API keys via environment variables or `.env` file:
+
+```bash
+# .env file
+POLYGON_API_KEY=your_key_here
+BINANCE_API_KEY=your_key_here
+BINANCE_API_SECRET=your_secret_here
+ALPACA_API_KEY=your_key_here
+ALPACA_API_SECRET=your_secret_here
+```
+
+Or pass them directly:
+
+```python
+stream = DataStream(
+    polygon_key="your_key",
+    binance_key="your_key",
+    binance_secret="your_secret"
 )
 ```
 
-**See [SYMBOL_DISCOVERY.md](SYMBOL_DISCOVERY.md) for complete documentation.**
+## Supported Providers
 
-## Active Providers: 28
+**Free (No API Key Required):**
+- Yahoo Finance - Stocks, ETFs, crypto (delayed)
+- Binance - Crypto market data
+- Coinbase - Crypto market data
+- CoinGecko - 10,000+ cryptocurrencies
 
-### GOAL EXCEEDED: 28 Providers (112% of goal)
+**Free (API Key Required):**
+- Alpha Vantage - Stocks, forex (5 calls/min)
+- FRED - 800,000+ economic indicators
+- Finnhub - Stocks + WebSocket (60 calls/min)
+- Alpaca - Real-time US stocks + paper trading
+- CoinGecko Pro - Higher rate limits
+- CryptoCompare - 100K calls/month
 
-**Stock & Options (12 providers):**
-1. **Alpaca** - US stocks, free real-time IEX data, paper trading
-2. **Polygon.io** - Premium US data (best quality)
-3. **Tradier** - FREE options chains (unique)
-4. **TwelveData** - Global stocks, 800 calls/day
-5. **IBKR** - Global markets, options, futures (with Docker support)
-6. **Finnhub** - Global stocks + WebSocket + news
-7. **Alpha Vantage** - Multi-asset
-8. **Yahoo Finance** - Unlimited free (delayed)
-9. **IEX Cloud** - US stocks, 500K calls/month free
-10. **TD Ameritrade** - US stocks + OPTIONS
-11. **Marketstack** - 70+ global exchanges
-12. **Tiingo** - Stocks + news sentiment
+**Premium:**
+- Polygon.io - High-quality US market data
+- Interactive Brokers - Global markets + options + futures
+- TwelveData - Global stocks (800 calls/day free)
+- Tradier - FREE options chains
+- And 15+ more crypto exchanges
 
-**Cryptocurrency (15 providers):**
-13. **Binance** - Global leader, 1000+ pairs
-14. **Coinbase** - US-friendly, 748 pairs (legacy)
-15. **Coinbase Advanced** - New Coinbase API
-16. **Kraken** - European exchange, 200+ pairs
-17. **KuCoin** - 700+ trading pairs
-18. **Bybit** - Derivatives specialist
-19. **OKX** - Global exchange
-20. **Gate.io** - 1,400+ trading pairs
-21. **Bitfinex** - Established exchange
-22. **Gemini** - US-regulated (Winklevoss)
-23. **Huobi (HTX)** - 600+ pairs
-24. **CoinGecko** - NO API KEY, 10K+ cryptos
-25. **CryptoCompare** - 100K calls/month free
-26. **Messari** - Research + metrics
-27. **Deribit** - CRYPTO OPTIONS (unique)
+**Total: 28 data providers**
 
-**Economic Data (1 provider):**
-28. **FRED** - 800,000+ economic indicators
+See [PROVIDER_SETUP_GUIDE.md](PROVIDER_SETUP_GUIDE.md) for API key setup instructions.
 
-**Progress: 112% COMPLETE**
+## Asset Types
 
-See [PROVIDER_SETUP_GUIDE.md](PROVIDER_SETUP_GUIDE.md) for setup instructions.
+Asset types are **auto-detected** from the symbol:
 
-### Docker Support
+```python
+# Stocks (auto-detected)
+stream.get("AAPL")
 
-**IBKR with Docker** - Run IB Gateway in a container (no local installation):
-```bash
-cd docker/ibkr
-./start.sh
+# Crypto (auto-detected from USDT suffix)
+stream.get("BTCUSDT")
+
+# Forex (auto-detected from 6-char pattern)
+stream.get("EURUSD")
+
+# Economic data (auto-detected)
+stream.get("GDP")
+
+# Or specify explicitly if needed
+stream.get("AAPL", asset_type="equity")
 ```
-See [IBKR_DOCKER_QUICKSTART.md](IBKR_DOCKER_QUICKSTART.md) for details.
 
-## Architecture
+## Advanced Features
 
+### Check Provider Status
+
+```python
+status = stream.status()
+print(status)
 ```
-wrdata/
-├── providers/          # Data provider adapters
-│   ├── base.py        # Base provider interface
-│   ├── yfinance.py    # Yahoo Finance adapter
-│   ├── binance.py     # Binance adapter
-│   └── ...
-├── models/            # Database and Pydantic models
-├── services/          # Business logic services
-└── utils/             # Utility functions
+
+### Force Specific Provider
+
+```python
+df = stream.get("AAPL", provider="polygon")
 ```
+
+### Get Provider Info
+
+```python
+print(stream)  # Shows available providers
+```
+
+## Output Format
+
+All data is returned as Polars DataFrames:
+
+```python
+df = stream.get("AAPL")
+print(df.head())
+
+# Columns: timestamp, open, high, low, close, volume
+```
+
+Convert to pandas if needed:
+
+```python
+pandas_df = df.to_pandas()
+```
+
+## Real-Time Streaming (Coming Soon)
+
+```python
+# Stream live prices
+async for tick in stream.stream("BTCUSDT"):
+    print(f"BTC: ${tick.price}")
+```
+
+## Examples
+
+See the [examples/](examples/) directory:
+- `basic_usage.py` - Simple examples
+- `advanced_usage.py` - API keys and configuration
+- `options_chain_example.py` - Options data
+- `streaming_usage.py` - Real-time streaming
 
 ## Development
 
-### Running Tests
-
 ```bash
-# Run all unit tests
-pytest tests/unit/ -v
+# Run tests
+pytest tests/
 
-# Run with coverage
-pytest tests/unit/ --cov=wrdata --cov-report=term-missing
+# Format code
+black wrdata/
 
-# Run integration tests (may hit external APIs)
-pytest tests/integration/ -v -m integration
-
-# Run specific test file
-pytest tests/unit/test_providers.py -v
+# Type check
+mypy wrdata/
 ```
-
-### Code Quality
-
-```bash
-# Format code with black
-black wrdata/ tests/
-
-# Lint with ruff
-ruff check wrdata/ tests/
-
-# Type check with mypy
-mypy wrdata/ --ignore-missing-imports
-```
-
-### Test Coverage
-
-Current test coverage: **50%+**
-
-We use pytest with coverage reporting. All pull requests should:
-- Include tests for new features
-- Maintain or improve overall coverage
-- Pass all existing tests
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linting
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
 
 ## License
 
 MIT
+
+## Contributing
+
+Pull requests welcome! Please ensure tests pass and code is formatted with black.

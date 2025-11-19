@@ -362,7 +362,7 @@ class DataStream:
         start: Optional[str] = None,
         end: Optional[str] = None,
         interval: str = "1d",
-        asset_type: str = "equity",
+        asset_type: Optional[str] = None,
         provider: Optional[str] = None,
     ) -> pl.DataFrame:
         """
@@ -376,7 +376,7 @@ class DataStream:
             start: Start date as "YYYY-MM-DD" (default: 1 year ago)
             end: End date as "YYYY-MM-DD" (default: today)
             interval: Time interval - "1m", "5m", "15m", "1h", "1d", "1wk", "1mo"
-            asset_type: Asset type - "equity", "crypto", "forex", etc.
+            asset_type: Asset type - auto-detected if not specified
             provider: Force specific provider (default: auto-select best)
 
         Returns:
@@ -386,15 +386,19 @@ class DataStream:
             >>> # Get 1 year of daily data (default)
             >>> df = stream.get("AAPL")
 
+            >>> # Get crypto data (auto-detected from symbol)
+            >>> df = stream.get("BTCUSDT")
+
             >>> # Get specific date range
             >>> df = stream.get("AAPL", start="2024-01-01", end="2024-12-31")
 
             >>> # Get intraday data
-            >>> df = stream.get("AAPL", interval="5m", start="2024-11-07", end="2024-11-07")
-
-            >>> # Get crypto data
-            >>> df = stream.get("BTCUSDT", asset_type="crypto")
+            >>> df = stream.get("AAPL", interval="5m", start="2024-11-07")
         """
+        # Auto-detect asset type if not provided
+        if asset_type is None:
+            asset_type = self._detect_asset_type(symbol)
+
         # Set defaults for dates if not provided
         if end is None:
             end = datetime.now().strftime("%Y-%m-%d")
@@ -671,6 +675,39 @@ class DataStream:
     # ========================================================================
     # END STREAMING METHODS
     # ========================================================================
+
+    def _detect_asset_type(self, symbol: str) -> str:
+        """
+        Auto-detect asset type from symbol pattern.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Asset type string
+        """
+        symbol_upper = symbol.upper()
+
+        # Crypto patterns
+        if any(pair in symbol_upper for pair in ['USDT', 'USDC', 'BUSD', 'USD', 'BTC', 'ETH']):
+            # Common crypto pairs
+            if symbol_upper.endswith('USDT') or symbol_upper.endswith('USDC') or symbol_upper.endswith('BUSD'):
+                return 'crypto'
+            if '-USD' in symbol_upper or '-BTC' in symbol_upper or '-ETH' in symbol_upper:
+                return 'crypto'
+
+        # Forex patterns (6 chars, all caps, e.g., EURUSD)
+        if len(symbol_upper) == 6 and symbol_upper.isalpha():
+            # Could be forex like EURUSD, GBPJPY
+            return 'forex'
+
+        # Economic indicators (typically short codes)
+        economic_symbols = ['GDP', 'CPI', 'UNRATE', 'DGS10', 'FEDFUNDS', 'PAYEMS']
+        if symbol_upper in economic_symbols:
+            return 'economic'
+
+        # Default to equity (stocks, ETFs)
+        return 'equity'
 
     def _select_provider(self, request: DataRequest) -> str:
         """
