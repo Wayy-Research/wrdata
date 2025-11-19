@@ -19,13 +19,6 @@ import asyncio
 from wrdata.providers.base import BaseProvider
 from wrdata.providers.yfinance_provider import YFinanceProvider
 from wrdata.providers.binance_provider import BinanceProvider
-from wrdata.providers.fred_provider import FREDProvider
-from wrdata.providers.alphavantage_provider import AlphaVantageProvider
-from wrdata.providers.coinbase_provider import CoinbaseProvider
-from wrdata.providers.coingecko_provider import CoinGeckoProvider
-from wrdata.providers.finnhub_provider import FinnhubProvider
-from wrdata.providers.alpaca_provider import AlpacaProvider
-from wrdata.providers.ibkr_provider import IBKRProvider
 from wrdata.models.schemas import (
     DataRequest,
     DataResponse,
@@ -34,13 +27,7 @@ from wrdata.models.schemas import (
 )
 from wrdata.core.config import settings
 
-# Streaming imports
-from wrdata.streaming.manager import StreamManager
-from wrdata.streaming.binance_stream import BinanceStreamProvider
-from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
-from wrdata.streaming.finnhub_stream import FinnhubStreamProvider
-from wrdata.streaming.alpaca_stream import AlpacaStreamProvider
-from wrdata.streaming.ibkr_stream import IBKRStreamProvider
+# Streaming imports (lazy loaded to avoid dependency issues)
 from wrdata.streaming.base import StreamMessage
 
 
@@ -189,7 +176,8 @@ class DataStream:
         self.cache_token = cache_token
         self.cache_org = cache_org
 
-        # Initialize streaming manager
+        # Initialize streaming manager (lazy import)
+        from wrdata.streaming.manager import StreamManager
         self.stream_manager = StreamManager()
 
         # Add streaming providers
@@ -227,6 +215,7 @@ class DataStream:
             return  # FRED requires an API key
 
         try:
+            from wrdata.providers.fred_provider import FREDProvider
             self.providers['fred'] = FREDProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize FRED provider: {e}")
@@ -237,6 +226,7 @@ class DataStream:
             return  # Alpha Vantage requires an API key
 
         try:
+            from wrdata.providers.alphavantage_provider import AlphaVantageProvider
             self.providers['alphavantage'] = AlphaVantageProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize Alpha Vantage provider: {e}")
@@ -244,6 +234,7 @@ class DataStream:
     def _add_coinbase_provider(self):
         """Add Coinbase provider (no API key required for public data)."""
         try:
+            from wrdata.providers.coinbase_provider import CoinbaseProvider
             self.providers['coinbase'] = CoinbaseProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Coinbase provider: {e}")
@@ -251,6 +242,7 @@ class DataStream:
     def _add_coingecko_provider(self):
         """Add CoinGecko provider (no API key required for basic use)."""
         try:
+            from wrdata.providers.coingecko_provider import CoinGeckoProvider
             self.providers['coingecko'] = CoinGeckoProvider()
         except Exception as e:
             print(f"Warning: Could not initialize CoinGecko provider: {e}")
@@ -261,6 +253,7 @@ class DataStream:
             return  # Finnhub requires an API key
 
         try:
+            from wrdata.providers.finnhub_provider import FinnhubProvider
             self.providers['finnhub'] = FinnhubProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize Finnhub provider: {e}")
@@ -271,6 +264,7 @@ class DataStream:
             return  # Alpaca requires both key and secret
 
         try:
+            from wrdata.providers.alpaca_provider import AlpacaProvider
             self.providers['alpaca'] = AlpacaProvider(
                 api_key=api_key,
                 api_secret=api_secret,
@@ -282,6 +276,7 @@ class DataStream:
     def _add_ibkr_provider(self, host: str, port: int, client_id: int, readonly: bool):
         """Add Interactive Brokers provider if TWS/Gateway is running."""
         try:
+            from wrdata.providers.ibkr_provider import IBKRProvider
             provider = IBKRProvider(
                 host=host,
                 port=port,
@@ -311,6 +306,7 @@ class DataStream:
         """Initialize WebSocket streaming providers."""
         try:
             # Add Binance streaming (free, no auth required for market data)
+            from wrdata.streaming.binance_stream import BinanceStreamProvider
             binance_stream = BinanceStreamProvider(api_key=binance_key)
             self.stream_manager.add_provider('binance_stream', binance_stream)
         except Exception as e:
@@ -318,6 +314,7 @@ class DataStream:
 
         try:
             # Add Coinbase streaming (free, no auth required for public data)
+            from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
             coinbase_stream = CoinbaseStreamProvider()
             self.stream_manager.add_provider('coinbase_stream', coinbase_stream)
         except Exception as e:
@@ -326,6 +323,7 @@ class DataStream:
         # Add Finnhub streaming if API key provided (FREE WebSocket!)
         if finnhub_key:
             try:
+                from wrdata.streaming.finnhub_stream import FinnhubStreamProvider
                 finnhub_stream = FinnhubStreamProvider(api_key=finnhub_key)
                 self.stream_manager.add_provider('finnhub_stream', finnhub_stream)
             except Exception as e:
@@ -334,6 +332,7 @@ class DataStream:
         # Add Alpaca streaming if API keys provided (FREE WebSocket + trading!)
         if alpaca_key and alpaca_secret:
             try:
+                from wrdata.streaming.alpaca_stream import AlpacaStreamProvider
                 alpaca_stream = AlpacaStreamProvider(
                     api_key=alpaca_key,
                     api_secret=alpaca_secret,
@@ -346,6 +345,7 @@ class DataStream:
         # Add IBKR streaming if TWS/Gateway is available
         # Use different client_id for streaming (client_id + 1)
         try:
+            from wrdata.streaming.ibkr_stream import IBKRStreamProvider
             ibkr_stream = IBKRStreamProvider(
                 host=ibkr_host,
                 port=ibkr_port,
