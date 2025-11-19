@@ -22,6 +22,7 @@ from wrdata.providers.binance_provider import BinanceProvider
 from wrdata.providers.fred_provider import FREDProvider
 from wrdata.providers.alphavantage_provider import AlphaVantageProvider
 from wrdata.providers.coinbase_provider import CoinbaseProvider
+from wrdata.providers.coingecko_provider import CoinGeckoProvider
 from wrdata.providers.finnhub_provider import FinnhubProvider
 from wrdata.providers.alpaca_provider import AlpacaProvider
 from wrdata.providers.ibkr_provider import IBKRProvider
@@ -149,6 +150,9 @@ class DataStream:
         # Add Coinbase (no API key required for public data)
         self._add_coinbase_provider()
 
+        # Add CoinGecko (no API key required for basic use)
+        self._add_coingecko_provider()
+
         # Add Finnhub if API key provided (or use from env)
         finnhub_key = finnhub_key or settings.FINNHUB_API_KEY
         self._add_finnhub_provider(finnhub_key)
@@ -174,8 +178,8 @@ class DataStream:
             'future': ['ibkr'],  # IBKR only for futures
             'index': ['yfinance'],
             'forex': ['ibkr', 'alphavantage', 'yfinance'],
-            'crypto': ['binance', 'coinbase', 'yfinance'],
-            'cryptocurrency': ['binance', 'coinbase', 'yfinance'],
+            'crypto': ['binance', 'coingecko', 'coinbase', 'yfinance'],
+            'cryptocurrency': ['binance', 'coingecko', 'coinbase', 'yfinance'],
             'economic': ['fred'],  # FRED for economic data
         }
 
@@ -243,6 +247,13 @@ class DataStream:
             self.providers['coinbase'] = CoinbaseProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Coinbase provider: {e}")
+
+    def _add_coingecko_provider(self):
+        """Add CoinGecko provider (no API key required for basic use)."""
+        try:
+            self.providers['coingecko'] = CoinGeckoProvider()
+        except Exception as e:
+            print(f"Warning: Could not initialize CoinGecko provider: {e}")
 
     def _add_finnhub_provider(self, api_key: Optional[str]):
         """Add Finnhub provider if API key available."""

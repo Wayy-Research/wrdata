@@ -74,49 +74,49 @@ data = fetcher.get_data(
 
 **See [SYMBOL_DISCOVERY.md](SYMBOL_DISCOVERY.md) for complete documentation.**
 
-## Active Providers: 28 🎉🎉🎉
+## Active Providers: 28
 
-### GOAL EXCEEDED: 28 Providers! (112% of goal)
+### GOAL EXCEEDED: 28 Providers (112% of goal)
 
 **Stock & Options (12 providers):**
-1. **Alpaca** ⭐ - US stocks, free real-time IEX data, paper trading
-2. **Polygon.io** ⭐ - Premium US data (best quality)
-3. **Tradier** ⭐ - FREE options chains! (unique)
+1. **Alpaca** - US stocks, free real-time IEX data, paper trading
+2. **Polygon.io** - Premium US data (best quality)
+3. **Tradier** - FREE options chains (unique)
 4. **TwelveData** - Global stocks, 800 calls/day
-5. **IBKR** - Global markets, options, futures (with Docker!)
+5. **IBKR** - Global markets, options, futures (with Docker support)
 6. **Finnhub** - Global stocks + WebSocket + news
 7. **Alpha Vantage** - Multi-asset
 8. **Yahoo Finance** - Unlimited free (delayed)
-9. **IEX Cloud** ⭐ NEW! - US stocks, 500K calls/month free
-10. **TD Ameritrade** ⭐ NEW! - US stocks + OPTIONS!
-11. **Marketstack** ⭐ NEW! - 70+ global exchanges
-12. **Tiingo** ⭐ NEW! - Stocks + news sentiment
+9. **IEX Cloud** - US stocks, 500K calls/month free
+10. **TD Ameritrade** - US stocks + OPTIONS
+11. **Marketstack** - 70+ global exchanges
+12. **Tiingo** - Stocks + news sentiment
 
 **Cryptocurrency (15 providers):**
 13. **Binance** - Global leader, 1000+ pairs
 14. **Coinbase** - US-friendly, 748 pairs (legacy)
-15. **Coinbase Advanced** ⭐ NEW! - New Coinbase API
+15. **Coinbase Advanced** - New Coinbase API
 16. **Kraken** - European exchange, 200+ pairs
-17. **KuCoin** ⭐ NEW! - 700+ trading pairs
-18. **Bybit** ⭐ NEW! - Derivatives specialist
-19. **OKX** ⭐ NEW! - Global exchange
-20. **Gate.io** ⭐ NEW! - 1,400+ trading pairs
-21. **Bitfinex** ⭐ NEW! - Established exchange
-22. **Gemini** ⭐ NEW! - US-regulated (Winklevoss)
-23. **Huobi (HTX)** ⭐ NEW! - 600+ pairs
-24. **CoinGecko** ⭐ NEW! - NO API KEY! 10K+ cryptos
-25. **CryptoCompare** ⭐ NEW! - 100K calls/month free
-26. **Messari** ⭐ NEW! - Research + metrics
-27. **Deribit** ⭐⭐ NEW! - CRYPTO OPTIONS! (unique)
+17. **KuCoin** - 700+ trading pairs
+18. **Bybit** - Derivatives specialist
+19. **OKX** - Global exchange
+20. **Gate.io** - 1,400+ trading pairs
+21. **Bitfinex** - Established exchange
+22. **Gemini** - US-regulated (Winklevoss)
+23. **Huobi (HTX)** - 600+ pairs
+24. **CoinGecko** - NO API KEY, 10K+ cryptos
+25. **CryptoCompare** - 100K calls/month free
+26. **Messari** - Research + metrics
+27. **Deribit** - CRYPTO OPTIONS (unique)
 
 **Economic Data (1 provider):**
 28. **FRED** - 800,000+ economic indicators
 
-**Progress: 112% COMPLETE! 🚀**
+**Progress: 112% COMPLETE**
 
 See [PROVIDER_SETUP_GUIDE.md](PROVIDER_SETUP_GUIDE.md) for setup instructions.
 
-### 🐳 Docker Support
+### Docker Support
 
 **IBKR with Docker** - Run IB Gateway in a container (no local installation):
 ```bash

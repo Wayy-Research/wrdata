@@ -27,6 +27,7 @@ from wrdata.providers.marketstack_provider import MarketstackProvider
 from wrdata.providers.deribit_provider import DeribitProvider
 from wrdata.providers.huobi_provider import HuobiProvider
 from wrdata.providers.messari_provider import MessariProvider
+from wrdata.providers.kalshi_provider import KalshiProvider
 
 __all__ = [
     "BaseProvider",
@@ -54,4 +55,5 @@ __all__ = [
     "DeribitProvider",
     "HuobiProvider",
     "MessariProvider",
+    "KalshiProvider",
 ]
