@@ -5,8 +5,6 @@
 
 Get **historical** and **real-time** stock, crypto, forex, and economic data with one simple API.
 
-No database. No complex setup. Just works.
-
 ## Quick Start
 
 ```python
@@ -24,7 +22,7 @@ df = stream.get("BTCUSDT")
 chain = stream.options("SPY")
 ```
 
-## Real-Time Streaming 🔴 LIVE
+## Real-Time Streaming LIVE
 
 Stream live market data from 7 providers via WebSockets:
 
@@ -196,7 +194,7 @@ stream = DataStream(
 - **Tiingo** - Stocks + news
 - **15+ crypto exchanges** - Bybit, OKX, KuCoin, Gate.io, Bitfinex, Gemini, Huobi, Messari, Deribit
 
-See [PROVIDER_SETUP_GUIDE.md](PROVIDER_SETUP_GUIDE.md) for API key setup.
+See [PROVIDER_SETUP_GUIDE.md](docs/PROVIDER_SETUP_GUIDE.md) for API key setup.
 
 ## Asset Type Auto-Detection
 
@@ -272,7 +270,7 @@ cd docker/ibkr
 ./start.sh
 ```
 
-See [IBKR_DOCKER_QUICKSTART.md](IBKR_DOCKER_QUICKSTART.md) for details.
+See [IBKR_DOCKER_QUICKSTART.md](docs/IBKR_DOCKER_QUICKSTART.md) for details.
 
 ## Development
 
@@ -307,3 +305,5 @@ Pull requests welcome! Please ensure tests pass and code is formatted with black
 **Simple. Fast. Powerful.**
 
 28 providers. Historical + Real-time. One API.
+
+© Wayy Research, 2025
