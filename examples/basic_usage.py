@@ -1,7 +1,7 @@
 """
 Basic usage examples for wrdata DataStream API.
 
-This shows how ridiculously simple it is to get market data now.
+Simple examples showing how to fetch market data.
 """
 
 from wrdata import DataStream

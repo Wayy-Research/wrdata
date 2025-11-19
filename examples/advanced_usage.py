@@ -4,19 +4,18 @@ Advanced usage examples for wrdata DataStream API.
 Shows configuration with API keys, custom providers, and more.
 """
 
-import os
 from wrdata import DataStream
 
 # ============================================================================
-# EXAMPLE 1: Using environment variables for API keys
+# EXAMPLE 1: Configuration from environment
 # ============================================================================
 print("=" * 60)
 print("EXAMPLE 1: Configuration from environment")
 print("=" * 60)
 
-# Set API keys via environment (or put in .env file)
-# os.environ['BINANCE_API_KEY'] = 'your_key_here'
-# os.environ['BINANCE_API_SECRET'] = 'your_secret_here'
+# Set API keys via environment variables or .env file:
+# BINANCE_API_KEY=your_key_here
+# BINANCE_API_SECRET=your_secret_here
 
 # DataStream automatically picks up env vars
 stream = DataStream()
@@ -32,11 +31,13 @@ print("EXAMPLE 2: Direct API key configuration")
 print("=" * 60)
 
 # Pass API keys directly (useful for multi-account setups)
+import os
+
 stream = DataStream(
     binance_key=os.getenv('BINANCE_API_KEY'),
     binance_secret=os.getenv('BINANCE_API_SECRET'),
-    # polygon_key=os.getenv('POLYGON_API_KEY'),  # Coming soon
-    # alphavantage_key=os.getenv('ALPHAVANTAGE_API_KEY'),  # Coming soon
+    polygon_key=os.getenv('POLYGON_API_KEY'),
+    alphavantage_key=os.getenv('ALPHAVANTAGE_API_KEY'),
 )
 
 print(f"Stream with custom keys: {stream}")

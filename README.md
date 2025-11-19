@@ -60,15 +60,15 @@ popular = discovery.get_popular_symbols(asset_type='stock', limit=100)
 ### Data Fetching
 
 ```python
-from wrdata import DataFetcher
+from wrdata import DataStream
 
 # Fetch data
-fetcher = DataFetcher()
-data = fetcher.get_data(
+stream = DataStream()
+data = stream.get(
     symbol="AAPL",
     asset_type="equity",
-    start_date="2024-01-01",
-    end_date="2024-12-31"
+    start="2024-01-01",
+    end="2024-12-31"
 )
 ```
 
