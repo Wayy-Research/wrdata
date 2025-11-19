@@ -43,7 +43,6 @@ asyncio.run(main())
 ```
 
 **Live Streaming Providers:**
-- **Binance** - Crypto (free, no key required)
 - **Coinbase** - Crypto (free, no key required)
 - **Finnhub** - Stocks (free tier, 60 req/min)
 - **Alpaca** - US stocks (free with key)
@@ -79,9 +78,12 @@ pip install wrdata
 
 ## Features
 
-- ✅ **28 Data Providers** - Yahoo, Binance, Polygon, Alpaca, FRED, and 23 more
-- ✅ **Real-Time Streaming** - Live WebSocket data from 7 providers
+- ✅ **32+ Data Providers** - Yahoo, Polygon, Alpaca, FRED, and 28+ more
+- ✅ **Real-Time Streaming** - Live WebSocket data from 6 providers
 - ✅ **Multi-Asset Support** - Stocks, crypto, forex, options, economic data
+- ✅ **Multi-Provider Search** - Search across 9+ providers simultaneously
+- ✅ **100+ Crypto Exchanges** - CCXT integration (Bybit, OKX, KuCoin, Gate.io, Bitfinex)
+- ✅ **Comprehensive Crypto** - 10,000+ cryptocurrencies via CoinGecko integration
 - ✅ **Auto-Detection** - Automatically detects asset type from symbol
 - ✅ **Smart Defaults** - Works immediately, configure only when needed
 - ✅ **Options Data** - Full options chains with Greeks
@@ -135,6 +137,40 @@ chain = stream.options("SPY")
 calls = stream.options("SPY", option_type="call", strike_min=580, strike_max=600)
 ```
 
+### Search for Symbols
+
+```python
+# Search across 9+ providers (YFinance, CoinGecko, CCXT exchanges, etc.)
+results = stream.search_symbol("DOGE", limit=50)
+
+# Results from multiple exchanges
+for r in results[:5]:
+    print(f"{r['symbol']:25} from {r['provider']}")
+
+# Output:
+# DOGE/USDT                 from ccxt_okx
+# DOGE/BTC                  from ccxt_kucoin
+# POLYDOGE/USDT             from ccxt_gateio
+# DOGE-USD                  from yfinance
+# dogecoin                  from coingecko
+
+# Group by provider to see coverage
+from collections import defaultdict
+by_provider = defaultdict(list)
+for r in results:
+    by_provider[r['provider']].append(r['symbol'])
+
+for provider, symbols in by_provider.items():
+    print(f"{provider}: {len(symbols)} results")
+
+# Output:
+# ccxt_okx: 8 results
+# ccxt_kucoin: 7 results
+# ccxt_gateio: 43 results
+# yfinance: 5 results
+# coingecko: 25 results
+```
+
 ## API Keys (Optional)
 
 Free providers work without keys. Add keys for premium providers:
@@ -144,8 +180,6 @@ Free providers work without keys. Add keys for premium providers:
 ```bash
 # .env file
 POLYGON_API_KEY=your_key_here
-BINANCE_API_KEY=your_key_here
-BINANCE_API_SECRET=your_secret_here
 ALPACA_API_KEY=your_key_here
 ALPACA_API_SECRET=your_secret_here
 FINNHUB_API_KEY=your_key_here
@@ -156,21 +190,25 @@ FINNHUB_API_KEY=your_key_here
 ```python
 stream = DataStream(
     polygon_key="your_key",
-    binance_key="your_key",
-    binance_secret="your_secret",
     alpaca_key="your_key",
     alpaca_secret="your_secret"
 )
 ```
 
-## Supported Providers (28 Total)
+## Supported Providers (32+ Total)
 
 ### Free - No API Key Required
 
 - **Yahoo Finance** - Stocks, ETFs, crypto (delayed)
-- **Binance** - Crypto market data + streaming
 - **Coinbase** - Crypto market data + streaming
 - **CoinGecko** - 10,000+ cryptocurrencies
+- **CCXT Exchanges** (5 pre-configured):
+  - **OKX** - Global crypto exchange
+  - **KuCoin** - 700+ altcoins
+  - **Gate.io** - Extensive crypto selection
+  - **Bitfinex** - Professional trading platform
+  - **Bybit** - Derivatives and spot trading
+  - *Plus 95+ more exchanges available via CCXT!*
 
 ### Free - API Key Required
 
@@ -304,6 +342,6 @@ Pull requests welcome! Please ensure tests pass and code is formatted with black
 
 **Simple. Fast. Powerful.**
 
-28 providers. Historical + Real-time. One API.
+32+ providers. 100+ crypto exchanges. Historical + Real-time. One API.
 
 © Wayy Research, 2025

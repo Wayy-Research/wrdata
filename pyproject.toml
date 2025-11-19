@@ -27,9 +27,11 @@ dependencies = [
     "pandas>=2.0.0",
     "polars>=0.20.0",
     "pydantic>=2.6.0",
+    "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0.0",
     "ccxt>=4.0.0",
+    "yfinance>=0.2.0",
 ]
 
 [project.optional-dependencies]

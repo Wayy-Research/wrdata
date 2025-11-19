@@ -18,7 +18,6 @@ import asyncio
 
 from wrdata.providers.base import BaseProvider
 from wrdata.providers.yfinance_provider import YFinanceProvider
-from wrdata.providers.binance_provider import BinanceProvider
 from wrdata.models.schemas import (
     DataRequest,
     DataResponse,
@@ -49,7 +48,7 @@ class DataStream:
 
         With API keys (better rate limits):
         >>> stream = DataStream(
-        ...     binance_key="...",
+        ...     finnhub_key="...",
         ...     polygon_key="..."
         ... )
 
@@ -62,10 +61,6 @@ class DataStream:
 
     def __init__(
         self,
-        # Crypto exchange keys (optional - better rate limits)
-        binance_key: Optional[str] = None,
-        binance_secret: Optional[str] = None,
-
         # Economic data (free with API key)
         fred_key: Optional[str] = None,
 
@@ -101,8 +96,6 @@ class DataStream:
         Initialize DataStream.
 
         Args:
-            binance_key: Binance API key (optional, for higher rate limits)
-            binance_secret: Binance API secret
             polygon_key: Polygon.io API key (premium)
             alphavantage_key: Alpha Vantage API key
             twelvedata_key: Twelve Data API key
@@ -121,11 +114,6 @@ class DataStream:
         # Always include YFinance (free, no key required)
         self._add_yfinance_provider()
 
-        # Add Binance if keys provided (or use from env)
-        binance_key = binance_key or settings.BINANCE_API_KEY
-        binance_secret = binance_secret or settings.BINANCE_API_SECRET
-        self._add_binance_provider(binance_key, binance_secret)
-
         # Add FRED if API key provided (or use from env)
         fred_key = fred_key or settings.FRED_API_KEY
         self._add_fred_provider(fred_key)
@@ -139,6 +127,12 @@ class DataStream:
 
         # Add CoinGecko (no API key required for basic use)
         self._add_coingecko_provider()
+
+        # Add Kraken (no API key required for public data)
+        self._add_kraken_provider()
+
+        # Add CCXT exchanges for expanded crypto coverage
+        self._add_ccxt_exchanges()
 
         # Add Finnhub if API key provided (or use from env)
         finnhub_key = finnhub_key or settings.FINNHUB_API_KEY
@@ -165,8 +159,8 @@ class DataStream:
             'future': ['ibkr'],  # IBKR only for futures
             'index': ['yfinance'],
             'forex': ['ibkr', 'alphavantage', 'yfinance'],
-            'crypto': ['binance', 'coingecko', 'coinbase', 'yfinance'],
-            'cryptocurrency': ['binance', 'coingecko', 'coinbase', 'yfinance'],
+            'crypto': ['yfinance', 'coingecko', 'coinbase'],
+            'cryptocurrency': ['yfinance', 'coingecko', 'coinbase'],
             'economic': ['fred'],  # FRED for economic data
         }
 
@@ -182,7 +176,6 @@ class DataStream:
 
         # Add streaming providers
         self._init_streaming_providers(
-            binance_key, binance_secret,
             finnhub_key,
             alpaca_key, alpaca_secret, alpaca_paper,
             ibkr_host, ibkr_port, ibkr_client_id
@@ -194,20 +187,6 @@ class DataStream:
             self.providers['yfinance'] = YFinanceProvider()
         except Exception as e:
             print(f"Warning: Could not initialize YFinance provider: {e}")
-
-    def _add_binance_provider(self, api_key: Optional[str], api_secret: Optional[str]):
-        """Add Binance provider if credentials available."""
-        try:
-            if api_key and api_secret:
-                self.providers['binance'] = BinanceProvider(
-                    api_key=api_key,
-                    api_secret=api_secret
-                )
-            else:
-                # Use unauthenticated mode (lower rate limits)
-                self.providers['binance'] = BinanceProvider()
-        except Exception as e:
-            print(f"Warning: Could not initialize Binance provider: {e}")
 
     def _add_fred_provider(self, api_key: Optional[str]):
         """Add FRED economic data provider if API key available."""
@@ -246,6 +225,40 @@ class DataStream:
             self.providers['coingecko'] = CoinGeckoProvider()
         except Exception as e:
             print(f"Warning: Could not initialize CoinGecko provider: {e}")
+
+    def _add_kraken_provider(self):
+        """Add Kraken provider (no API key required for public data)."""
+        try:
+            from wrdata.providers.kraken_provider import KrakenProvider
+            self.providers['kraken'] = KrakenProvider()
+        except Exception as e:
+            print(f"Warning: Could not initialize Kraken provider: {e}")
+
+    def _add_ccxt_exchanges(self):
+        """Add major cryptocurrency exchanges via CCXT (100+ exchanges available)."""
+        try:
+            from wrdata.providers.ccxt_provider import CCXTProvider
+
+            # Add major exchanges (free, no API key required for public data)
+            major_exchanges = [
+                'bybit',      # Fast-growing crypto derivatives exchange
+                'okx',        # Top-tier global exchange
+                'kucoin',     # Wide variety of altcoins
+                'gateio',     # Extensive crypto selection
+                'bitfinex',   # Professional trading platform
+            ]
+
+            for exchange_id in major_exchanges:
+                try:
+                    provider = CCXTProvider(exchange_id=exchange_id)
+                    self.providers[f'ccxt_{exchange_id}'] = provider
+                except Exception as e:
+                    # Silent fail - CCXT exchanges are optional
+                    print(f"Warning: Could not initialize CCXT {exchange_id}: {e}")
+                    pass
+
+        except Exception as e:
+            print(f"Warning: Could not initialize CCXT providers: {e}")
 
     def _add_finnhub_provider(self, api_key: Optional[str]):
         """Add Finnhub provider if API key available."""
@@ -293,8 +306,6 @@ class DataStream:
 
     def _init_streaming_providers(
         self,
-        binance_key: Optional[str],
-        binance_secret: Optional[str],
         finnhub_key: Optional[str],
         alpaca_key: Optional[str],
         alpaca_secret: Optional[str],
@@ -304,14 +315,6 @@ class DataStream:
         ibkr_client_id: int
     ):
         """Initialize WebSocket streaming providers."""
-        try:
-            # Add Binance streaming (free, no auth required for market data)
-            from wrdata.streaming.binance_stream import BinanceStreamProvider
-            binance_stream = BinanceStreamProvider(api_key=binance_key)
-            self.stream_manager.add_provider('binance_stream', binance_stream)
-        except Exception as e:
-            print(f"Warning: Could not initialize Binance streaming: {e}")
-
         try:
             # Add Coinbase streaming (free, no auth required for public data)
             from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
@@ -546,6 +549,216 @@ class DataStream:
 
         provider = self.providers['yfinance']
         return provider.get_available_expirations(symbol)
+
+    def search_symbol(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search for symbols across multiple providers.
+
+        Returns a list of matching symbols with their details including
+        the correct symbol format, source provider, description, and asset type.
+
+        Args:
+            query: Search query (e.g., "bitcoin", "apple", "ETH")
+            limit: Maximum number of results to return (default: 10)
+
+        Returns:
+            List of dictionaries with symbol information:
+            - symbol: The trading symbol in the correct format
+            - name: Full name/description
+            - type: Asset type (stock, crypto, etf, etc.)
+            - provider: The provider where this result came from
+            - exchange: Exchange/market (if applicable)
+
+        Examples:
+            >>> # Search for Bitcoin
+            >>> results = stream.search_symbol("bitcoin")
+            >>> print(results[0])
+            {
+                'symbol': 'BTC-USD',
+                'name': 'Bitcoin USD',
+                'type': 'cryptocurrency',
+                'provider': 'yfinance',
+                'exchange': 'CCC'
+            }
+
+            >>> # Search for Ethereum across providers
+            >>> results = stream.search_symbol("ethereum")
+            >>> for r in results:
+            ...     print(f"{r['symbol']:15} from {r['provider']}")
+            ETH-USD         from yfinance
+            ETH/USD         from kraken
+            ethereum        from coingecko
+        """
+        results = []
+        seen_symbols = set()
+
+        # 1. Search YFinance (stocks, ETFs, major crypto)
+        if 'yfinance' in self.providers and len(results) < limit:
+            try:
+                import yfinance as yf
+                search_results = yf.Search(query, max_results=min(limit, 10))
+
+                for result in search_results.quotes:
+                    symbol = result.get('symbol', '')
+                    if symbol and symbol not in seen_symbols:
+                        seen_symbols.add(symbol)
+                        results.append({
+                            'symbol': symbol,
+                            'name': result.get('longname') or result.get('shortname', ''),
+                            'type': result.get('quoteType', '').lower(),
+                            'provider': 'yfinance',
+                            'exchange': result.get('exchange', ''),
+                        })
+                        if len(results) >= limit:
+                            break
+            except Exception as e:
+                print(f"Warning: YFinance search failed: {e}")
+
+        # 2. Search CoinGecko (comprehensive crypto database)
+        if 'coingecko' in self.providers and len(results) < limit:
+            try:
+                import requests
+                provider = self.providers['coingecko']
+
+                # Search CoinGecko's coin list
+                url = f"{provider.base_url}/search"
+                params = {"query": query}
+                response = requests.get(url, headers=provider.headers, params=params, timeout=10)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    for coin in data.get('coins', [])[:limit - len(results)]:
+                        symbol_id = coin.get('id', '')
+                        if symbol_id and symbol_id not in seen_symbols:
+                            seen_symbols.add(symbol_id)
+                            results.append({
+                                'symbol': symbol_id,
+                                'name': coin.get('name', ''),
+                                'type': 'cryptocurrency',
+                                'provider': 'coingecko',
+                                'exchange': 'CoinGecko',
+                            })
+                            if len(results) >= limit:
+                                break
+            except Exception as e:
+                print(f"Warning: CoinGecko search failed: {e}")
+
+        # 3. Search Kraken (major crypto pairs)
+        if 'kraken' in self.providers and len(results) < limit:
+            try:
+                import requests
+                provider = self.providers['kraken']
+
+                # Get Kraken asset pairs
+                url = f"{provider.base_url}/public/AssetPairs"
+                response = requests.get(url, timeout=10)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('error') is None and data.get('result'):
+                        query_upper = query.upper()
+                        for pair_name, pair_data in data['result'].items():
+                            altname = pair_data.get('altname', '')
+                            # Match query in pair name
+                            if query_upper in altname or query_upper in pair_name:
+                                if altname and altname not in seen_symbols:
+                                    seen_symbols.add(altname)
+                                    base = pair_data.get('base', '')
+                                    quote = pair_data.get('quote', '')
+                                    results.append({
+                                        'symbol': altname,
+                                        'name': f"{base}/{quote}",
+                                        'type': 'cryptocurrency',
+                                        'provider': 'kraken',
+                                        'exchange': 'Kraken',
+                                    })
+                                    if len(results) >= limit:
+                                        break
+            except Exception as e:
+                print(f"Warning: Kraken search failed: {e}")
+
+        # 4. Search Coinbase (major crypto pairs)
+        if 'coinbase' in self.providers and len(results) < limit:
+            try:
+                import requests
+                provider = self.providers['coinbase']
+
+                # Get Coinbase products
+                url = f"{provider.base_url}/products"
+                response = requests.get(url, timeout=10)
+
+                if response.status_code == 200:
+                    products = response.json()
+                    query_upper = query.upper()
+                    for product in products:
+                        product_id = product.get('id', '')
+                        base_currency = product.get('base_currency', '')
+                        # Match query in product
+                        if query_upper in product_id or query_upper in base_currency:
+                            if product_id and product_id not in seen_symbols:
+                                seen_symbols.add(product_id)
+                                results.append({
+                                    'symbol': product_id,
+                                    'name': product.get('display_name', product_id),
+                                    'type': 'cryptocurrency',
+                                    'provider': 'coinbase',
+                                    'exchange': 'Coinbase',
+                                })
+                                if len(results) >= limit:
+                                    break
+            except Exception as e:
+                print(f"Warning: Coinbase search failed: {e}")
+
+        # 5. Search CCXT exchanges (100+ exchanges via unified API)
+        if len(results) < limit:
+            # Search across available CCXT exchanges
+            ccxt_providers = [name for name in self.providers.keys() if name.startswith('ccxt_')]
+
+            for provider_name in ccxt_providers:
+                if len(results) >= limit:
+                    break
+
+                try:
+                    provider = self.providers[provider_name]
+                    # Use the provider's search method
+                    if hasattr(provider, 'search_symbols'):
+                        exchange_results = provider.search_symbols(query, limit - len(results))
+
+                        for result in exchange_results:
+                            symbol = result.get('symbol', '')
+                            if symbol and symbol not in seen_symbols:
+                                seen_symbols.add(symbol)
+                                results.append(result)
+                                if len(results) >= limit:
+                                    break
+                except Exception as e:
+                    # Silent fail - individual exchanges may have issues
+                    pass
+
+        return results[:limit]
+
+    def _get_recommended_provider(self, asset_type: str) -> str:
+        """
+        Get the recommended provider for an asset type.
+
+        Args:
+            asset_type: Asset type string
+
+        Returns:
+            Recommended provider name
+        """
+        # Use the first available provider from the priority list
+        asset_type_lower = asset_type.lower()
+        if asset_type_lower in self._provider_priority:
+            for provider in self._provider_priority[asset_type_lower]:
+                if provider in self.providers:
+                    return provider
+
+        # Fallback to first available provider
+        if self.providers:
+            return list(self.providers.keys())[0]
+
+        return 'unknown'
 
     # ========================================================================
     # REAL-TIME STREAMING METHODS (Phase 2)
