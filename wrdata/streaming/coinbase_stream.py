@@ -9,7 +9,7 @@ WebSocket Docs: https://docs.cloud.coinbase.com/exchange/docs/websocket-overview
 
 import asyncio
 import json
-from typing import Optional, Callable, AsyncIterator
+from typing import Optional, Callable, AsyncIterator, Dict
 from datetime import datetime
 import aiohttp
 
@@ -37,6 +37,9 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         self._connected = False
         self._reconnect_attempts = 0
         self._max_reconnect_attempts = 10
+
+        # Orderbook state management for Level2
+        self._orderbooks: Dict[str, Dict] = {}
 
     async def connect(self) -> bool:
         """Establish WebSocket connection."""
@@ -204,6 +207,151 @@ class CoinbaseStreamProvider(BaseStreamProvider):
             except Exception as e:
                 print(f"Error processing Coinbase match: {e}")
                 continue
+
+    async def subscribe_depth(
+        self,
+        symbol: str,
+        callback: Optional[Callable[[StreamMessage], None]] = None
+    ) -> AsyncIterator[StreamMessage]:
+        """
+        Subscribe to Level2 orderbook updates.
+
+        Provides:
+        - Initial full orderbook snapshot
+        - Incremental updates (l2update channel)
+
+        Args:
+            symbol: Trading pair (e.g., "BTC-USD")
+            callback: Optional callback for each update
+
+        Yields:
+            StreamMessage with bids/asks orderbook data
+        """
+        symbol = self._normalize_symbol(symbol)
+        stream_id = f"depth_{symbol}"
+
+        if callback:
+            self.add_callback(stream_id, callback)
+
+        # Initialize orderbook state
+        self._orderbooks[symbol] = {
+            'bids': {},  # price -> size
+            'asks': {},  # price -> size
+        }
+
+        # Subscribe to level2 channel
+        subscribe_message = {
+            "type": "subscribe",
+            "product_ids": [symbol],
+            "channels": ["level2"]
+        }
+
+        async for message in self._stream_channel(subscribe_message):
+            try:
+                msg_type = message.get('type')
+
+                if msg_type == 'snapshot':
+                    # Full orderbook snapshot
+                    self._process_snapshot(symbol, message)
+
+                    stream_msg = self._create_orderbook_message(symbol)
+                    await self._notify_callbacks(stream_id, stream_msg)
+                    yield stream_msg
+
+                elif msg_type == 'l2update':
+                    # Incremental update
+                    self._process_l2update(symbol, message)
+
+                    stream_msg = self._create_orderbook_message(symbol)
+                    await self._notify_callbacks(stream_id, stream_msg)
+                    yield stream_msg
+
+            except Exception as e:
+                print(f"Error processing Coinbase orderbook update: {e}")
+                continue
+
+    def _process_snapshot(self, symbol: str, message: dict):
+        """Process full orderbook snapshot."""
+        orderbook = self._orderbooks[symbol]
+
+        # Reset orderbook
+        orderbook['bids'] = {}
+        orderbook['asks'] = {}
+
+        # Add all bids [price, size]
+        for price, size in message.get('bids', []):
+            orderbook['bids'][float(price)] = float(size)
+
+        # Add all asks [price, size]
+        for price, size in message.get('asks', []):
+            orderbook['asks'][float(price)] = float(size)
+
+    def _process_l2update(self, symbol: str, message: dict):
+        """Process incremental orderbook update."""
+        orderbook = self._orderbooks[symbol]
+
+        # changes format: [side, price, size]
+        for change in message.get('changes', []):
+            side, price, size = change
+            price = float(price)
+            size = float(size)
+
+            book = orderbook['bids'] if side == 'buy' else orderbook['asks']
+
+            if size == 0:
+                # Remove price level
+                book.pop(price, None)
+            else:
+                # Update price level
+                book[price] = size
+
+    def _create_orderbook_message(self, symbol: str) -> StreamMessage:
+        """Create StreamMessage from current orderbook state."""
+        orderbook = self._orderbooks[symbol]
+
+        # Sort and convert to list of [price, size]
+        # Bids: highest to lowest
+        bids = sorted(
+            [[p, s] for p, s in orderbook['bids'].items()],
+            key=lambda x: x[0],
+            reverse=True
+        )[:20]  # Top 20 levels
+
+        # Asks: lowest to highest
+        asks = sorted(
+            [[p, s] for p, s in orderbook['asks'].items()],
+            key=lambda x: x[0]
+        )[:20]  # Top 20 levels
+
+        # Calculate best bid/ask
+        best_bid = bids[0][0] if bids else None
+        best_ask = asks[0][0] if asks else None
+        mid_price = (best_bid + best_ask) / 2 if (best_bid and best_ask) else None
+
+        return StreamMessage(
+            symbol=symbol,
+            timestamp=datetime.utcnow(),
+            price=mid_price,
+            bid=best_bid,
+            ask=best_ask,
+            bids=bids,
+            asks=asks,
+            provider=self.name,
+            stream_type="depth"
+        )
+
+    def get_orderbook_snapshot(self, symbol: str) -> Optional[Dict]:
+        """
+        Get current orderbook state for a symbol.
+
+        Args:
+            symbol: Trading pair (e.g., "BTC-USD")
+
+        Returns:
+            Dict with 'bids' and 'asks' or None if not available
+        """
+        symbol = self._normalize_symbol(symbol)
+        return self._orderbooks.get(symbol)
 
     def _interval_to_seconds(self, interval: str) -> int:
         """Convert interval string to seconds."""
