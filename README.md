@@ -70,6 +70,81 @@ asyncio.run(track_portfolio())
 
 See `examples/streaming_usage.py` for 6 complete examples including trading signals.
 
+## Orderbook Streaming (Level2)
+
+Stream real-time orderbook data from Coinbase with full depth-of-market updates:
+
+```python
+import asyncio
+from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
+
+async def stream_orderbook():
+    provider = CoinbaseStreamProvider()
+    await provider.connect()
+
+    # Stream Level2 orderbook updates
+    async for msg in provider.subscribe_depth("BTC-USD"):
+        print(f"Mid Price: ${msg.price:,.2f}")
+        print(f"Best Bid: ${msg.bid:,.2f} | Best Ask: ${msg.ask:,.2f}")
+        print(f"Spread: ${msg.ask - msg.bid:.2f}")
+
+        # Access top 20 bid/ask levels
+        print(f"\nTop 5 Bids: {msg.bids[:5]}")  # [[price, size], ...]
+        print(f"Top 5 Asks: {msg.asks[:5]}")
+
+        # Calculate order imbalance
+        bid_vol = sum(size for _, size in msg.bids[:10])
+        ask_vol = sum(size for _, size in msg.asks[:10])
+        print(f"Bid/Ask Volume Ratio: {bid_vol/ask_vol:.2f}")
+
+    await provider.disconnect()
+
+asyncio.run(stream_orderbook())
+```
+
+**Get Orderbook Snapshot:**
+
+```python
+# Stream a few updates first to build orderbook state
+count = 0
+async for msg in provider.subscribe_depth("ETH-USD"):
+    count += 1
+    if count >= 3:
+        break
+
+# Get current orderbook state
+snapshot = provider.get_orderbook_snapshot("ETH-USD")
+print(f"Total price levels - Bids: {len(snapshot['bids'])}, Asks: {len(snapshot['asks'])}")
+```
+
+**Track Multiple Orderbooks:**
+
+```python
+async def monitor_books():
+    provider = CoinbaseStreamProvider()
+    await provider.connect()
+
+    async def track(symbol):
+        async for msg in provider.subscribe_depth(symbol):
+            spread = msg.ask - msg.bid
+            print(f"{symbol}: ${msg.price:,.2f} | Spread: ${spread:.2f}")
+
+    # Monitor BTC and ETH simultaneously
+    await asyncio.gather(
+        track("BTC-USD"),
+        track("ETH-USD")
+    )
+
+asyncio.run(monitor_books())
+```
+
+Features:
+- Real-time Level2 orderbook updates via WebSocket
+- Full snapshot on connection + incremental updates
+- Top 20 bid/ask levels maintained automatically
+- No API key required
+- Track multiple symbols concurrently
+
 ## Installation
 
 ```bash
