@@ -43,7 +43,8 @@ asyncio.run(main())
 ```
 
 **Live Streaming Providers:**
-- **Coinbase** - Crypto (free, no key required)
+- **Binance** - Crypto (free, no key required) + Whale detection
+- **Coinbase** - Crypto (free, no key required) + Whale detection
 - **Finnhub** - Stocks (free tier, 60 req/min)
 - **Alpaca** - US stocks (free with key)
 - **Kraken** - Crypto (free, no key required)
@@ -145,6 +146,158 @@ Features:
 - No API key required
 - Track multiple symbols concurrently
 
+## Whale Transaction Tracking 🐋
+
+Detect and monitor large volume cryptocurrency transactions (whale transactions) in real-time using percentile-based detection:
+
+```python
+import asyncio
+from wrdata.streaming.binance_stream import BinanceStreamProvider
+
+async def track_whales():
+    provider = BinanceStreamProvider()
+    await provider.connect()
+
+    def whale_alert(whale_tx):
+        print(f"🐋 WHALE ALERT!")
+        print(f"  Symbol: {whale_tx.symbol}")
+        print(f"  Size: {whale_tx.size} BTC")
+        print(f"  Value: ${whale_tx.usd_value:,.2f}")
+        print(f"  Percentile: {whale_tx.percentile:.2f}% (Rank: {whale_tx.volume_rank})")
+
+    # Monitor for top 1% transactions by volume
+    async for msg in provider.subscribe_aggregate_trades(
+        symbol="BTCUSDT",
+        enable_whale_detection=True,
+        percentile_threshold=99.0,  # Top 1%
+        whale_callback=whale_alert
+    ):
+        pass  # Process messages
+
+    await provider.disconnect()
+
+asyncio.run(track_whales())
+```
+
+**Coinbase Whale Detection with USD Threshold:**
+
+```python
+from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
+
+async def coinbase_whales():
+    provider = CoinbaseStreamProvider()
+    await provider.connect()
+
+    def whale_alert(whale_tx):
+        print(f"🐋 {whale_tx.symbol}: ${whale_tx.usd_value:,.0f} - {whale_tx.side.upper()}")
+
+    # Detect whales: Top 1% AND minimum $100k
+    async for msg in provider.subscribe_matches(
+        symbol="BTC-USD",
+        enable_whale_detection=True,
+        percentile_threshold=99.0,
+        min_usd_value=100000,  # $100k minimum
+        whale_callback=whale_alert
+    ):
+        pass
+
+    await provider.disconnect()
+
+asyncio.run(coinbase_whales())
+```
+
+**Key Features:**
+- 📊 **Percentile-based detection** - Adapts to market conditions using rolling window analysis
+- 💰 **USD value thresholds** - Combine percentile with absolute dollar amounts
+- 🔄 **Real-time streaming** - WebSocket-based for instant whale alerts
+- 📈 **Volume statistics** - Track mean, median, percentiles (p50, p75, p90, p95, p99, p99.9)
+- 🎯 **Multi-symbol support** - Monitor whale activity across multiple cryptocurrencies
+- ⚡ **Exchange-specific tracking** - Separate detection per exchange (Binance, Coinbase)
+- 🏆 **Transaction ranking** - See where each whale ranks among recent trades
+
+**How It Works:**
+
+The whale detector maintains a rolling window of recent transactions (default: last 1000 trades or 1 hour) and calculates volume percentiles in real-time. Transactions exceeding your threshold (e.g., 99th percentile = top 1%) are classified as whale transactions.
+
+**Supported Data Sources:**
+- **Binance** - Aggregate trade streams (perfect for whale detection)
+- **Coinbase** - Trade matches channel with full execution data
+- **Whale Alert** - Historical + real-time blockchain whale transactions (API key required)
+
+**Whale Alert Integration:**
+
+Whale Alert provides purpose-built whale transaction tracking across all major blockchains. Requires API key from [whale-alert.io](https://whale-alert.io/).
+
+```python
+from wrdata.providers.whale_alert_provider import WhaleAlertProvider
+
+# Historical whale transactions
+provider = WhaleAlertProvider(api_key="your_api_key")
+
+batch = provider.fetch_whale_transactions(
+    start_date="2025-11-20",
+    end_date="2025-11-23",
+    blockchain="bitcoin",
+    min_value=1000000  # $1M minimum
+)
+
+for whale_tx in batch.transactions:
+    print(f"Whale: {whale_tx.size} {whale_tx.symbol} = ${whale_tx.usd_value:,.0f}")
+    print(f"Type: {whale_tx.transaction_type} via {whale_tx.exchange}")
+```
+
+**Real-time Whale Alert Stream:**
+
+```python
+from wrdata.streaming.whale_alert_stream import WhaleAlertStreamProvider
+
+provider = WhaleAlertStreamProvider(api_key="your_api_key")
+await provider.connect()
+
+async for whale_tx in provider.subscribe_whale_alerts(min_value=2000000):
+    print(f"🐋 ALERT: ${whale_tx.usd_value:,.0f} {whale_tx.transaction_type}")
+```
+
+**Historical Price Impact Analysis:**
+
+Analyze how whale transactions affect price:
+
+```python
+from tests.integration.test_whale_price_impact import WhalePriceImpactAnalyzer
+
+analyzer = WhalePriceImpactAnalyzer(whale_provider, price_provider)
+
+# Fetch whale transactions
+whales = analyzer.fetch_whale_transactions(
+    start_date="2025-11-20",
+    end_date="2025-11-20",
+    blockchain="bitcoin"
+)
+
+# Fetch corresponding price data
+prices = analyzer.fetch_price_data(
+    symbol="BTCUSDT",
+    start_date="2025-11-20",
+    interval="1m"
+)
+
+# Analyze impact
+analysis = analyzer.analyze_price_impact(whales, prices)
+analyzer.print_analysis_report(analysis)
+
+# Outputs:
+# - Average price change (5m, 10m, 15m after whale transaction)
+# - Volume surge percentage
+# - Volatility increase
+# - Impact by transaction type (deposit vs withdrawal)
+```
+
+See `examples/whale_tracking.py` for 5 complete examples including multi-symbol monitoring and analytics dashboard.
+
+See `examples/whale_alert_demo.py` for Whale Alert API integration demo.
+
+See `tests/integration/test_whale_price_impact.py` for full price impact analysis.
+
 ## Installation
 
 ```bash
@@ -154,7 +307,8 @@ pip install wrdata
 ## Features
 
 - ✅ **32+ Data Providers** - Yahoo, Polygon, Alpaca, FRED, and 28+ more
-- ✅ **Real-Time Streaming** - Live WebSocket data from 6 providers
+- ✅ **Real-Time Streaming** - Live WebSocket data from 7 providers
+- ✅ **Whale Transaction Tracking** 🐋 - Real-time detection of large volume crypto transactions
 - ✅ **Multi-Asset Support** - Stocks, crypto, forex, options, economic data
 - ✅ **Multi-Provider Search** - Search across 9+ providers simultaneously
 - ✅ **100+ Crypto Exchanges** - CCXT integration (Bybit, OKX, KuCoin, Gate.io, Bitfinex)

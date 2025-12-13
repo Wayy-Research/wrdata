@@ -1,0 +1,101 @@
+coingecko_asset_platform_id,name,network_id
+ethereum,Ethereum,eth
+binance-smart-chain,BNB Chain,bsc
+polygon-pos,Polygon POS,polygon_pos
+avalanche,Avalanche,avax
+moonriver,Moonriver,movr
+cronos,Cronos,cro
+harmony-shard-0,Harmony,one
+boba,Boba Network,boba
+fantom,Fantom,ftm
+smartbch,SmartBCH,bch
+aurora,Aurora,aurora
+metis-andromeda,Metis,metis
+arbitrum-one,Arbitrum,arbitrum
+fuse,Fuse,fuse
+kucoin-community-chain,Kucoin Community Chain,kcc
+iotex,IOTEX,iotx
+celo,CELO,celo
+xdai,Gnosis XDAI,xdai
+moonbeam,Moonbeam,glmr
+optimistic-ethereum,Optimism,optimism
+energi,Energi,nrg
+wanchain,Wanchain,wan
+ronin,Ronin,ronin
+kardiachain,Kardiachain,kai
+meter,Meter,mtr
+velas,Velas,velas
+shiden network,Shiden,sdn
+telos,Telos,tlos
+astar,Astar,astr
+elastos,Elastos,ela
+defi-kingdoms-blockchain,DFK Chain,dfk
+evmos,Evmos,evmos
+solana,Solana,solana
+conflux,Conflux,cfx
+bittorrent,BitTorrent,bttc
+sx-network,SX Network,sxn
+xdc-network,XDC,xdc
+klay-token,Kaia,kaia
+kava,Kava,kava
+bitgert,Bitgert,bitgert
+tombchain,Tombchain,tombchain
+dogechain,Dogechain,dogechain
+findora,Findora,findora
+thundercore,ThunderCore,thundercore
+arbitrum-nova,Arbitrum Nova,arbitrum_nova
+canto,Canto,canto
+ethereum-classic,Ethereum Classic,ethereum_classic
+step-network,Step Network,step-network
+ethereumpow,EthereumPOW,ethw
+godwoken,Godwoken,godwoken
+songbird,Songbird,songbird
+tomochain,Viction,tomochain
+platon-network,PlatON Network,platon_network
+exosama,Exosama,exosama
+oasys,Oasys,oasys
+bitkub-chain,KUB,bitkub_chain
+wemix-network,WEMIX,wemix
+flare-network,Flare,flare
+onus,ONUS,onus
+aptos,Aptos,aptos
+core,Core,core
+filecoin,Filecoin,filecoin
+zksync,ZkSync,zksync
+,LoopNetwork,loopnetwork
+multivac,MultiVAC,multivac
+polygon-zkevm,Polygon zkEVM,polygon-zkevm
+eos-evm,EOS EVM,eos-evm
+ultron,Ultron,ultron
+sui,Sui Network,sui-network
+pulsechain,Pulsechain,pulsechain
+enuls,ENULS,enuls
+tenet,Tenet,tenet
+rollux,Rollux,rollux
+starknet,Starknet,starknet-alpha
+mantle,Mantle,mantle
+neon-evm,Neon EVM,neon-evm
+linea,Linea,linea
+base,Base,base
+bitrock,Bitrock,bitrock
+opbnb,opBNB,opbnb
+sei-network,Sei Network,sei-network
+shibarium,Shibarium,shibarium
+manta-pacific,Manta Pacific,manta-pacific
+,Sepolia Testnet,sepolia-testnet
+hedera-hashgraph,Hedera Hashgraph,hedera-hashgraph
+shimmer_evm,ShimmerEVM,shimmerevm
+beam,Beam,beam
+scroll,Scroll,scroll
+lightlink,LightLink Phoenix,lightlink-phoenix
+elysium,Elysium,elysium
+the-open-network,TON,ton
+mode,Mode,mode
+defichain-evm,DefiMetaChain,defimetachain
+humanode,Humanode,humanode
+moonchain,MXC zkEVM,mxc-zkevm
+zkfair,ZKFair,zkfair
+alveychain,AlveyChain,alveychain
+,Blast Sepolia (Testnet),blast-sepolia-testnet
+zetachain,ZetaChain,zetachain
+oasis-sapphire,Oasis Sapphire,oasis-sapphire

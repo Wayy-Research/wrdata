@@ -9,9 +9,12 @@ import asyncio
 import json
 from typing import Optional, Callable, AsyncIterator
 from datetime import datetime
+from decimal import Decimal
 import aiohttp
 
 from wrdata.streaming.base import BaseStreamProvider, StreamMessage
+from wrdata.models.schemas import WhaleTransaction
+from wrdata.utils.whale_detection import WhaleDetector
 
 
 class BinanceStreamProvider(BaseStreamProvider):
@@ -40,6 +43,9 @@ class BinanceStreamProvider(BaseStreamProvider):
         self._connected = False
         self._reconnect_attempts = 0
         self._max_reconnect_attempts = 10
+
+        # Whale detection
+        self.whale_detector: Optional[WhaleDetector] = None
 
     async def connect(self) -> bool:
         """Establish WebSocket connection."""
@@ -211,6 +217,133 @@ class BinanceStreamProvider(BaseStreamProvider):
 
             except Exception as e:
                 print(f"Error parsing Binance depth message: {e}")
+                continue
+
+    async def subscribe_aggregate_trades(
+        self,
+        symbol: str,
+        callback: Optional[Callable[[StreamMessage], None]] = None,
+        whale_callback: Optional[Callable[[WhaleTransaction], None]] = None,
+        enable_whale_detection: bool = False,
+        percentile_threshold: float = 99.0,
+        min_usd_value: Optional[float] = None
+    ) -> AsyncIterator[StreamMessage]:
+        """
+        Subscribe to aggregate trade stream for whale detection.
+
+        Binance aggregate trades combine individual trades that are filled at the same
+        time, from the same taker order, against multiple maker orders. This is ideal
+        for whale detection as large orders are often filled in multiple smaller trades.
+
+        Args:
+            symbol: Trading pair (e.g., "BTCUSDT")
+            callback: Optional callback for all trades
+            whale_callback: Optional callback for whale transactions only
+            enable_whale_detection: Enable percentile-based whale filtering
+            percentile_threshold: Volume percentile threshold (default: 99.0 = top 1%)
+            min_usd_value: Minimum USD value to qualify as whale
+
+        Yields:
+            StreamMessage objects for aggregate trades
+        """
+        # Initialize whale detector if needed
+        if enable_whale_detection and self.whale_detector is None:
+            self.whale_detector = WhaleDetector(
+                default_percentile=percentile_threshold,
+                min_usd_value=min_usd_value,
+                window_size=1000,
+                time_window_seconds=3600
+            )
+
+        # Normalize symbol
+        symbol = symbol.upper().replace('/', '').replace('-', '')
+        stream_name = f"{symbol.lower()}@aggTrade"
+
+        stream_id = f"aggtrade_{symbol}"
+        if callback:
+            self.add_callback(stream_id, callback)
+
+        async for message in self._stream_endpoint(stream_name):
+            try:
+                # Parse Binance aggregate trade message
+                # Message format:
+                # {
+                #   "e": "aggTrade",
+                #   "E": 1234567890,  # Event time
+                #   "s": "BTCUSDT",   # Symbol
+                #   "a": 12345,       # Aggregate trade ID
+                #   "p": "50000.00",  # Price
+                #   "q": "0.5",       # Quantity
+                #   "f": 100,         # First trade ID
+                #   "l": 105,         # Last trade ID
+                #   "T": 1234567890,  # Trade time
+                #   "m": true,        # Is the buyer the market maker?
+                # }
+
+                price = float(message['p'])
+                quantity = float(message['q'])
+                timestamp = datetime.fromtimestamp(message['T'] / 1000)
+                is_buyer_maker = message['m']
+
+                stream_msg = StreamMessage(
+                    symbol=symbol,
+                    timestamp=timestamp,
+                    price=price,
+                    volume=quantity,
+                    provider=self.name,
+                    stream_type="aggtrade",
+                    raw_data=message
+                )
+
+                # Whale detection
+                if enable_whale_detection and self.whale_detector:
+                    is_whale, metadata = self.whale_detector.process_transaction(
+                        symbol=symbol,
+                        volume=quantity,
+                        price=price,
+                        exchange="binance",
+                        timestamp=timestamp,
+                        percentile_threshold=percentile_threshold
+                    )
+
+                    if is_whale:
+                        # Create WhaleTransaction object
+                        whale_tx = WhaleTransaction(
+                            symbol=symbol,
+                            timestamp=timestamp,
+                            exchange="binance",
+                            transaction_id=str(message['a']),
+                            size=Decimal(str(quantity)),
+                            price=Decimal(str(price)),
+                            usd_value=Decimal(str(metadata['usd_value'])),
+                            percentile=metadata['percentile'],
+                            volume_rank=metadata['rank'],
+                            transaction_type="trade",
+                            side="sell" if is_buyer_maker else "buy",
+                            is_maker=is_buyer_maker,
+                            provider=self.name,
+                            raw_data=message
+                        )
+
+                        # Notify whale callback
+                        if whale_callback:
+                            if asyncio.iscoroutinefunction(whale_callback):
+                                await whale_callback(whale_tx)
+                            else:
+                                whale_callback(whale_tx)
+
+                        # Add whale metadata to stream message
+                        if stream_msg.raw_data is None:
+                            stream_msg.raw_data = {}
+                        stream_msg.raw_data['whale_metadata'] = metadata
+
+                # Notify callbacks
+                await self._notify_callbacks(stream_id, stream_msg)
+
+                yield stream_msg
+
+            except Exception as e:
+                print(f"Error parsing Binance aggregate trade message: {e}")
                 continue
 
     async def _stream_endpoint(self, stream_name: str) -> AsyncIterator[dict]:

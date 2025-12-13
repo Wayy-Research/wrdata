@@ -11,6 +11,9 @@ from .schemas import (
     SymbolSearchRequest,
     SymbolSearchResponse,
     ProviderStatus,
+    WhaleTransaction,
+    WhaleAlert,
+    WhaleTransactionBatch,
 )
 
 __all__ = [
@@ -26,4 +29,8 @@ __all__ = [
     "SymbolSearchRequest",
     "SymbolSearchResponse",
     "ProviderStatus",
+    # Whale tracking schemas
+    "WhaleTransaction",
+    "WhaleAlert",
+    "WhaleTransactionBatch",
 ]

@@ -65,35 +65,52 @@ class CoinbaseProvider(BaseProvider):
             }
             granularity = granularity_map.get(interval, 86400)
 
-            # Convert dates to ISO format
-            start_iso = datetime.strptime(start_date, "%Y-%m-%d").isoformat()
-            end_iso = datetime.strptime(end_date, "%Y-%m-%d").isoformat()
+            # Convert dates to datetime
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
 
-            # Build request
+            # Coinbase limits to 300 candles per request - paginate if needed
+            max_candles = 300
+            chunk_seconds = granularity * max_candles
+
             url = f"{self.base_url}/products/{symbol}/candles"
-            params = {
-                'start': start_iso,
-                'end': end_iso,
-                'granularity': granularity
-            }
+            all_candles = []
 
-            # Make request
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
+            current_start = start_dt
+            while current_start < end_dt:
+                # Calculate chunk end (max 300 candles worth)
+                from datetime import timedelta
+                chunk_end = min(current_start + timedelta(seconds=chunk_seconds), end_dt)
 
-            candles = response.json()
+                params = {
+                    'start': current_start.isoformat(),
+                    'end': chunk_end.isoformat(),
+                    'granularity': granularity
+                }
 
-            # Check if it's an error response
-            if isinstance(candles, dict) and 'message' in candles:
-                return DataResponse(
-                    symbol=symbol,
-                    provider=self.name,
-                    data=[],
-                    success=False,
-                    error=candles['message']
-                )
+                # Make request
+                response = requests.get(url, params=params, timeout=10)
+                response.raise_for_status()
 
-            if not candles or len(candles) == 0:
+                candles = response.json()
+
+                # Check if it's an error response
+                if isinstance(candles, dict) and 'message' in candles:
+                    return DataResponse(
+                        symbol=symbol,
+                        provider=self.name,
+                        data=[],
+                        success=False,
+                        error=candles['message']
+                    )
+
+                if candles:
+                    all_candles.extend(candles)
+
+                # Move to next chunk
+                current_start = chunk_end
+
+            if not all_candles:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
@@ -103,17 +120,22 @@ class CoinbaseProvider(BaseProvider):
                 )
 
             # Coinbase returns: [timestamp, low, high, open, close, volume]
+            # Deduplicate by timestamp (in case of overlap)
+            seen_timestamps = set()
             records = []
-            for candle in candles:
-                timestamp = datetime.fromtimestamp(candle[0])
-                records.append({
-                    'Date': timestamp.isoformat(),
-                    'open': float(candle[3]),
-                    'high': float(candle[2]),
-                    'low': float(candle[1]),
-                    'close': float(candle[4]),
-                    'volume': float(candle[5]),
-                })
+            for candle in all_candles:
+                ts = candle[0]
+                if ts not in seen_timestamps:
+                    seen_timestamps.add(ts)
+                    timestamp = datetime.fromtimestamp(ts)
+                    records.append({
+                        'Date': timestamp.isoformat(),
+                        'open': float(candle[3]),
+                        'high': float(candle[2]),
+                        'low': float(candle[1]),
+                        'close': float(candle[4]),
+                        'volume': float(candle[5]),
+                    })
 
             # Sort by date (oldest first)
             records.sort(key=lambda x: x['Date'])

@@ -1,0 +1,2 @@
+provider,symbol_count,status,error
+kalshi,0,failed,"HTTPSConnectionPool(host='api.kalshi.com', port=443): Max retries exceeded with url: /trade-api/v2/markets?limit=1000 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x780035af3a30>: Failed to establish a new connection: [Errno -2] Name or service not known'))"

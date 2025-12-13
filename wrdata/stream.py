@@ -159,8 +159,8 @@ class DataStream:
             'future': ['ibkr'],  # IBKR only for futures
             'index': ['yfinance'],
             'forex': ['ibkr', 'alphavantage', 'yfinance'],
-            'crypto': ['yfinance', 'coingecko', 'coinbase'],
-            'cryptocurrency': ['yfinance', 'coingecko', 'coinbase'],
+            'crypto': ['coinbase', 'kraken', 'ccxt_kucoin', 'ccxt_okx', 'ccxt_gateio', 'yfinance', 'coingecko', 'ccxt_bitfinex', 'ccxt_binance', 'ccxt_bybit'],
+            'cryptocurrency': ['coinbase', 'kraken', 'ccxt_kucoin', 'ccxt_okx', 'ccxt_gateio', 'yfinance', 'coingecko', 'ccxt_bitfinex', 'ccxt_binance', 'ccxt_bybit'],
             'economic': ['fred'],  # FRED for economic data
         }
 
@@ -241,6 +241,7 @@ class DataStream:
 
             # Add major exchanges (free, no API key required for public data)
             major_exchanges = [
+                'binance',    # 7-8 years of 1-minute data, best for historical data
                 'bybit',      # Fast-growing crypto derivatives exchange
                 'okx',        # Top-tier global exchange
                 'kucoin',     # Wide variety of altcoins
@@ -428,6 +429,109 @@ class DataStream:
         # Convert to DataFrame
         return self._response_to_dataframe(response)
 
+    def fast_get(
+        self,
+        symbol: str,
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+        interval: str = "1d",
+        provider: str = "coinbase",
+        max_concurrent: int = 10,
+    ) -> pl.DataFrame:
+        """
+        Fast parallel fetch for large historical data pulls.
+
+        Uses async parallel requests to fetch data 5-20x faster than
+        the standard sequential approach. Best for:
+        - Large date ranges (months/years of data)
+        - Fine-grained intervals (1m, 5m)
+        - Crypto data from exchanges with pagination limits
+
+        Supported providers:
+        - "coinbase": Best for USD pairs (XRP-USD, BTC-USD, ETH-USD) - FASTEST
+        - "kraken": Good for USD pairs, limited history
+        - "binance": Wide selection, requires non-US IP
+        - "okx", "kucoin", "gateio", "bybit": Additional CCXT exchanges
+
+        Args:
+            symbol: Trading pair (e.g., "BTC-USD", "XRP/USDT", "ETHUSDT")
+            start: Start date as "YYYY-MM-DD" (default: 1 year ago)
+            end: End date as "YYYY-MM-DD" (default: today)
+            interval: Time interval - "1m", "5m", "15m", "1h", "1d"
+            provider: Exchange to use (default: "coinbase")
+            max_concurrent: Maximum parallel requests (default: 10)
+
+        Returns:
+            DataFrame with columns: timestamp, open, high, low, close, volume
+
+        Examples:
+            >>> # Fast fetch 1 year of daily XRP data from Coinbase
+            >>> df = stream.fast_get("XRP-USD")
+
+            >>> # Fast fetch 1 year of 1-minute BTC data
+            >>> df = stream.fast_get("BTC-USD", interval="1m")
+
+            >>> # Use specific date range
+            >>> df = stream.fast_get("ETH-USD", start="2024-01-01", end="2024-12-31")
+        """
+        import asyncio
+        from wrdata.utils.async_fetch import AsyncCCXTFetcher, AsyncOHLCVFetcher
+
+        # Set defaults for dates if not provided
+        if end is None:
+            end = datetime.now().strftime("%Y-%m-%d")
+        if start is None:
+            start = (datetime.now().replace(year=datetime.now().year - 1)).strftime("%Y-%m-%d")
+
+        # Choose fetcher based on provider
+        # Direct aiohttp fetchers are faster for supported exchanges
+        direct_providers = ['coinbase', 'binance', 'kraken']
+
+        async def _async_fetch():
+            if provider.lower() in direct_providers:
+                # Use direct aiohttp fetcher (faster)
+                fetcher = AsyncOHLCVFetcher(
+                    provider=provider.lower(),
+                    max_concurrent=max_concurrent,
+                )
+                return await fetcher.fetch(symbol, start, end, interval)
+            else:
+                # Use CCXT for other exchanges
+                fetcher = AsyncCCXTFetcher(
+                    exchange_id=provider.lower(),
+                    max_concurrent=max_concurrent,
+                )
+                return await fetcher.fetch(symbol, start, end, interval)
+
+        # Run async fetch
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If already in async context, create task
+                import nest_asyncio
+                nest_asyncio.apply()
+                data = loop.run_until_complete(_async_fetch())
+            else:
+                data = asyncio.run(_async_fetch())
+        except RuntimeError:
+            # No event loop - create one
+            data = asyncio.run(_async_fetch())
+
+        if not data:
+            return pl.DataFrame()
+
+        # Convert to DataFrame
+        df = pl.DataFrame(data)
+
+        # Parse timestamp
+        if 'timestamp' in df.columns:
+            df = df.with_columns(
+                pl.col('timestamp').str.to_datetime().alias('timestamp')
+            )
+            df = df.sort('timestamp')
+
+        return df
+
     def get_many(
         self,
         symbols: List[str],
@@ -435,11 +539,19 @@ class DataStream:
         end: Optional[str] = None,
         interval: str = "1d",
         asset_type: str = "equity",
-    ) -> Dict[str, pl.DataFrame]:
+        provider: Optional[str] = None,
+        min_coverage: float = 0.70,
+        forward_fill: bool = True,
+        drop_low_coverage: bool = True,
+    ) -> pl.DataFrame:
         """
-        Get historical data for multiple symbols.
+        Get historical data for multiple symbols as a single combined DataFrame.
 
-        Currently fetches sequentially. Will be parallelized in Phase 4.
+        Returns a DataFrame with 'symbol' and 'timestamp' columns that can be
+        used as a composite index for multi-symbol analysis.
+
+        Automatically filters out symbols with insufficient data coverage and
+        forward-fills gaps for cleaner correlation analysis.
 
         Args:
             symbols: List of ticker symbols
@@ -447,14 +559,32 @@ class DataStream:
             end: End date as "YYYY-MM-DD"
             interval: Time interval
             asset_type: Asset type
+            provider: Force specific provider (default: auto-select best)
+            min_coverage: Minimum data coverage threshold (0.70 = 70%). Symbols with
+                         less coverage are excluded if drop_low_coverage is True.
+            forward_fill: Fill gaps in data using forward fill method (default: True)
+            drop_low_coverage: If True, exclude symbols with coverage below min_coverage (default: True)
 
         Returns:
-            Dictionary mapping symbol -> DataFrame
+            Combined DataFrame with columns: symbol, timestamp, open, high, low, close, volume
 
         Example:
-            >>> data = stream.get_many(["AAPL", "GOOGL", "MSFT"])
-            >>> aapl_df = data["AAPL"]
+            >>> # Get combined crypto data with automatic filtering
+            >>> df = stream.get_many(
+            ...     ["BTC-USD", "ETH-USD", "SOL-USD"],
+            ...     interval="1m",
+            ...     asset_type="crypto"
+            ... )
+            >>> # Data is ready for correlation analysis
+            >>> df.group_by('symbol').count()
+            >>> # Pivot for correlation matrix
+            >>> pivot_df = df.pivot(
+            ...     values='close',
+            ...     index='timestamp',
+            ...     columns='symbol'
+            ... )
         """
+        # Fetch data for all symbols
         results = {}
 
         for symbol in symbols:
@@ -464,14 +594,97 @@ class DataStream:
                     start=start,
                     end=end,
                     interval=interval,
-                    asset_type=asset_type
+                    asset_type=asset_type,
+                    provider=provider
                 )
-                results[symbol] = df
+                if not df.is_empty():
+                    results[symbol] = df
             except Exception as e:
                 print(f"Error fetching {symbol}: {e}")
-                results[symbol] = pl.DataFrame()  # Empty DataFrame on error
 
-        return results
+        if not results:
+            return pl.DataFrame()
+
+        # Apply coverage filtering if requested
+        if start and end and drop_low_coverage and min_coverage > 0:
+            from datetime import datetime
+
+            start_dt = datetime.strptime(start, "%Y-%m-%d")
+            end_dt = datetime.strptime(end, "%Y-%m-%d")
+            days = (end_dt - start_dt).days
+
+            # Expected rows per day by interval (for 24/7 crypto markets)
+            interval_to_rows_per_day = {
+                '1m': 60 * 24, '5m': 12 * 24, '15m': 4 * 24, '30m': 2 * 24,
+                '1h': 24, '2h': 12, '4h': 6, '6h': 4, '12h': 2, '1d': 1,
+            }
+            rows_per_day = interval_to_rows_per_day.get(interval, 1)
+            expected_rows = days * rows_per_day
+
+            # Filter by coverage
+            filtered_results = {}
+            excluded_count = 0
+
+            for symbol, df in results.items():
+                actual_rows = len(df)
+                coverage = actual_rows / expected_rows if expected_rows > 0 else 1.0
+
+                if coverage >= min_coverage:
+                    filtered_results[symbol] = df
+                else:
+                    excluded_count += 1
+                    print(f"Excluding {symbol}: {actual_rows} rows ({coverage*100:.1f}% coverage, need {min_coverage*100:.0f}%)")
+
+            if excluded_count > 0:
+                print(f"Excluded {excluded_count} symbols with coverage < {min_coverage*100:.0f}%")
+
+            results = filtered_results
+
+        if not results:
+            print("No symbols meet the minimum coverage threshold")
+            return pl.DataFrame()
+
+        # Normalize and combine DataFrames
+        combined_dfs = []
+        standard_cols = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+
+        for symbol, df in results.items():
+            # Select only standard columns (skip metadata)
+            available_cols = [c for c in standard_cols if c in df.columns]
+            df_normalized = df.select(available_cols)
+
+            # Cast numeric columns to float64 for consistency
+            numeric_cols = ['open', 'high', 'low', 'close', 'volume']
+            for col in numeric_cols:
+                if col in df_normalized.columns:
+                    df_normalized = df_normalized.with_columns(
+                        pl.col(col).cast(pl.Float64)
+                    )
+
+            # Forward fill gaps if requested
+            if forward_fill and 'timestamp' in df_normalized.columns:
+                fill_cols = [c for c in numeric_cols if c in df_normalized.columns]
+                if fill_cols:
+                    df_normalized = df_normalized.with_columns([
+                        pl.col(c).forward_fill() for c in fill_cols
+                    ])
+
+            # Add symbol column
+            df_with_symbol = df_normalized.with_columns(
+                pl.lit(symbol).alias('symbol')
+            )
+            combined_dfs.append(df_with_symbol)
+
+        # Concatenate all DataFrames
+        combined = pl.concat(combined_dfs, how='vertical')
+
+        # Sort by symbol and timestamp for better organization
+        if 'timestamp' in combined.columns:
+            combined = combined.sort(['symbol', 'timestamp'])
+        else:
+            combined = combined.sort('symbol')
+
+        return combined
 
     def options(
         self,
@@ -980,9 +1193,42 @@ class DataStream:
 
         # Try fallback providers if enabled
         if self.fallback_enabled:
-            for provider_name, provider in self.providers.items():
+            # Get priority list for this asset type
+            asset_type = request.asset_type.lower()
+            priority_list = self._provider_priority.get(asset_type, [])
+
+            # Try providers in priority order
+            for provider_name in priority_list:
                 if provider_name == primary_provider:
                     continue  # Skip primary, we already tried it
+
+                if provider_name not in self.providers:
+                    continue  # Provider not available
+
+                provider = self.providers[provider_name]
+
+                try:
+                    print(f"Trying fallback provider: {provider_name}")
+                    response = provider.fetch_timeseries(
+                        symbol=request.symbol,
+                        start_date=request.start_date,
+                        end_date=request.end_date,
+                        interval=request.interval
+                    )
+
+                    if response.success:
+                        return response
+
+                except Exception as e:
+                    print(f"Fallback provider {provider_name} error: {e}")
+                    continue
+
+            # If priority list didn't work, try remaining providers
+            for provider_name, provider in self.providers.items():
+                if provider_name == primary_provider:
+                    continue
+                if provider_name in priority_list:
+                    continue  # Already tried
 
                 try:
                     print(f"Trying fallback provider: {provider_name}")
@@ -1028,12 +1274,46 @@ class DataStream:
         timestamp_cols = ['timestamp', 'date', 'datetime']
         for col in timestamp_cols:
             if col in df.columns:
-                # Convert to datetime (parse from ISO format, handle timezone)
-                df = df.with_columns(
-                    pl.col(col).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S%:z', strict=False)
-                    .alias('timestamp')
-                )
-                if col != 'timestamp':
+                # Try multiple parsing strategies
+                # Use strict=True and catch exceptions, or check for nulls
+                parsed = False
+                original_df = df.clone()
+
+                # Define parsing strategies in order of specificity
+                parsing_strategies = [
+                    # ISO format with microseconds
+                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S%.f', strict=False),
+                    # ISO format without microseconds
+                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S', strict=False),
+                    # ISO format with timezone
+                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S%:z', strict=False),
+                    # Simple date format (YYYY-MM-DD)
+                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%d', strict=False),
+                    # Polars auto-parse
+                    lambda c: pl.col(c).str.to_datetime(),
+                ]
+
+                for strategy in parsing_strategies:
+                    if parsed:
+                        break
+                    try:
+                        test_df = original_df.with_columns(
+                            strategy(col).alias('timestamp')
+                        )
+                        # Check if parsing produced non-null values
+                        non_null_count = len(test_df) - test_df['timestamp'].null_count()
+                        if non_null_count > 0:
+                            df = test_df
+                            parsed = True
+                    except Exception:
+                        pass
+
+                if not parsed:
+                    # If all else fails, keep original column renamed
+                    if col != 'timestamp':
+                        df = df.rename({col: 'timestamp'})
+
+                if col != 'timestamp' and 'timestamp' in df.columns:
                     df = df.drop(col)
                 break
 

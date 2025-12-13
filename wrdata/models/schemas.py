@@ -191,3 +191,102 @@ class OptionsTimeseriesResponse(BaseModel):
     metadata: Dict[str, Any] = {}
     success: bool = True
     error: Optional[str] = None
+
+
+# Whale Transaction Schemas
+
+class WhaleTransaction(BaseModel):
+    """
+    Whale transaction data model for large volume cryptocurrency transactions.
+
+    Represents a single large transaction detected based on percentile thresholds
+    or absolute volume/value criteria.
+    """
+    # Core identification
+    symbol: str
+    timestamp: datetime
+    exchange: Optional[str] = None
+    transaction_id: Optional[str] = None  # Exchange-specific trade ID
+
+    # Transaction details
+    size: Decimal  # Volume/quantity of the transaction
+    price: Decimal  # Price at which transaction occurred
+    usd_value: Optional[Decimal] = None  # USD equivalent value
+
+    # Whale classification metrics
+    percentile: Optional[float] = None  # Volume percentile (0-100)
+    volume_rank: Optional[int] = None  # Rank among recent transactions
+
+    # Transaction context
+    transaction_type: str = "trade"  # "trade", "transfer", "deposit", "withdrawal"
+    side: Optional[str] = None  # "buy", "sell", "unknown"
+    is_maker: Optional[bool] = None  # True if maker order, False if taker
+
+    # Blockchain-specific (for on-chain transactions)
+    from_address: Optional[str] = None
+    to_address: Optional[str] = None
+    blockchain: Optional[str] = None  # "bitcoin", "ethereum", etc.
+    tx_hash: Optional[str] = None
+
+    # Provider metadata
+    provider: str
+    raw_data: Optional[Dict[str, Any]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with serialized decimals."""
+        return {
+            'symbol': self.symbol,
+            'timestamp': self.timestamp.isoformat(),
+            'exchange': self.exchange,
+            'transaction_id': self.transaction_id,
+            'size': float(self.size) if self.size else None,
+            'price': float(self.price) if self.price else None,
+            'usd_value': float(self.usd_value) if self.usd_value else None,
+            'percentile': self.percentile,
+            'volume_rank': self.volume_rank,
+            'transaction_type': self.transaction_type,
+            'side': self.side,
+            'is_maker': self.is_maker,
+            'from_address': self.from_address,
+            'to_address': self.to_address,
+            'blockchain': self.blockchain,
+            'tx_hash': self.tx_hash,
+            'provider': self.provider,
+        }
+
+
+class WhaleAlert(BaseModel):
+    """
+    Alert configuration for whale transaction monitoring.
+
+    Defines thresholds and filters for whale detection.
+    """
+    # Volume thresholds
+    percentile_threshold: float = Field(default=99.0, ge=0, le=100)  # Top 1% by default
+    min_usd_value: Optional[Decimal] = None  # Absolute minimum USD value
+
+    # Filters
+    symbols: Optional[List[str]] = None  # Specific symbols to monitor
+    exchanges: Optional[List[str]] = None  # Specific exchanges
+    blockchains: Optional[List[str]] = None  # Specific blockchains
+    transaction_types: List[str] = ["trade", "transfer", "deposit", "withdrawal"]
+
+    # Alert settings
+    alert_name: Optional[str] = None
+    enabled: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WhaleTransactionBatch(BaseModel):
+    """Batch of whale transactions with metadata."""
+    transactions: List[WhaleTransaction]
+    count: int
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    filters_applied: Dict[str, Any] = {}
+    provider: str
+
+    model_config = ConfigDict(from_attributes=True)
