@@ -14,6 +14,9 @@ from wrdata.providers.binance_provider import BinanceProvider
 # from wrdata.providers.alpaca_provider import AlpacaProvider
 # etc.
 
+# Options providers
+from wrdata.providers.alpaca_options_provider import AlpacaOptionsProvider
+
 # DeFi providers
 from wrdata.providers.panoptic_provider import PanopticProvider
 
@@ -21,5 +24,6 @@ __all__ = [
     "BaseProvider",
     "YFinanceProvider",
     "BinanceProvider",
+    "AlpacaOptionsProvider",
     "PanopticProvider",
 ]

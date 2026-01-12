@@ -10,7 +10,7 @@ Quick Start:
     >>> print(df.head())
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 
 # Main API - this is what users should use
 from .stream import DataStream
