@@ -7,6 +7,7 @@ pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
 sqlalchemy>=2.0.0
 ccxt>=4.0.0
+httpx>=0.24.0
 
 # Real-time streaming
 aiohttp>=3.9.0
