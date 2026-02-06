@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class CryptoCompareProvider(BaseProvider):
@@ -38,7 +42,7 @@ class CryptoCompareProvider(BaseProvider):
         self.headers = {}
 
         if api_key:
-            self.headers['authorization'] = f'Apikey {api_key}'
+            self.headers["authorization"] = f"Apikey {api_key}"
 
     def fetch_timeseries(
         self,
@@ -46,13 +50,13 @@ class CryptoCompareProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from CryptoCompare."""
         try:
             # CryptoCompare uses fsym (from symbol) and tsym (to symbol)
             # Default to USD as quote currency
-            symbol = symbol.upper().replace('USDT', '').replace('USD', '')
+            symbol = symbol.upper().replace("USDT", "").replace("USD", "")
             tsym = "USD"
 
             # Map intervals to endpoints
@@ -83,25 +87,33 @@ class CryptoCompareProvider(BaseProvider):
                 "tsym": tsym,
                 "toTs": end_ts,
                 "limit": 2000,  # Max data points
-                "aggregate": aggregate
+                "aggregate": aggregate,
             }
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
             data = response.json()
 
-            if data.get('Response') == 'Error':
+            if data.get("Response") == "Error":
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"CryptoCompare error: {data.get('Message', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"CryptoCompare error: {data.get('Message', 'Unknown error')}",
                 )
 
-            candles = data.get('Data', {}).get('Data', [])
+            candles = data.get("Data", {}).get("Data", [])
 
             if not candles:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             # Filter by date range
@@ -110,36 +122,49 @@ class CryptoCompareProvider(BaseProvider):
 
             records = []
             for candle in candles:
-                timestamp = candle['time']
+                timestamp = candle["time"]
                 dt = datetime.fromtimestamp(timestamp)
 
                 if start_dt <= dt.date() <= end_dt:
-                    records.append({
-                        'Date': dt.strftime('%Y-%m-%d'),
-                        'open': float(candle.get('open', 0)),
-                        'high': float(candle.get('high', 0)),
-                        'low': float(candle.get('low', 0)),
-                        'close': float(candle.get('close', 0)),
-                        'volume': float(candle.get('volumefrom', 0)),
-                    })
+                    records.append(
+                        {
+                            "Date": dt.strftime("%Y-%m-%d"),
+                            "open": float(candle.get("open", 0)),
+                            "high": float(candle.get("high", 0)),
+                            "low": float(candle.get("low", 0)),
+                            "close": float(candle.get("close", 0)),
+                            "volume": float(candle.get("volumefrom", 0)),
+                        }
+                    )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'CryptoCompare'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "CryptoCompare",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"CryptoCompare error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"CryptoCompare error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="CryptoCompare does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="CryptoCompare does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

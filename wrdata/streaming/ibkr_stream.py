@@ -44,9 +44,7 @@ class IBKRStreamProvider(BaseStreamProvider):
         try:
             if not self._connected:
                 await self.ib.connectAsync(
-                    self.host,
-                    self.port,
-                    clientId=self.client_id
+                    self.host, self.port, clientId=self.client_id
                 )
                 self._connected = True
                 print(f"✓ Connected to IBKR stream on {self.host}:{self.port}")
@@ -77,7 +75,7 @@ class IBKRStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time tick data.
@@ -92,8 +90,8 @@ class IBKRStreamProvider(BaseStreamProvider):
             StreamMessage with tick data
         """
         symbol = symbol.upper()
-        exchange = kwargs.get('exchange', 'SMART')
-        currency = kwargs.get('currency', 'USD')
+        exchange = kwargs.get("exchange", "SMART")
+        currency = kwargs.get("currency", "USD")
 
         # Connect if not already connected
         if not self._connected:
@@ -112,8 +110,8 @@ class IBKRStreamProvider(BaseStreamProvider):
             bars = self.ib.reqRealTimeBars(
                 contract,
                 barSize=5,  # 5 seconds
-                whatToShow='TRADES',
-                useRTH=False  # Include extended hours
+                whatToShow="TRADES",
+                useRTH=False,  # Include extended hours
             )
 
             print(f"✓ Subscribed to {symbol} real-time bars")
@@ -131,15 +129,15 @@ class IBKRStreamProvider(BaseStreamProvider):
                     provider=self.name,
                     stream_type="bar",
                     raw_data={
-                        'time': bar.time,
-                        'open': bar.open_,
-                        'high': bar.high,
-                        'low': bar.low,
-                        'close': bar.close,
-                        'volume': bar.volume,
-                        'wap': bar.wap,
-                        'count': bar.count
-                    }
+                        "time": bar.time,
+                        "open": bar.open_,
+                        "high": bar.high,
+                        "low": bar.low,
+                        "close": bar.close,
+                        "volume": bar.volume,
+                        "wap": bar.wap,
+                        "count": bar.count,
+                    },
                 )
 
                 await self._notify_callbacks(stream_id, stream_msg)
@@ -157,7 +155,7 @@ class IBKRStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time market data (tick-by-tick).
@@ -172,8 +170,8 @@ class IBKRStreamProvider(BaseStreamProvider):
             StreamMessage with market data updates
         """
         symbol = symbol.upper()
-        exchange = kwargs.get('exchange', 'SMART')
-        currency = kwargs.get('currency', 'USD')
+        exchange = kwargs.get("exchange", "SMART")
+        currency = kwargs.get("currency", "USD")
 
         if not self._connected:
             await self.connect()
@@ -188,7 +186,7 @@ class IBKRStreamProvider(BaseStreamProvider):
             await self.ib.qualifyContractsAsync(contract)
 
             # Request market data
-            ticker = self.ib.reqMktData(contract, '', False, False)
+            ticker = self.ib.reqMktData(contract, "", False, False)
 
             print(f"✓ Subscribed to {symbol} market data")
 
@@ -208,16 +206,16 @@ class IBKRStreamProvider(BaseStreamProvider):
                         provider=self.name,
                         stream_type="quote",
                         raw_data={
-                            'last': ticker.last,
-                            'bid': ticker.bid,
-                            'ask': ticker.ask,
-                            'bidSize': ticker.bidSize,
-                            'askSize': ticker.askSize,
-                            'volume': ticker.volume,
-                            'high': ticker.high,
-                            'low': ticker.low,
-                            'close': ticker.close,
-                        }
+                            "last": ticker.last,
+                            "bid": ticker.bid,
+                            "ask": ticker.ask,
+                            "bidSize": ticker.bidSize,
+                            "askSize": ticker.askSize,
+                            "volume": ticker.volume,
+                            "high": ticker.high,
+                            "low": ticker.low,
+                            "close": ticker.close,
+                        },
                     )
 
                     await self._notify_callbacks(stream_id, stream_msg)
@@ -236,7 +234,7 @@ class IBKRStreamProvider(BaseStreamProvider):
         symbol: str,
         interval: str = "1m",
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time kline/bar data.

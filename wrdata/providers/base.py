@@ -33,7 +33,7 @@ class BaseProvider(ABC):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical timeseries data for a symbol.
@@ -51,10 +51,7 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch current options chain data for a symbol.
 
@@ -67,8 +64,7 @@ class BaseProvider(ABC):
         pass
 
     def fetch_options_timeseries(
-        self,
-        request: OptionsTimeseriesRequest
+        self, request: OptionsTimeseriesRequest
     ) -> OptionsTimeseriesResponse:
         """
         Fetch historical timeseries of options chain data.

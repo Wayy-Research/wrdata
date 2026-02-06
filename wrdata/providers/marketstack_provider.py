@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class MarketstackProvider(BaseProvider):
@@ -48,7 +52,7 @@ class MarketstackProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical stock data from Marketstack."""
         try:
@@ -61,58 +65,77 @@ class MarketstackProvider(BaseProvider):
                 "symbols": symbol,
                 "date_from": start_date,
                 "date_to": end_date,
-                "limit": 1000
+                "limit": 1000,
             }
 
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
 
-            if 'error' in data:
+            if "error" in data:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"Marketstack error: {data['error'].get('message', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"Marketstack error: {data['error'].get('message', 'Unknown error')}",
                 )
 
-            bars = data.get('data', [])
+            bars = data.get("data", [])
 
             if not bars:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
             for bar in bars:
-                records.append({
-                    'Date': bar['date'][:10],
-                    'open': float(bar.get('open', 0) or 0),
-                    'high': float(bar.get('high', 0) or 0),
-                    'low': float(bar.get('low', 0) or 0),
-                    'close': float(bar.get('close', 0) or 0),
-                    'volume': int(bar.get('volume', 0) or 0),
-                })
+                records.append(
+                    {
+                        "Date": bar["date"][:10],
+                        "open": float(bar.get("open", 0) or 0),
+                        "high": float(bar.get("high", 0) or 0),
+                        "low": float(bar.get("low", 0) or 0),
+                        "close": float(bar.get("close", 0) or 0),
+                        "volume": int(bar.get("volume", 0) or 0),
+                    }
+                )
 
             # Marketstack returns newest first, reverse it
             records.reverse()
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Marketstack'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Marketstack",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Marketstack error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Marketstack error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Marketstack does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Marketstack does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -121,11 +144,7 @@ class MarketstackProvider(BaseProvider):
     def validate_connection(self) -> bool:
         try:
             url = f"{self.base_url}/eod/latest"
-            params = {
-                "access_key": self.api_key,
-                "symbols": "AAPL",
-                "limit": 1
-            }
+            params = {"access_key": self.api_key, "symbols": "AAPL", "limit": 1}
             response = requests.get(url, params=params, timeout=5)
             return response.status_code == 200
         except:

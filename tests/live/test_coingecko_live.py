@@ -44,7 +44,7 @@ def test_crypto_data():
             symbol=symbol,
             start_date=start_date.strftime("%Y-%m-%d"),
             end_date=end_date.strftime("%Y-%m-%d"),
-            interval="1d"
+            interval="1d",
         )
 
         if response.success:

@@ -22,8 +22,8 @@ def test_alpaca_provider():
     print("=" * 60)
 
     # Get API keys from environment
-    api_key = os.getenv('ALPACA_API_KEY')
-    api_secret = os.getenv('ALPACA_API_SECRET')
+    api_key = os.getenv("ALPACA_API_KEY")
+    api_secret = os.getenv("ALPACA_API_SECRET")
 
     if not api_key or not api_secret:
         print("\n❌ ALPACA_API_KEY or ALPACA_API_SECRET not set!")
@@ -83,20 +83,21 @@ def test_alpaca_provider():
     print("\n✓ Fetching market snapshot for AAPL...")
     snapshot = provider.get_snapshot("AAPL")
     if snapshot:
-        latest_trade = snapshot.get('latestTrade', {})
-        latest_quote = snapshot.get('latestQuote', {})
-        print(f"  ✓ Latest Trade: ${latest_trade.get('p', 'N/A')} @ {latest_trade.get('t', 'N/A')}")
-        print(f"  ✓ Latest Quote: ${latest_quote.get('bp', 'N/A')} / ${latest_quote.get('ap', 'N/A')}")
+        latest_trade = snapshot.get("latestTrade", {})
+        latest_quote = snapshot.get("latestQuote", {})
+        print(
+            f"  ✓ Latest Trade: ${latest_trade.get('p', 'N/A')} @ {latest_trade.get('t', 'N/A')}"
+        )
+        print(
+            f"  ✓ Latest Quote: ${latest_quote.get('bp', 'N/A')} / ${latest_quote.get('ap', 'N/A')}"
+        )
     else:
         print("  ⚠️ Could not get snapshot")
 
     # Get historical data
     print("\n✓ Fetching historical data for AAPL...")
     response = provider.fetch_timeseries(
-        symbol="AAPL",
-        start_date="2024-10-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="AAPL", start_date="2024-10-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -113,7 +114,9 @@ def test_alpaca_provider():
     if positions:
         print(f"  ✓ You have {len(positions)} open position(s)")
         for pos in positions[:5]:  # Show first 5
-            print(f"    {pos.get('symbol')}: {pos.get('qty')} shares @ ${pos.get('avg_entry_price')}")
+            print(
+                f"    {pos.get('symbol')}: {pos.get('qty')} shares @ ${pos.get('avg_entry_price')}"
+            )
     else:
         print("  No open positions")
 
@@ -123,7 +126,9 @@ def test_alpaca_provider():
     if orders:
         print(f"  ✓ You have {len(orders)} open order(s)")
         for order in orders[:5]:
-            print(f"    {order.get('symbol')}: {order.get('side')} {order.get('qty')} @ {order.get('type')}")
+            print(
+                f"    {order.get('symbol')}: {order.get('side')} {order.get('qty')} @ {order.get('type')}"
+            )
     else:
         print("  No open orders")
 
@@ -139,8 +144,8 @@ def test_datastream_with_alpaca():
     print("=" * 60)
 
     # Get API keys
-    api_key = os.getenv('ALPACA_API_KEY')
-    api_secret = os.getenv('ALPACA_API_SECRET')
+    api_key = os.getenv("ALPACA_API_KEY")
+    api_secret = os.getenv("ALPACA_API_SECRET")
 
     if not api_key or not api_secret:
         print("\n❌ Skipping DataStream test - no API keys")
@@ -152,17 +157,12 @@ def test_datastream_with_alpaca():
     # Check provider status
     status = stream.status()
     print(f"\n✓ Available providers: {list(stream.providers.keys())}")
-    if 'alpaca' in status:
+    if "alpaca" in status:
         print(f"  Alpaca connected: {status['alpaca'].get('connected', False)}")
 
     # Fetch Apple stock data
     print("\n✓ Fetching Apple (AAPL) stock data...")
-    df = stream.get(
-        "AAPL",
-        start="2024-10-01",
-        end="2024-11-07",
-        asset_type="stock"
-    )
+    df = stream.get("AAPL", start="2024-10-01", end="2024-11-07", asset_type="stock")
 
     print(f"  ✓ Got {len(df)} rows of AAPL data")
     if len(df) > 0:
@@ -171,12 +171,7 @@ def test_datastream_with_alpaca():
 
     # Fetch Microsoft data
     print("\n✓ Fetching Microsoft (MSFT)...")
-    df = stream.get(
-        "MSFT",
-        start="2024-11-01",
-        end="2024-11-07",
-        asset_type="stock"
-    )
+    df = stream.get("MSFT", start="2024-11-01", end="2024-11-07", asset_type="stock")
 
     print(f"  ✓ Got {len(df)} rows")
     if len(df) > 0:
@@ -199,8 +194,8 @@ async def test_alpaca_streaming():
     print("=" * 60)
 
     # Get API keys
-    api_key = os.getenv('ALPACA_API_KEY')
-    api_secret = os.getenv('ALPACA_API_SECRET')
+    api_key = os.getenv("ALPACA_API_KEY")
+    api_secret = os.getenv("ALPACA_API_SECRET")
 
     if not api_key or not api_secret:
         print("\n❌ Skipping streaming test - no API keys")
@@ -221,8 +216,12 @@ async def test_alpaca_streaming():
         count = 0
         max_messages = 20  # Just show first 20 messages
 
-        async for msg in stream.subscribe_multiple(['AAPL', 'MSFT'], data_type='trades'):
-            print(f"  {msg.symbol}: ${msg.price:.2f} @ {msg.timestamp.strftime('%H:%M:%S')} (vol: {msg.volume:.0f})")
+        async for msg in stream.subscribe_multiple(
+            ["AAPL", "MSFT"], data_type="trades"
+        ):
+            print(
+                f"  {msg.symbol}: ${msg.price:.2f} @ {msg.timestamp.strftime('%H:%M:%S')} (vol: {msg.volume:.0f})"
+            )
 
             count += 1
             if count >= max_messages:
@@ -248,10 +247,10 @@ if __name__ == "__main__":
 
     # Test WebSocket streaming
     print("\n✅ REST API tests completed!")
-    print("\nReady to test WebSocket streaming? (y/n): ", end='')
+    print("\nReady to test WebSocket streaming? (y/n): ", end="")
     try:
         response = input()
-        if response.lower() == 'y':
+        if response.lower() == "y":
             asyncio.run(test_alpaca_streaming())
     except:
         print("\nSkipping streaming test")

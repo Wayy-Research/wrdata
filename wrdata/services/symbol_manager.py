@@ -38,18 +38,20 @@ class SymbolManager:
             # Fetch NASDAQ stocks
             try:
                 nasdaq_url = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25000&exchange=nasdaq"
-                headers = {'User-Agent': 'Mozilla/5.0'}
+                headers = {"User-Agent": "Mozilla/5.0"}
                 response = requests.get(nasdaq_url, headers=headers, timeout=15)
                 if response.status_code == 200:
                     data = response.json()
-                    for row in data.get('data', {}).get('table', {}).get('rows', []):
-                        symbols.append({
-                            "symbol": row['symbol'],
-                            "name": row.get('name', ''),
-                            "description": f"{row.get('name', '')} - NASDAQ",
-                            "asset_type": "stock",
-                            "exchange": "NASDAQ",
-                        })
+                    for row in data.get("data", {}).get("table", {}).get("rows", []):
+                        symbols.append(
+                            {
+                                "symbol": row["symbol"],
+                                "name": row.get("name", ""),
+                                "description": f"{row.get('name', '')} - NASDAQ",
+                                "asset_type": "stock",
+                                "exchange": "NASDAQ",
+                            }
+                        )
                     print(f"Fetched {len(symbols)} NASDAQ symbols")
             except Exception as e:
                 print(f"Error fetching NASDAQ symbols: {e}")
@@ -61,14 +63,16 @@ class SymbolManager:
                 if response.status_code == 200:
                     data = response.json()
                     nyse_count = 0
-                    for row in data.get('data', {}).get('table', {}).get('rows', []):
-                        symbols.append({
-                            "symbol": row['symbol'],
-                            "name": row.get('name', ''),
-                            "description": f"{row.get('name', '')} - NYSE",
-                            "asset_type": "stock",
-                            "exchange": "NYSE",
-                        })
+                    for row in data.get("data", {}).get("table", {}).get("rows", []):
+                        symbols.append(
+                            {
+                                "symbol": row["symbol"],
+                                "name": row.get("name", ""),
+                                "description": f"{row.get('name', '')} - NYSE",
+                                "asset_type": "stock",
+                                "exchange": "NYSE",
+                            }
+                        )
                         nyse_count += 1
                     print(f"Fetched {nyse_count} NYSE symbols")
             except Exception as e:
@@ -76,10 +80,34 @@ class SymbolManager:
 
             # Add major indices
             indices = [
-                {"symbol": "^GSPC", "name": "S&P 500", "description": "S&P 500 Index", "asset_type": "index", "exchange": "INDEX"},
-                {"symbol": "^DJI", "name": "Dow Jones", "description": "Dow Jones Industrial Average", "asset_type": "index", "exchange": "INDEX"},
-                {"symbol": "^IXIC", "name": "NASDAQ Composite", "description": "NASDAQ Composite Index", "asset_type": "index", "exchange": "INDEX"},
-                {"symbol": "^RUT", "name": "Russell 2000", "description": "Russell 2000 Index", "asset_type": "index", "exchange": "INDEX"},
+                {
+                    "symbol": "^GSPC",
+                    "name": "S&P 500",
+                    "description": "S&P 500 Index",
+                    "asset_type": "index",
+                    "exchange": "INDEX",
+                },
+                {
+                    "symbol": "^DJI",
+                    "name": "Dow Jones",
+                    "description": "Dow Jones Industrial Average",
+                    "asset_type": "index",
+                    "exchange": "INDEX",
+                },
+                {
+                    "symbol": "^IXIC",
+                    "name": "NASDAQ Composite",
+                    "description": "NASDAQ Composite Index",
+                    "asset_type": "index",
+                    "exchange": "INDEX",
+                },
+                {
+                    "symbol": "^RUT",
+                    "name": "Russell 2000",
+                    "description": "Russell 2000 Index",
+                    "asset_type": "index",
+                    "exchange": "INDEX",
+                },
             ]
             symbols.extend(indices)
 
@@ -182,17 +210,67 @@ class SymbolManager:
         """
         common_pairs = [
             # Major pairs
-            {"symbol": "EUR/USD", "name": "Euro / US Dollar", "description": "EUR/USD - Euro to US Dollar", "asset_type": "forex"},
-            {"symbol": "GBP/USD", "name": "British Pound / US Dollar", "description": "GBP/USD - British Pound to US Dollar", "asset_type": "forex"},
-            {"symbol": "USD/JPY", "name": "US Dollar / Japanese Yen", "description": "USD/JPY - US Dollar to Japanese Yen", "asset_type": "forex"},
-            {"symbol": "USD/CHF", "name": "US Dollar / Swiss Franc", "description": "USD/CHF - US Dollar to Swiss Franc", "asset_type": "forex"},
-            {"symbol": "AUD/USD", "name": "Australian Dollar / US Dollar", "description": "AUD/USD - Australian Dollar to US Dollar", "asset_type": "forex"},
-            {"symbol": "USD/CAD", "name": "US Dollar / Canadian Dollar", "description": "USD/CAD - US Dollar to Canadian Dollar", "asset_type": "forex"},
-            {"symbol": "NZD/USD", "name": "New Zealand Dollar / US Dollar", "description": "NZD/USD - New Zealand Dollar to US Dollar", "asset_type": "forex"},
+            {
+                "symbol": "EUR/USD",
+                "name": "Euro / US Dollar",
+                "description": "EUR/USD - Euro to US Dollar",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "GBP/USD",
+                "name": "British Pound / US Dollar",
+                "description": "GBP/USD - British Pound to US Dollar",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "USD/JPY",
+                "name": "US Dollar / Japanese Yen",
+                "description": "USD/JPY - US Dollar to Japanese Yen",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "USD/CHF",
+                "name": "US Dollar / Swiss Franc",
+                "description": "USD/CHF - US Dollar to Swiss Franc",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "AUD/USD",
+                "name": "Australian Dollar / US Dollar",
+                "description": "AUD/USD - Australian Dollar to US Dollar",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "USD/CAD",
+                "name": "US Dollar / Canadian Dollar",
+                "description": "USD/CAD - US Dollar to Canadian Dollar",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "NZD/USD",
+                "name": "New Zealand Dollar / US Dollar",
+                "description": "NZD/USD - New Zealand Dollar to US Dollar",
+                "asset_type": "forex",
+            },
             # Cross pairs
-            {"symbol": "EUR/GBP", "name": "Euro / British Pound", "description": "EUR/GBP - Euro to British Pound", "asset_type": "forex"},
-            {"symbol": "EUR/JPY", "name": "Euro / Japanese Yen", "description": "EUR/JPY - Euro to Japanese Yen", "asset_type": "forex"},
-            {"symbol": "GBP/JPY", "name": "British Pound / Japanese Yen", "description": "GBP/JPY - British Pound to Japanese Yen", "asset_type": "forex"},
+            {
+                "symbol": "EUR/GBP",
+                "name": "Euro / British Pound",
+                "description": "EUR/GBP - Euro to British Pound",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "EUR/JPY",
+                "name": "Euro / Japanese Yen",
+                "description": "EUR/JPY - Euro to Japanese Yen",
+                "asset_type": "forex",
+            },
+            {
+                "symbol": "GBP/JPY",
+                "name": "British Pound / Japanese Yen",
+                "description": "GBP/JPY - British Pound to Japanese Yen",
+                "asset_type": "forex",
+            },
         ]
 
         return common_pairs
@@ -205,15 +283,60 @@ class SymbolManager:
             List of symbol dictionaries
         """
         treasury_symbols = [
-            {"symbol": "DGS1MO", "name": "1-Month Treasury", "description": "1-Month Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS3MO", "name": "3-Month Treasury", "description": "3-Month Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS6MO", "name": "6-Month Treasury", "description": "6-Month Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS1", "name": "1-Year Treasury", "description": "1-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS2", "name": "2-Year Treasury", "description": "2-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS5", "name": "5-Year Treasury", "description": "5-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS10", "name": "10-Year Treasury", "description": "10-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS20", "name": "20-Year Treasury", "description": "20-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
-            {"symbol": "DGS30", "name": "30-Year Treasury", "description": "30-Year Treasury Constant Maturity Rate", "asset_type": "bond"},
+            {
+                "symbol": "DGS1MO",
+                "name": "1-Month Treasury",
+                "description": "1-Month Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS3MO",
+                "name": "3-Month Treasury",
+                "description": "3-Month Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS6MO",
+                "name": "6-Month Treasury",
+                "description": "6-Month Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS1",
+                "name": "1-Year Treasury",
+                "description": "1-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS2",
+                "name": "2-Year Treasury",
+                "description": "2-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS5",
+                "name": "5-Year Treasury",
+                "description": "5-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS10",
+                "name": "10-Year Treasury",
+                "description": "10-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS20",
+                "name": "20-Year Treasury",
+                "description": "20-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
+            {
+                "symbol": "DGS30",
+                "name": "30-Year Treasury",
+                "description": "30-Year Treasury Constant Maturity Rate",
+                "asset_type": "bond",
+            },
         ]
 
         return treasury_symbols
@@ -227,83 +350,324 @@ class SymbolManager:
         """
         indicators = [
             # GDP & Economic Output
-            {"symbol": "GDP", "name": "Gross Domestic Product", "description": "Gross Domestic Product", "asset_type": "economic"},
-            {"symbol": "GDPC1", "name": "Real GDP", "description": "Real Gross Domestic Product", "asset_type": "economic"},
-            {"symbol": "GDPPOT", "name": "Potential GDP", "description": "Real Potential Gross Domestic Product", "asset_type": "economic"},
-            {"symbol": "INDPRO", "name": "Industrial Production", "description": "Industrial Production Total Index", "asset_type": "economic"},
-
+            {
+                "symbol": "GDP",
+                "name": "Gross Domestic Product",
+                "description": "Gross Domestic Product",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GDPC1",
+                "name": "Real GDP",
+                "description": "Real Gross Domestic Product",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GDPPOT",
+                "name": "Potential GDP",
+                "description": "Real Potential Gross Domestic Product",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "INDPRO",
+                "name": "Industrial Production",
+                "description": "Industrial Production Total Index",
+                "asset_type": "economic",
+            },
             # Employment & Labor
-            {"symbol": "UNRATE", "name": "Unemployment Rate", "description": "Civilian Unemployment Rate", "asset_type": "economic"},
-            {"symbol": "PAYEMS", "name": "Nonfarm Payrolls", "description": "All Employees Total Nonfarm", "asset_type": "economic"},
-            {"symbol": "CIVPART", "name": "Labor Force Participation", "description": "Civilian Labor Force Participation Rate", "asset_type": "economic"},
-            {"symbol": "EMRATIO", "name": "Employment-Population Ratio", "description": "Employment-Population Ratio", "asset_type": "economic"},
-            {"symbol": "ICSA", "name": "Initial Claims", "description": "Initial Unemployment Claims", "asset_type": "economic"},
-
+            {
+                "symbol": "UNRATE",
+                "name": "Unemployment Rate",
+                "description": "Civilian Unemployment Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "PAYEMS",
+                "name": "Nonfarm Payrolls",
+                "description": "All Employees Total Nonfarm",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "CIVPART",
+                "name": "Labor Force Participation",
+                "description": "Civilian Labor Force Participation Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "EMRATIO",
+                "name": "Employment-Population Ratio",
+                "description": "Employment-Population Ratio",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ICSA",
+                "name": "Initial Claims",
+                "description": "Initial Unemployment Claims",
+                "asset_type": "economic",
+            },
             # Inflation & Prices
-            {"symbol": "CPIAUCSL", "name": "CPI", "description": "Consumer Price Index for All Urban Consumers", "asset_type": "economic"},
-            {"symbol": "CPILFESL", "name": "Core CPI", "description": "CPI Less Food and Energy", "asset_type": "economic"},
-            {"symbol": "PCEPI", "name": "PCE Price Index", "description": "Personal Consumption Expenditures Price Index", "asset_type": "economic"},
-            {"symbol": "PCEPILFE", "name": "Core PCE", "description": "PCE Excluding Food and Energy", "asset_type": "economic"},
-            {"symbol": "PPIFIS", "name": "PPI", "description": "Producer Price Index Final Demand", "asset_type": "economic"},
-
+            {
+                "symbol": "CPIAUCSL",
+                "name": "CPI",
+                "description": "Consumer Price Index for All Urban Consumers",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "CPILFESL",
+                "name": "Core CPI",
+                "description": "CPI Less Food and Energy",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "PCEPI",
+                "name": "PCE Price Index",
+                "description": "Personal Consumption Expenditures Price Index",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "PCEPILFE",
+                "name": "Core PCE",
+                "description": "PCE Excluding Food and Energy",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "PPIFIS",
+                "name": "PPI",
+                "description": "Producer Price Index Final Demand",
+                "asset_type": "economic",
+            },
             # Monetary Policy & Interest Rates
-            {"symbol": "FEDFUNDS", "name": "Federal Funds Rate", "description": "Effective Federal Funds Rate", "asset_type": "economic"},
-            {"symbol": "DFF", "name": "Fed Funds Daily", "description": "Federal Funds Effective Rate Daily", "asset_type": "economic"},
-            {"symbol": "DGS2", "name": "2-Year Treasury", "description": "2-Year Treasury Constant Maturity Rate", "asset_type": "economic"},
-            {"symbol": "DGS5", "name": "5-Year Treasury", "description": "5-Year Treasury Constant Maturity Rate", "asset_type": "economic"},
-            {"symbol": "DGS10", "name": "10-Year Treasury", "description": "10-Year Treasury Constant Maturity Rate", "asset_type": "economic"},
-            {"symbol": "DGS30", "name": "30-Year Treasury", "description": "30-Year Treasury Constant Maturity Rate", "asset_type": "economic"},
-            {"symbol": "T10Y2Y", "name": "10Y-2Y Spread", "description": "10-Year Treasury Minus 2-Year Treasury", "asset_type": "economic"},
-            {"symbol": "T10Y3M", "name": "10Y-3M Spread", "description": "10-Year Treasury Minus 3-Month Treasury", "asset_type": "economic"},
-
+            {
+                "symbol": "FEDFUNDS",
+                "name": "Federal Funds Rate",
+                "description": "Effective Federal Funds Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DFF",
+                "name": "Fed Funds Daily",
+                "description": "Federal Funds Effective Rate Daily",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DGS2",
+                "name": "2-Year Treasury",
+                "description": "2-Year Treasury Constant Maturity Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DGS5",
+                "name": "5-Year Treasury",
+                "description": "5-Year Treasury Constant Maturity Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DGS10",
+                "name": "10-Year Treasury",
+                "description": "10-Year Treasury Constant Maturity Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DGS30",
+                "name": "30-Year Treasury",
+                "description": "30-Year Treasury Constant Maturity Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "T10Y2Y",
+                "name": "10Y-2Y Spread",
+                "description": "10-Year Treasury Minus 2-Year Treasury",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "T10Y3M",
+                "name": "10Y-3M Spread",
+                "description": "10-Year Treasury Minus 3-Month Treasury",
+                "asset_type": "economic",
+            },
             # Money Supply
-            {"symbol": "M1SL", "name": "M1 Money Supply", "description": "M1 Money Stock", "asset_type": "economic"},
-            {"symbol": "M2SL", "name": "M2 Money Supply", "description": "M2 Money Stock", "asset_type": "economic"},
-            {"symbol": "M2V", "name": "M2 Velocity", "description": "Velocity of M2 Money Stock", "asset_type": "economic"},
-
+            {
+                "symbol": "M1SL",
+                "name": "M1 Money Supply",
+                "description": "M1 Money Stock",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "M2SL",
+                "name": "M2 Money Supply",
+                "description": "M2 Money Stock",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "M2V",
+                "name": "M2 Velocity",
+                "description": "Velocity of M2 Money Stock",
+                "asset_type": "economic",
+            },
             # Consumer Spending & Income
-            {"symbol": "PCE", "name": "Personal Consumption", "description": "Personal Consumption Expenditures", "asset_type": "economic"},
-            {"symbol": "PSAVERT", "name": "Personal Savings Rate", "description": "Personal Saving Rate", "asset_type": "economic"},
-            {"symbol": "DPI", "name": "Disposable Income", "description": "Disposable Personal Income", "asset_type": "economic"},
-            {"symbol": "RSXFS", "name": "Retail Sales", "description": "Advance Retail Sales", "asset_type": "economic"},
-
+            {
+                "symbol": "PCE",
+                "name": "Personal Consumption",
+                "description": "Personal Consumption Expenditures",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "PSAVERT",
+                "name": "Personal Savings Rate",
+                "description": "Personal Saving Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DPI",
+                "name": "Disposable Income",
+                "description": "Disposable Personal Income",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "RSXFS",
+                "name": "Retail Sales",
+                "description": "Advance Retail Sales",
+                "asset_type": "economic",
+            },
             # Sentiment & Confidence
-            {"symbol": "UMCSENT", "name": "Consumer Sentiment", "description": "University of Michigan Consumer Sentiment", "asset_type": "economic"},
-            {"symbol": "CSCICP03USM665S", "name": "Consumer Confidence", "description": "Consumer Opinion Surveys Confidence Indicators", "asset_type": "economic"},
-
+            {
+                "symbol": "UMCSENT",
+                "name": "Consumer Sentiment",
+                "description": "University of Michigan Consumer Sentiment",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "CSCICP03USM665S",
+                "name": "Consumer Confidence",
+                "description": "Consumer Opinion Surveys Confidence Indicators",
+                "asset_type": "economic",
+            },
             # Housing
-            {"symbol": "HOUST", "name": "Housing Starts", "description": "Housing Starts Total", "asset_type": "economic"},
-            {"symbol": "HSN1F", "name": "New Home Sales", "description": "New One Family Houses Sold", "asset_type": "economic"},
-            {"symbol": "MORTGAGE30US", "name": "30Y Mortgage Rate", "description": "30-Year Fixed Rate Mortgage Average", "asset_type": "economic"},
-            {"symbol": "CSUSHPISA", "name": "Case-Shiller Index", "description": "S&P CoreLogic Case-Shiller US Home Price Index", "asset_type": "economic"},
-
+            {
+                "symbol": "HOUST",
+                "name": "Housing Starts",
+                "description": "Housing Starts Total",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "HSN1F",
+                "name": "New Home Sales",
+                "description": "New One Family Houses Sold",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "MORTGAGE30US",
+                "name": "30Y Mortgage Rate",
+                "description": "30-Year Fixed Rate Mortgage Average",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "CSUSHPISA",
+                "name": "Case-Shiller Index",
+                "description": "S&P CoreLogic Case-Shiller US Home Price Index",
+                "asset_type": "economic",
+            },
             # Exchange Rates
-            {"symbol": "DEXUSEU", "name": "USD/EUR Exchange Rate", "description": "US Dollar to Euro Exchange Rate", "asset_type": "economic"},
-            {"symbol": "DEXCHUS", "name": "CNY/USD Exchange Rate", "description": "Chinese Yuan to US Dollar Exchange Rate", "asset_type": "economic"},
-            {"symbol": "DEXJPUS", "name": "JPY/USD Exchange Rate", "description": "Japanese Yen to US Dollar Exchange Rate", "asset_type": "economic"},
-            {"symbol": "DEXUSUK", "name": "USD/GBP Exchange Rate", "description": "US Dollar to British Pound Exchange Rate", "asset_type": "economic"},
-            {"symbol": "DEXCAUS", "name": "CAD/USD Exchange Rate", "description": "Canadian Dollar to US Dollar Exchange Rate", "asset_type": "economic"},
-
+            {
+                "symbol": "DEXUSEU",
+                "name": "USD/EUR Exchange Rate",
+                "description": "US Dollar to Euro Exchange Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DEXCHUS",
+                "name": "CNY/USD Exchange Rate",
+                "description": "Chinese Yuan to US Dollar Exchange Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DEXJPUS",
+                "name": "JPY/USD Exchange Rate",
+                "description": "Japanese Yen to US Dollar Exchange Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DEXUSUK",
+                "name": "USD/GBP Exchange Rate",
+                "description": "US Dollar to British Pound Exchange Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DEXCAUS",
+                "name": "CAD/USD Exchange Rate",
+                "description": "Canadian Dollar to US Dollar Exchange Rate",
+                "asset_type": "economic",
+            },
             # Credit & Debt
-            {"symbol": "TOTALSL", "name": "Total Consumer Credit", "description": "Total Consumer Credit Outstanding", "asset_type": "economic"},
-            {"symbol": "GFDEBTN", "name": "Federal Debt", "description": "Federal Debt Total Public Debt", "asset_type": "economic"},
-            {"symbol": "GFDEGDQ188S", "name": "Debt to GDP", "description": "Federal Debt to GDP Ratio", "asset_type": "economic"},
-
+            {
+                "symbol": "TOTALSL",
+                "name": "Total Consumer Credit",
+                "description": "Total Consumer Credit Outstanding",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GFDEBTN",
+                "name": "Federal Debt",
+                "description": "Federal Debt Total Public Debt",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GFDEGDQ188S",
+                "name": "Debt to GDP",
+                "description": "Federal Debt to GDP Ratio",
+                "asset_type": "economic",
+            },
             # Manufacturing & Business
-            {"symbol": "NAPM", "name": "ISM Manufacturing PMI", "description": "ISM Manufacturing Purchasing Managers Index", "asset_type": "economic"},
-            {"symbol": "NEWORDER", "name": "New Orders", "description": "Manufacturers New Orders", "asset_type": "economic"},
-            {"symbol": "CAPUTLB50001SQ", "name": "Capacity Utilization", "description": "Capacity Utilization Manufacturing", "asset_type": "economic"},
-
+            {
+                "symbol": "NAPM",
+                "name": "ISM Manufacturing PMI",
+                "description": "ISM Manufacturing Purchasing Managers Index",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "NEWORDER",
+                "name": "New Orders",
+                "description": "Manufacturers New Orders",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "CAPUTLB50001SQ",
+                "name": "Capacity Utilization",
+                "description": "Capacity Utilization Manufacturing",
+                "asset_type": "economic",
+            },
             # Trade & Commodities
-            {"symbol": "BOPGSTB", "name": "Trade Balance", "description": "Trade Balance Goods and Services", "asset_type": "economic"},
-            {"symbol": "DCOILWTICO", "name": "WTI Crude Oil", "description": "Crude Oil Prices WTI", "asset_type": "economic"},
-            {"symbol": "DHHNGSP", "name": "Natural Gas", "description": "Henry Hub Natural Gas Spot Price", "asset_type": "economic"},
-            {"symbol": "GOLDAMGBD228NLBM", "name": "Gold Price", "description": "Gold Fixing Price London", "asset_type": "economic"},
+            {
+                "symbol": "BOPGSTB",
+                "name": "Trade Balance",
+                "description": "Trade Balance Goods and Services",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DCOILWTICO",
+                "name": "WTI Crude Oil",
+                "description": "Crude Oil Prices WTI",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "DHHNGSP",
+                "name": "Natural Gas",
+                "description": "Henry Hub Natural Gas Spot Price",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GOLDAMGBD228NLBM",
+                "name": "Gold Price",
+                "description": "Gold Fixing Price London",
+                "asset_type": "economic",
+            },
         ]
 
         return indicators
 
-    def fetch_alphavantage_symbols(self, provider: DataProvider) -> List[Dict[str, Any]]:
+    def fetch_alphavantage_symbols(
+        self, provider: DataProvider
+    ) -> List[Dict[str, Any]]:
         """
         Fetch stock listings from Alpha Vantage.
 
@@ -329,14 +693,16 @@ class SymbolManager:
             reader = csv.DictReader(csv_data)
 
             for row in reader:
-                if row['assetType'] in ['Stock', 'ETF']:
-                    symbols.append({
-                        "symbol": row['symbol'],
-                        "name": row['name'],
-                        "description": f"{row['name']} - {row['exchange']}",
-                        "asset_type": row['assetType'].lower(),
-                        "exchange": row['exchange'],
-                    })
+                if row["assetType"] in ["Stock", "ETF"]:
+                    symbols.append(
+                        {
+                            "symbol": row["symbol"],
+                            "name": row["name"],
+                            "description": f"{row['name']} - {row['exchange']}",
+                            "asset_type": row["assetType"].lower(),
+                            "exchange": row["exchange"],
+                        }
+                    )
 
             print(f"Fetched {len(symbols)} AlphaVantage symbols")
             return symbols
@@ -365,23 +731,25 @@ class SymbolManager:
             response.raise_for_status()
             data = response.json()
 
-            for stock in data.get('data', []):
-                symbol_key = stock['symbol']
+            for stock in data.get("data", []):
+                symbol_key = stock["symbol"]
 
                 # Skip if we've already seen this symbol (TwelveData has duplicates)
                 if symbol_key in seen_symbols:
                     continue
 
                 seen_symbols.add(symbol_key)
-                symbols.append({
-                    "symbol": symbol_key,
-                    "name": stock['name'],
-                    "description": f"{stock['name']} - {stock.get('exchange', 'N/A')}",
-                    "asset_type": stock.get('type', 'stock').lower(),
-                    "exchange": stock.get('exchange'),
-                    "country": stock.get('country'),
-                    "currency": stock.get('currency'),
-                })
+                symbols.append(
+                    {
+                        "symbol": symbol_key,
+                        "name": stock["name"],
+                        "description": f"{stock['name']} - {stock.get('exchange', 'N/A')}",
+                        "asset_type": stock.get("type", "stock").lower(),
+                        "exchange": stock.get("exchange"),
+                        "country": stock.get("country"),
+                        "currency": stock.get("currency"),
+                    }
+                )
 
             print(f"Fetched {len(symbols)} TwelveData symbols (deduplicated)")
             return symbols
@@ -408,18 +776,22 @@ class SymbolManager:
 
             symbols = []
             for pair_name, pair_info in data.get("result", {}).items():
-                symbols.append({
-                    "symbol": pair_name,
-                    "name": f"{pair_info.get('base', '')}/{pair_info.get('quote', '')}",
-                    "description": f"Kraken {pair_info.get('wsname', pair_name)} trading pair",
-                    "asset_type": "crypto",
-                    "exchange": "Kraken",
-                    "extra_metadata": json.dumps({
-                        "base": pair_info.get("base"),
-                        "quote": pair_info.get("quote"),
-                        "wsname": pair_info.get("wsname"),
-                    }),
-                })
+                symbols.append(
+                    {
+                        "symbol": pair_name,
+                        "name": f"{pair_info.get('base', '')}/{pair_info.get('quote', '')}",
+                        "description": f"Kraken {pair_info.get('wsname', pair_name)} trading pair",
+                        "asset_type": "crypto",
+                        "exchange": "Kraken",
+                        "extra_metadata": json.dumps(
+                            {
+                                "base": pair_info.get("base"),
+                                "quote": pair_info.get("quote"),
+                                "wsname": pair_info.get("wsname"),
+                            }
+                        ),
+                    }
+                )
 
             print(f"Fetched {len(symbols)} Kraken symbols")
             return symbols
@@ -437,20 +809,90 @@ class SymbolManager:
         """
         # Common commodities available via API Ninjas
         commodities = [
-            {"symbol": "GOLD", "name": "Gold", "description": "Gold Spot Price", "asset_type": "commodity"},
-            {"symbol": "SILVER", "name": "Silver", "description": "Silver Spot Price", "asset_type": "commodity"},
-            {"symbol": "COPPER", "name": "Copper", "description": "Copper Futures", "asset_type": "commodity"},
-            {"symbol": "PLATINUM", "name": "Platinum", "description": "Platinum Spot Price", "asset_type": "commodity"},
-            {"symbol": "PALLADIUM", "name": "Palladium", "description": "Palladium Spot Price", "asset_type": "commodity"},
-            {"symbol": "WTI", "name": "WTI Crude Oil", "description": "West Texas Intermediate Crude Oil", "asset_type": "commodity"},
-            {"symbol": "BRENT", "name": "Brent Crude Oil", "description": "Brent Crude Oil", "asset_type": "commodity"},
-            {"symbol": "NATGAS", "name": "Natural Gas", "description": "Natural Gas Futures", "asset_type": "commodity"},
-            {"symbol": "WHEAT", "name": "Wheat", "description": "Wheat Futures", "asset_type": "commodity"},
-            {"symbol": "CORN", "name": "Corn", "description": "Corn Futures", "asset_type": "commodity"},
-            {"symbol": "SOYBEANS", "name": "Soybeans", "description": "Soybean Futures", "asset_type": "commodity"},
-            {"symbol": "COFFEE", "name": "Coffee", "description": "Coffee Futures", "asset_type": "commodity"},
-            {"symbol": "SUGAR", "name": "Sugar", "description": "Sugar Futures", "asset_type": "commodity"},
-            {"symbol": "COTTON", "name": "Cotton", "description": "Cotton Futures", "asset_type": "commodity"},
+            {
+                "symbol": "GOLD",
+                "name": "Gold",
+                "description": "Gold Spot Price",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "SILVER",
+                "name": "Silver",
+                "description": "Silver Spot Price",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "COPPER",
+                "name": "Copper",
+                "description": "Copper Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "PLATINUM",
+                "name": "Platinum",
+                "description": "Platinum Spot Price",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "PALLADIUM",
+                "name": "Palladium",
+                "description": "Palladium Spot Price",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "WTI",
+                "name": "WTI Crude Oil",
+                "description": "West Texas Intermediate Crude Oil",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "BRENT",
+                "name": "Brent Crude Oil",
+                "description": "Brent Crude Oil",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "NATGAS",
+                "name": "Natural Gas",
+                "description": "Natural Gas Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "WHEAT",
+                "name": "Wheat",
+                "description": "Wheat Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "CORN",
+                "name": "Corn",
+                "description": "Corn Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "SOYBEANS",
+                "name": "Soybeans",
+                "description": "Soybean Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "COFFEE",
+                "name": "Coffee",
+                "description": "Coffee Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "SUGAR",
+                "name": "Sugar",
+                "description": "Sugar Futures",
+                "asset_type": "commodity",
+            },
+            {
+                "symbol": "COTTON",
+                "name": "Cotton",
+                "description": "Cotton Futures",
+                "asset_type": "commodity",
+            },
         ]
 
         return commodities
@@ -463,13 +905,48 @@ class SymbolManager:
             List of symbol dictionaries
         """
         indicators = [
-            {"symbol": "NY.GDP.MKTP.CD", "name": "GDP (current US$)", "description": "GDP (current US$)", "asset_type": "economic"},
-            {"symbol": "SP.POP.TOTL", "name": "Population, total", "description": "Population, total", "asset_type": "economic"},
-            {"symbol": "NY.GDP.PCAP.CD", "name": "GDP per capita", "description": "GDP per capita (current US$)", "asset_type": "economic"},
-            {"symbol": "FP.CPI.TOTL.ZG", "name": "Inflation", "description": "Inflation, consumer prices (annual %)", "asset_type": "economic"},
-            {"symbol": "SL.UEM.TOTL.ZS", "name": "Unemployment", "description": "Unemployment, total (% of total labor force)", "asset_type": "economic"},
-            {"symbol": "NE.TRD.GNFS.ZS", "name": "Trade (% of GDP)", "description": "Trade (% of GDP)", "asset_type": "economic"},
-            {"symbol": "GC.DOD.TOTL.GD.ZS", "name": "Debt (% of GDP)", "description": "Central government debt, total (% of GDP)", "asset_type": "economic"},
+            {
+                "symbol": "NY.GDP.MKTP.CD",
+                "name": "GDP (current US$)",
+                "description": "GDP (current US$)",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "SP.POP.TOTL",
+                "name": "Population, total",
+                "description": "Population, total",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "NY.GDP.PCAP.CD",
+                "name": "GDP per capita",
+                "description": "GDP per capita (current US$)",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "FP.CPI.TOTL.ZG",
+                "name": "Inflation",
+                "description": "Inflation, consumer prices (annual %)",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "SL.UEM.TOTL.ZS",
+                "name": "Unemployment",
+                "description": "Unemployment, total (% of total labor force)",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "NE.TRD.GNFS.ZS",
+                "name": "Trade (% of GDP)",
+                "description": "Trade (% of GDP)",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "GC.DOD.TOTL.GD.ZS",
+                "name": "Debt (% of GDP)",
+                "description": "Central government debt, total (% of GDP)",
+                "asset_type": "economic",
+            },
         ]
 
         return indicators
@@ -482,12 +959,42 @@ class SymbolManager:
             List of symbol dictionaries
         """
         indicators = [
-            {"symbol": "ECB/MRO", "name": "Main Refinancing Rate", "description": "ECB Main Refinancing Operations Rate", "asset_type": "economic"},
-            {"symbol": "ECB/DEPOSIT", "name": "Deposit Facility Rate", "description": "ECB Deposit Facility Rate", "asset_type": "economic"},
-            {"symbol": "ECB/MARGINAL", "name": "Marginal Lending Rate", "description": "ECB Marginal Lending Facility Rate", "asset_type": "economic"},
-            {"symbol": "ECB/HICP", "name": "HICP", "description": "Harmonised Index of Consumer Prices", "asset_type": "economic"},
-            {"symbol": "ECB/UNRATE", "name": "Unemployment Rate", "description": "Euro Area Unemployment Rate", "asset_type": "economic"},
-            {"symbol": "ECB/GDP", "name": "GDP", "description": "Euro Area GDP", "asset_type": "economic"},
+            {
+                "symbol": "ECB/MRO",
+                "name": "Main Refinancing Rate",
+                "description": "ECB Main Refinancing Operations Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ECB/DEPOSIT",
+                "name": "Deposit Facility Rate",
+                "description": "ECB Deposit Facility Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ECB/MARGINAL",
+                "name": "Marginal Lending Rate",
+                "description": "ECB Marginal Lending Facility Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ECB/HICP",
+                "name": "HICP",
+                "description": "Harmonised Index of Consumer Prices",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ECB/UNRATE",
+                "name": "Unemployment Rate",
+                "description": "Euro Area Unemployment Rate",
+                "asset_type": "economic",
+            },
+            {
+                "symbol": "ECB/GDP",
+                "name": "GDP",
+                "description": "Euro Area GDP",
+                "asset_type": "economic",
+            },
         ]
 
         return indicators
@@ -505,7 +1012,9 @@ class SymbolManager:
         Returns:
             Sync result summary
         """
-        provider = self.db.query(DataProvider).filter(DataProvider.id == provider_id).first()
+        provider = (
+            self.db.query(DataProvider).filter(DataProvider.id == provider_id).first()
+        )
 
         if not provider:
             return {"error": "Provider not found", "provider_id": provider_id}
@@ -638,7 +1147,9 @@ class SymbolManager:
         Returns:
             Summary of all sync operations
         """
-        providers = self.db.query(DataProvider).filter(DataProvider.is_active == True).all()
+        providers = (
+            self.db.query(DataProvider).filter(DataProvider.is_active == True).all()
+        )
 
         results = []
         total_created = 0

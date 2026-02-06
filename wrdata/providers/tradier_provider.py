@@ -17,7 +17,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class TradierProvider(BaseProvider):
@@ -34,11 +38,7 @@ class TradierProvider(BaseProvider):
     No credit card required for sandbox!
     """
 
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        sandbox: bool = True
-    ):
+    def __init__(self, api_key: Optional[str] = None, sandbox: bool = True):
         super().__init__(name="tradier", api_key=api_key)
 
         if not api_key:
@@ -58,7 +58,7 @@ class TradierProvider(BaseProvider):
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
     def fetch_timeseries(
@@ -67,7 +67,7 @@ class TradierProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical stock data from Tradier.
@@ -106,34 +106,36 @@ class TradierProvider(BaseProvider):
             }
 
             # Make request
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
 
             data = response.json()
 
             # Check for errors
-            if 'history' not in data or data['history'] is None:
+            if "history" not in data or data["history"] is None:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No historical data found for {symbol}"
+                    error=f"No historical data found for {symbol}",
                 )
 
-            history = data['history']
+            history = data["history"]
 
             # Check if day exists (single result vs array)
-            if 'day' not in history:
+            if "day" not in history:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data in date range for {symbol}"
+                    error=f"No data in date range for {symbol}",
                 )
 
-            days = history['day']
+            days = history["day"]
 
             # Handle single day vs multiple days
             if isinstance(days, dict):
@@ -147,34 +149,36 @@ class TradierProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data returned for {symbol}"
+                    error=f"No data returned for {symbol}",
                 )
 
             # Convert to standard format
             records = []
             for day in days:
-                records.append({
-                    'Date': day.get('date'),
-                    'open': float(day.get('open', 0)),
-                    'high': float(day.get('high', 0)),
-                    'low': float(day.get('low', 0)),
-                    'close': float(day.get('close', 0)),
-                    'volume': int(day.get('volume', 0)),
-                })
+                records.append(
+                    {
+                        "Date": day.get("date"),
+                        "open": float(day.get("open", 0)),
+                        "high": float(day.get("high", 0)),
+                        "low": float(day.get("low", 0)),
+                        "close": float(day.get("close", 0)),
+                        "volume": int(day.get("volume", 0)),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Tradier',
-                    'sandbox': self.sandbox,
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Tradier",
+                    "sandbox": self.sandbox,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -190,7 +194,7 @@ class TradierProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -199,7 +203,7 @@ class TradierProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Tradier API error: {str(e)}"
+                error=f"Tradier API error: {str(e)}",
             )
 
     def get_quote(self, symbol: str) -> dict:
@@ -218,46 +222,45 @@ class TradierProvider(BaseProvider):
 
             params = {"symbols": symbol}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
 
-            if 'quotes' not in data or 'quote' not in data['quotes']:
+            if "quotes" not in data or "quote" not in data["quotes"]:
                 return {}
 
-            quote = data['quotes']['quote']
+            quote = data["quotes"]["quote"]
 
             return {
-                'symbol': quote.get('symbol'),
-                'description': quote.get('description'),
-                'last': quote.get('last'),
-                'bid': quote.get('bid'),
-                'ask': quote.get('ask'),
-                'bid_size': quote.get('bidsize'),
-                'ask_size': quote.get('asksize'),
-                'volume': quote.get('volume'),
-                'open': quote.get('open'),
-                'high': quote.get('high'),
-                'low': quote.get('low'),
-                'close': quote.get('close'),
-                'prev_close': quote.get('prevclose'),
-                'change': quote.get('change'),
-                'change_percentage': quote.get('change_percentage'),
-                'average_volume': quote.get('average_volume'),
-                'last_volume': quote.get('last_volume'),
-                'trade_date': quote.get('trade_date'),
-                'type': quote.get('type'),
+                "symbol": quote.get("symbol"),
+                "description": quote.get("description"),
+                "last": quote.get("last"),
+                "bid": quote.get("bid"),
+                "ask": quote.get("ask"),
+                "bid_size": quote.get("bidsize"),
+                "ask_size": quote.get("asksize"),
+                "volume": quote.get("volume"),
+                "open": quote.get("open"),
+                "high": quote.get("high"),
+                "low": quote.get("low"),
+                "close": quote.get("close"),
+                "prev_close": quote.get("prevclose"),
+                "change": quote.get("change"),
+                "change_percentage": quote.get("change_percentage"),
+                "average_volume": quote.get("average_volume"),
+                "last_volume": quote.get("last_volume"),
+                "trade_date": quote.get("trade_date"),
+                "type": quote.get("type"),
             }
 
         except Exception as e:
             print(f"Failed to get quote: {e}")
             return {}
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch options chain from Tradier.
 
@@ -270,21 +273,23 @@ class TradierProvider(BaseProvider):
             url = f"{self.base_url}/markets/options/expirations"
             params = {"symbol": symbol}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
 
             data = response.json()
 
-            if 'expirations' not in data or data['expirations'] is None:
+            if "expirations" not in data or data["expirations"] is None:
                 return OptionsChainResponse(
                     symbol=symbol,
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options expirations found for {symbol}"
+                    error=f"No options expirations found for {symbol}",
                 )
 
-            expirations = data['expirations'].get('date', [])
+            expirations = data["expirations"].get("date", [])
 
             if not expirations:
                 return OptionsChainResponse(
@@ -292,19 +297,19 @@ class TradierProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options available for {symbol}"
+                    error=f"No options available for {symbol}",
                 )
 
             # Use requested expiry or first available
             if request.expiry:
-                expiry_str = request.expiry.strftime('%Y-%m-%d')
+                expiry_str = request.expiry.strftime("%Y-%m-%d")
                 if expiry_str not in expirations:
                     return OptionsChainResponse(
                         symbol=symbol,
                         provider=self.name,
                         snapshot_timestamp=datetime.utcnow(),
                         success=False,
-                        error=f"No options for expiry {expiry_str}. Available: {expirations[:5]}"
+                        error=f"No options for expiry {expiry_str}. Available: {expirations[:5]}",
                     )
             else:
                 expiry_str = expirations[0]
@@ -314,24 +319,26 @@ class TradierProvider(BaseProvider):
             chain_params = {
                 "symbol": symbol,
                 "expiration": expiry_str,
-                "greeks": "true"  # Include Greeks if available
+                "greeks": "true",  # Include Greeks if available
             }
 
-            chain_response = requests.get(chain_url, headers=self.headers, params=chain_params, timeout=30)
+            chain_response = requests.get(
+                chain_url, headers=self.headers, params=chain_params, timeout=30
+            )
             chain_response.raise_for_status()
 
             chain_data = chain_response.json()
 
-            if 'options' not in chain_data or chain_data['options'] is None:
+            if "options" not in chain_data or chain_data["options"] is None:
                 return OptionsChainResponse(
                     symbol=symbol,
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options chain data for {symbol}"
+                    error=f"No options chain data for {symbol}",
                 )
 
-            options = chain_data['options'].get('option', [])
+            options = chain_data["options"].get("option", [])
 
             # Ensure it's a list
             if isinstance(options, dict):
@@ -343,12 +350,12 @@ class TradierProvider(BaseProvider):
                 snapshot_timestamp=datetime.utcnow(),
                 success=True,
                 metadata={
-                    'expiration': expiry_str,
-                    'contracts_found': len(options),
-                    'expirations_available': len(expirations),
-                    'source': 'Tradier',
-                    'sandbox': self.sandbox,
-                }
+                    "expiration": expiry_str,
+                    "contracts_found": len(options),
+                    "expirations_available": len(expirations),
+                    "source": "Tradier",
+                    "sandbox": self.sandbox,
+                },
             )
 
         except Exception as e:
@@ -357,7 +364,7 @@ class TradierProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=f"Tradier options error: {str(e)}"
+                error=f"Tradier options error: {str(e)}",
             )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -367,20 +374,22 @@ class TradierProvider(BaseProvider):
             url = f"{self.base_url}/markets/options/expirations"
             params = {"symbol": symbol}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
 
-            if 'expirations' not in data or data['expirations'] is None:
+            if "expirations" not in data or data["expirations"] is None:
                 return []
 
-            expirations = data['expirations'].get('date', [])
+            expirations = data["expirations"].get("date", [])
 
             # Convert to date objects
             result = []
             for exp_str in expirations:
-                exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date()
+                exp_date = datetime.strptime(exp_str, "%Y-%m-%d").date()
                 result.append(exp_date)
 
             return result
@@ -403,20 +412,19 @@ class TradierProvider(BaseProvider):
         try:
             symbol = symbol.upper()
             url = f"{self.base_url}/markets/options/strikes"
-            params = {
-                "symbol": symbol,
-                "expiration": expiration
-            }
+            params = {"symbol": symbol, "expiration": expiration}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
 
-            if 'strikes' not in data or data['strikes'] is None:
+            if "strikes" not in data or data["strikes"] is None:
                 return []
 
-            strikes = data['strikes'].get('strike', [])
+            strikes = data["strikes"].get("strike", [])
 
             # Convert to floats
             return [float(strike) for strike in strikes]
@@ -458,7 +466,7 @@ class TradierProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return data.get('clock', {})
+            return data.get("clock", {})
 
         except Exception as e:
             print(f"Failed to get market clock: {e}")
@@ -476,7 +484,7 @@ class TradierProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return 'clock' in data
+            return "clock" in data
 
         except Exception:
             return False
@@ -488,16 +496,16 @@ class TradierProvider(BaseProvider):
 
 # Tradier market data types
 TRADIER_QUOTE_TYPES = {
-    'stock': 'Common Stock',
-    'option': 'Option Contract',
-    'etf': 'Exchange Traded Fund',
-    'index': 'Market Index',
-    'mutual_fund': 'Mutual Fund',
+    "stock": "Common Stock",
+    "option": "Option Contract",
+    "etf": "Exchange Traded Fund",
+    "index": "Market Index",
+    "mutual_fund": "Mutual Fund",
 }
 
 # Tradier intervals
 TRADIER_INTERVALS = {
-    'daily': 'Daily bars',
-    'weekly': 'Weekly bars',
-    'monthly': 'Monthly bars',
+    "daily": "Daily bars",
+    "weekly": "Weekly bars",
+    "monthly": "Monthly bars",
 }

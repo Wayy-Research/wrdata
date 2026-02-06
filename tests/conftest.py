@@ -14,7 +14,7 @@ from wrdata.core.config import settings
 @pytest.fixture
 def test_db_engine():
     """Create a test database engine (in-memory SQLite)."""
-    engine = create_engine('sqlite:///:memory:', echo=False)
+    engine = create_engine("sqlite:///:memory:", echo=False)
     Base.metadata.create_all(engine)
     yield engine
     engine.dispose()
@@ -29,15 +29,15 @@ def test_db_session(test_db_engine):
     # Seed with test data providers
     providers = [
         DataProvider(
-            name='yfinance',
-            provider_type='yfinance',
+            name="yfinance",
+            provider_type="yfinance",
             api_key_required=False,
             has_api_key=False,
             is_active=True,
         ),
         DataProvider(
-            name='binance',
-            provider_type='binance',
+            name="binance",
+            provider_type="binance",
             api_key_required=False,
             has_api_key=False,
             is_active=True,
@@ -56,15 +56,15 @@ def test_db_session(test_db_engine):
 @pytest.fixture
 def sample_symbol(test_db_session):
     """Create a sample symbol for testing."""
-    provider = test_db_session.query(DataProvider).filter_by(name='yfinance').first()
+    provider = test_db_session.query(DataProvider).filter_by(name="yfinance").first()
 
     symbol = Symbol(
         provider_id=provider.id,
-        symbol='AAPL',
-        name='Apple Inc.',
-        description='Apple Inc. - NASDAQ',
-        asset_type='stock',
-        exchange='NASDAQ',
+        symbol="AAPL",
+        name="Apple Inc.",
+        description="Apple Inc. - NASDAQ",
+        asset_type="stock",
+        exchange="NASDAQ",
     )
 
     test_db_session.add(symbol)
@@ -80,8 +80,8 @@ def date_range():
     start_date = end_date - timedelta(days=7)
 
     return {
-        'start_date': start_date.strftime('%Y-%m-%d'),
-        'end_date': end_date.strftime('%Y-%m-%d'),
+        "start_date": start_date.strftime("%Y-%m-%d"),
+        "end_date": end_date.strftime("%Y-%m-%d"),
     }
 
 
@@ -90,20 +90,20 @@ def mock_ohlcv_data():
     """Provide mock OHLCV data for testing."""
     return [
         {
-            'timestamp': '2024-01-01T00:00:00',
-            'open': 100.0,
-            'high': 105.0,
-            'low': 99.0,
-            'close': 103.0,
-            'volume': 1000000,
+            "timestamp": "2024-01-01T00:00:00",
+            "open": 100.0,
+            "high": 105.0,
+            "low": 99.0,
+            "close": 103.0,
+            "volume": 1000000,
         },
         {
-            'timestamp': '2024-01-02T00:00:00',
-            'open': 103.0,
-            'high': 108.0,
-            'low': 102.0,
-            'close': 107.0,
-            'volume': 1200000,
+            "timestamp": "2024-01-02T00:00:00",
+            "open": 103.0,
+            "high": 108.0,
+            "low": 102.0,
+            "close": 107.0,
+            "volume": 1200000,
         },
     ]
 
@@ -114,6 +114,7 @@ def skip_if_no_network():
     pytest.importorskip("requests")
 
     import requests
+
     try:
         requests.get("https://www.google.com", timeout=3)
     except requests.exceptions.RequestException:

@@ -41,7 +41,7 @@ async def test_connection():
     provider = IBKRStreamProvider(
         host="127.0.0.1",
         port=7497,  # Paper trading
-        client_id=2  # Different from REST provider
+        client_id=2,  # Different from REST provider
     )
 
     try:
@@ -82,7 +82,9 @@ async def test_realtime_bars():
 
             print(f"Bar {count}:")
             print(f"  Time: {msg.timestamp}")
-            print(f"  OHLC: O=${msg.open:.2f} H=${msg.high:.2f} L=${msg.low:.2f} C=${msg.close:.2f}")
+            print(
+                f"  OHLC: O=${msg.open:.2f} H=${msg.high:.2f} L=${msg.low:.2f} C=${msg.close:.2f}"
+            )
             print(f"  Volume: {msg.volume:,.0f}")
             print(f"  WAP: {msg.raw_data.get('wap', 'N/A')}")
             print(f"  Count: {msg.raw_data.get('count', 'N/A')}")
@@ -103,6 +105,7 @@ async def test_realtime_bars():
     except Exception as e:
         print(f"\n✗ Streaming error: {e}")
         import traceback
+
         traceback.print_exc()
         await provider.disconnect()
         return False
@@ -131,7 +134,9 @@ async def test_market_data_stream():
             print(f"  Last: ${msg.price:.2f}")
             if msg.bid and msg.ask:
                 spread = msg.ask - msg.bid
-                print(f"  Bid/Ask: ${msg.bid:.2f} / ${msg.ask:.2f} (spread: ${spread:.2f})")
+                print(
+                    f"  Bid/Ask: ${msg.bid:.2f} / ${msg.ask:.2f} (spread: ${spread:.2f})"
+                )
             print(f"  Volume: {msg.volume:,.0f}")
             print()
 
@@ -150,6 +155,7 @@ async def test_market_data_stream():
     except Exception as e:
         print(f"\n✗ Streaming error: {e}")
         import traceback
+
         traceback.print_exc()
         await provider.disconnect()
         return False
@@ -224,7 +230,9 @@ async def test_callback_handler():
     def on_message(msg):
         """Callback to handle messages."""
         received_messages.append(msg)
-        print(f"📨 Callback: {msg.symbol} @ ${msg.price:.2f} ({msg.timestamp.strftime('%H:%M:%S')})")
+        print(
+            f"📨 Callback: {msg.symbol} @ ${msg.price:.2f} ({msg.timestamp.strftime('%H:%M:%S')})"
+        )
 
     try:
         symbol = "AAPL"
@@ -311,6 +319,7 @@ async def run_all_tests():
         except Exception as e:
             print(f"\n✗ Test '{name}' crashed: {e}")
             import traceback
+
             traceback.print_exc()
             results[name] = False
 

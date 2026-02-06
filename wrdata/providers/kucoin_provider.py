@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class KuCoinProvider(BaseProvider):
@@ -41,14 +45,14 @@ class KuCoinProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from KuCoin."""
         try:
             # KuCoin format: BTC-USDT
-            if '-' not in symbol:
-                symbol = symbol.upper().replace('USDT', '-USDT')
-                if '-' not in symbol:
+            if "-" not in symbol:
+                symbol = symbol.upper().replace("USDT", "-USDT")
+                if "-" not in symbol:
                     symbol = f"{symbol}-USDT"
 
             # Map intervals
@@ -75,25 +79,31 @@ class KuCoinProvider(BaseProvider):
                 "symbol": symbol,
                 "type": kucoin_interval,
                 "startAt": start_ts,
-                "endAt": end_ts
+                "endAt": end_ts,
             }
 
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
 
-            if data.get('code') != '200000':
+            if data.get("code") != "200000":
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"KuCoin error: {data.get('msg', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"KuCoin error: {data.get('msg', 'Unknown error')}",
                 )
 
-            candles = data.get('data', [])
+            candles = data.get("data", [])
 
             if not candles:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
@@ -102,35 +112,48 @@ class KuCoinProvider(BaseProvider):
                 timestamp = int(candle[0])
                 dt = datetime.fromtimestamp(timestamp)
 
-                records.append({
-                    'Date': dt.strftime('%Y-%m-%d'),
-                    'open': float(candle[1]),
-                    'high': float(candle[3]),
-                    'low': float(candle[4]),
-                    'close': float(candle[2]),
-                    'volume': float(candle[5]),
-                })
+                records.append(
+                    {
+                        "Date": dt.strftime("%Y-%m-%d"),
+                        "open": float(candle[1]),
+                        "high": float(candle[3]),
+                        "low": float(candle[4]),
+                        "close": float(candle[2]),
+                        "volume": float(candle[5]),
+                    }
+                )
 
             # KuCoin returns newest first, reverse it
             records.reverse()
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'KuCoin'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "KuCoin",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"KuCoin error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"KuCoin error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="KuCoin does not provide traditional options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="KuCoin does not provide traditional options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -141,7 +164,7 @@ class KuCoinProvider(BaseProvider):
             url = f"{self.base_url}/api/v1/status"
             response = requests.get(url, timeout=5)
             data = response.json()
-            return data.get('code') == '200000'
+            return data.get("code") == "200000"
         except:
             return False
 

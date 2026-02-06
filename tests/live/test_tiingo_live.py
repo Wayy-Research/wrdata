@@ -45,7 +45,7 @@ def test_stock_data():
         symbol="AAPL",
         start_date=start_date.strftime("%Y-%m-%d"),
         end_date=end_date.strftime("%Y-%m-%d"),
-        interval="1d"
+        interval="1d",
     )
 
     if response.success:

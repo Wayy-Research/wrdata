@@ -71,7 +71,7 @@ class KrakenStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """Subscribe to real-time trades."""
         if not self.websocket:
@@ -86,7 +86,7 @@ class KrakenStreamProvider(BaseStreamProvider):
             subscribe_msg = {
                 "event": "subscribe",
                 "pair": [symbol],
-                "subscription": {"name": "trade"}
+                "subscription": {"name": "trade"},
             }
             await self.websocket.send_json(subscribe_msg)
             print(f"✓ Subscribed to {symbol} trades")
@@ -100,7 +100,7 @@ class KrakenStreamProvider(BaseStreamProvider):
                         continue
 
                     # Trade data format: [channelID, [trades], channelName, pair]
-                    if len(data) >= 4 and data[2] == 'trade':
+                    if len(data) >= 4 and data[2] == "trade":
                         trades = data[1]
                         pair = data[3]
 
@@ -112,7 +112,7 @@ class KrakenStreamProvider(BaseStreamProvider):
                                 volume=float(trade[1]),
                                 provider=self.name,
                                 stream_type="trade",
-                                raw_data={'side': trade[3], 'type': trade[4]}
+                                raw_data={"side": trade[3], "type": trade[4]},
                             )
 
                             await self._notify_callbacks(stream_id, stream_msg)
@@ -122,7 +122,7 @@ class KrakenStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {
                 "event": "unsubscribe",
                 "pair": [symbol],
-                "subscription": {"name": "trade"}
+                "subscription": {"name": "trade"},
             }
             await self.websocket.send_json(unsubscribe_msg)
             raise
@@ -131,7 +131,7 @@ class KrakenStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """Subscribe to ticker updates."""
         if not self.websocket:
@@ -145,7 +145,7 @@ class KrakenStreamProvider(BaseStreamProvider):
             subscribe_msg = {
                 "event": "subscribe",
                 "pair": [symbol],
-                "subscription": {"name": "ticker"}
+                "subscription": {"name": "ticker"},
             }
             await self.websocket.send_json(subscribe_msg)
             print(f"✓ Subscribed to {symbol} ticker")
@@ -157,20 +157,20 @@ class KrakenStreamProvider(BaseStreamProvider):
                     if isinstance(data, dict):
                         continue
 
-                    if len(data) >= 4 and data[2] == 'ticker':
+                    if len(data) >= 4 and data[2] == "ticker":
                         ticker = data[1]
                         pair = data[3]
 
                         stream_msg = StreamMessage(
                             symbol=pair,
                             timestamp=datetime.now(),
-                            bid=float(ticker['b'][0]),
-                            ask=float(ticker['a'][0]),
-                            price=float(ticker['c'][0]),
-                            volume=float(ticker['v'][1]),
+                            bid=float(ticker["b"][0]),
+                            ask=float(ticker["a"][0]),
+                            price=float(ticker["c"][0]),
+                            volume=float(ticker["v"][1]),
                             provider=self.name,
                             stream_type="ticker",
-                            raw_data=ticker
+                            raw_data=ticker,
                         )
 
                         await self._notify_callbacks(stream_id, stream_msg)
@@ -184,7 +184,7 @@ class KrakenStreamProvider(BaseStreamProvider):
         symbol: str,
         interval: str = "1m",
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """Subscribe to OHLC (kline) data."""
         if not self.websocket:
@@ -195,14 +195,22 @@ class KrakenStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Map intervals
-        interval_map = {"1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
+        interval_map = {
+            "1m": 1,
+            "5m": 5,
+            "15m": 15,
+            "30m": 30,
+            "1h": 60,
+            "4h": 240,
+            "1d": 1440,
+        }
         kraken_interval = interval_map.get(interval, 1)
 
         try:
             subscribe_msg = {
                 "event": "subscribe",
                 "pair": [symbol],
-                "subscription": {"name": "ohlc", "interval": kraken_interval}
+                "subscription": {"name": "ohlc", "interval": kraken_interval},
             }
             await self.websocket.send_json(subscribe_msg)
             print(f"✓ Subscribed to {symbol} {interval} candles")
@@ -214,7 +222,7 @@ class KrakenStreamProvider(BaseStreamProvider):
                     if isinstance(data, dict):
                         continue
 
-                    if len(data) >= 4 and data[2].startswith('ohlc'):
+                    if len(data) >= 4 and data[2].startswith("ohlc"):
                         ohlc = data[1]
                         pair = data[3]
 
@@ -228,7 +236,7 @@ class KrakenStreamProvider(BaseStreamProvider):
                             volume=float(ohlc[7]),
                             provider=self.name,
                             stream_type="kline",
-                            raw_data={'vwap': ohlc[6], 'count': ohlc[8]}
+                            raw_data={"vwap": ohlc[6], "count": ohlc[8]},
                         )
 
                         await self._notify_callbacks(stream_id, stream_msg)

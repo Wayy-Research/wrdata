@@ -47,7 +47,7 @@ class CCXTProvider(BaseProvider):
         exchange_id: str = "binance",
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
-        **exchange_params
+        **exchange_params,
     ):
         """
         Initialize CCXT provider for a specific exchange.
@@ -71,14 +71,14 @@ class CCXTProvider(BaseProvider):
 
         # Configure exchange
         config = {
-            'enableRateLimit': True,
-            'timeout': 30000,
+            "enableRateLimit": True,
+            "timeout": 30000,
         }
 
         # Add API credentials if provided
         if api_key and api_secret:
-            config['apiKey'] = api_key
-            config['secret'] = api_secret
+            config["apiKey"] = api_key
+            config["secret"] = api_secret
 
         # Add custom parameters
         config.update(exchange_params)
@@ -100,8 +100,8 @@ class CCXTProvider(BaseProvider):
             Symbol in CCXT format (slash-separated)
         """
         # Replace dash with slash for CCXT
-        if '-' in symbol:
-            symbol = symbol.replace('-', '/')
+        if "-" in symbol:
+            symbol = symbol.replace("-", "/")
 
         return symbol
 
@@ -122,10 +122,13 @@ class CCXTProvider(BaseProvider):
             # Load markets if not already loaded
             if not self.exchange.markets:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"  Loading markets for {self.exchange_id}...")
                 self.exchange.load_markets()
-                logger.debug(f"  Loaded {len(self.exchange.markets)} markets for {self.exchange_id}")
+                logger.debug(
+                    f"  Loaded {len(self.exchange.markets)} markets for {self.exchange_id}"
+                )
 
             # Normalize to slash format
             normalized = self._normalize_symbol(symbol)
@@ -135,18 +138,18 @@ class CCXTProvider(BaseProvider):
                 return normalized
 
             # Second: Try common variations
-            base_quote = normalized.split('/')
+            base_quote = normalized.split("/")
             if len(base_quote) == 2:
                 base, quote = base_quote
 
                 # For USD pairs, prioritize USDT (most common on crypto exchanges)
                 # Then try other stablecoins
-                if quote == 'USD':
-                    variations_to_try = ['USDT', 'USDC', 'USD', 'BUSD', 'TUSD', 'DAI']
-                elif quote == 'USDT':
-                    variations_to_try = ['USDT', 'USD', 'USDC', 'BUSD']
-                elif quote == 'USDC':
-                    variations_to_try = ['USDC', 'USDT', 'USD', 'BUSD']
+                if quote == "USD":
+                    variations_to_try = ["USDT", "USDC", "USD", "BUSD", "TUSD", "DAI"]
+                elif quote == "USDT":
+                    variations_to_try = ["USDT", "USD", "USDC", "BUSD"]
+                elif quote == "USDC":
+                    variations_to_try = ["USDC", "USDT", "USD", "BUSD"]
                 else:
                     # For other quotes, just try the original
                     variations_to_try = [quote]
@@ -155,21 +158,30 @@ class CCXTProvider(BaseProvider):
                     alt_symbol = f"{base}/{alt_quote}"
                     if alt_symbol in self.exchange.markets:
                         import logging
+
                         logger = logging.getLogger(__name__)
                         if alt_quote != quote:
-                            logger.info(f"  {symbol} → {alt_symbol} on {self.exchange_id}")
+                            logger.info(
+                                f"  {symbol} → {alt_symbol} on {self.exchange_id}"
+                            )
                         return alt_symbol
 
             # No variation found
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.debug(f"  No match for {symbol} on {self.exchange_id} (tried: {variations_to_try})")
+            logger.debug(
+                f"  No match for {symbol} on {self.exchange_id} (tried: {variations_to_try})"
+            )
             return None
 
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.warning(f"  Symbol lookup exception for {symbol} on {self.exchange_id}: {e}")
+            logger.warning(
+                f"  Symbol lookup exception for {symbol} on {self.exchange_id}: {e}"
+            )
             return None
 
     def fetch_timeseries(
@@ -178,7 +190,7 @@ class CCXTProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical OHLCV data from the exchange with automatic pagination.
@@ -199,6 +211,7 @@ class CCXTProvider(BaseProvider):
         try:
             # Find the symbol on this exchange
             import logging
+
             logger = logging.getLogger(__name__)
 
             exchange_symbol = self._find_symbol_on_exchange(symbol)
@@ -211,18 +224,28 @@ class CCXTProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=error_msg
+                    error=error_msg,
                 )
 
             # Parse dates to timestamps (milliseconds)
-            start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp() * 1000)
-            end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp() * 1000)
+            start_ts = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp() * 1000)
+            end_ts = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp() * 1000)
 
             # Map intervals to ccxt format
             interval_map = {
-                '1m': '1m', '3m': '3m', '5m': '5m', '15m': '15m',
-                '30m': '30m', '1h': '1h', '2h': '2h', '4h': '4h',
-                '6h': '6h', '12h': '12h', '1d': '1d', '1w': '1w', '1M': '1M',
+                "1m": "1m",
+                "3m": "3m",
+                "5m": "5m",
+                "15m": "15m",
+                "30m": "30m",
+                "1h": "1h",
+                "2h": "2h",
+                "4h": "4h",
+                "6h": "6h",
+                "12h": "12h",
+                "1d": "1d",
+                "1w": "1w",
+                "1M": "1M",
             }
 
             timeframe = interval_map.get(interval, interval)
@@ -234,7 +257,7 @@ class CCXTProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Timeframe {timeframe} not supported by {self.exchange_id}"
+                    error=f"Timeframe {timeframe} not supported by {self.exchange_id}",
                 )
 
             # Fetch OHLCV data with pagination
@@ -242,23 +265,23 @@ class CCXTProvider(BaseProvider):
             current_ts = start_ts
 
             # Limit per request (most exchanges support 500-1000)
-            limit = 1000 if self.exchange_id == 'binance' else 500
+            limit = 1000 if self.exchange_id == "binance" else 500
 
             # Calculate milliseconds per candle for this interval
             interval_to_ms = {
-                '1m': 60 * 1000,
-                '3m': 3 * 60 * 1000,
-                '5m': 5 * 60 * 1000,
-                '15m': 15 * 60 * 1000,
-                '30m': 30 * 60 * 1000,
-                '1h': 60 * 60 * 1000,
-                '2h': 2 * 60 * 60 * 1000,
-                '4h': 4 * 60 * 60 * 1000,
-                '6h': 6 * 60 * 60 * 1000,
-                '12h': 12 * 60 * 60 * 1000,
-                '1d': 24 * 60 * 60 * 1000,
-                '1w': 7 * 24 * 60 * 60 * 1000,
-                '1M': 30 * 24 * 60 * 60 * 1000,  # Approximate
+                "1m": 60 * 1000,
+                "3m": 3 * 60 * 1000,
+                "5m": 5 * 60 * 1000,
+                "15m": 15 * 60 * 1000,
+                "30m": 30 * 60 * 1000,
+                "1h": 60 * 60 * 1000,
+                "2h": 2 * 60 * 60 * 1000,
+                "4h": 4 * 60 * 60 * 1000,
+                "6h": 6 * 60 * 60 * 1000,
+                "12h": 12 * 60 * 60 * 1000,
+                "1d": 24 * 60 * 60 * 1000,
+                "1w": 7 * 24 * 60 * 60 * 1000,
+                "1M": 30 * 24 * 60 * 60 * 1000,  # Approximate
             }
             ms_per_candle = interval_to_ms.get(timeframe, 60 * 1000)
 
@@ -271,8 +294,11 @@ class CCXTProvider(BaseProvider):
             estimated_iterations = (total_ms // (ms_per_candle * limit)) + 1
 
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.info(f"Starting pagination for {symbol} on {self.exchange_id}: ~{estimated_iterations} requests needed")
+            logger.info(
+                f"Starting pagination for {symbol} on {self.exchange_id}: ~{estimated_iterations} requests needed"
+            )
 
             while current_ts < end_ts and iterations < max_iterations:
                 try:
@@ -281,7 +307,7 @@ class CCXTProvider(BaseProvider):
                         symbol=exchange_symbol,
                         timeframe=timeframe,
                         since=current_ts,
-                        limit=limit
+                        limit=limit,
                     )
 
                     if not ohlcv:
@@ -304,12 +330,19 @@ class CCXTProvider(BaseProvider):
 
                     # Log progress every 50 requests
                     if iterations % 50 == 0:
-                        progress_pct = (iterations / estimated_iterations) * 100 if estimated_iterations > 0 else 0
-                        logger.info(f"  {symbol}: Fetched {len(all_ohlcv):,} candles ({iterations}/{int(estimated_iterations)} requests, {progress_pct:.0f}%)")
+                        progress_pct = (
+                            (iterations / estimated_iterations) * 100
+                            if estimated_iterations > 0
+                            else 0
+                        )
+                        logger.info(
+                            f"  {symbol}: Fetched {len(all_ohlcv):,} candles ({iterations}/{int(estimated_iterations)} requests, {progress_pct:.0f}%)"
+                        )
 
                     # Rate limiting (be nice to the exchange)
                     if iterations % 5 == 0:
                         import time
+
                         time.sleep(0.1)  # 100ms pause every 5 requests
 
                 except Exception as e:
@@ -320,7 +353,9 @@ class CCXTProvider(BaseProvider):
                         raise e
 
             # Log completion
-            logger.info(f"  {symbol}: Pagination complete - fetched {len(all_ohlcv):,} candles in {iterations} requests")
+            logger.info(
+                f"  {symbol}: Pagination complete - fetched {len(all_ohlcv):,} candles in {iterations} requests"
+            )
 
             # Filter by end date and remove duplicates
             seen_timestamps = set()
@@ -336,21 +371,25 @@ class CCXTProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="No data found for the specified date range"
+                    error="No data found for the specified date range",
                 )
 
             # Convert to standard format
             data = []
             for candle in filtered_ohlcv:
                 timestamp, open_price, high, low, close, volume = candle
-                data.append({
-                    'timestamp': datetime.fromtimestamp(timestamp / 1000).isoformat(),
-                    'open': float(open_price),
-                    'high': float(high),
-                    'low': float(low),
-                    'close': float(close),
-                    'volume': float(volume)
-                })
+                data.append(
+                    {
+                        "timestamp": datetime.fromtimestamp(
+                            timestamp / 1000
+                        ).isoformat(),
+                        "open": float(open_price),
+                        "high": float(high),
+                        "low": float(low),
+                        "close": float(close),
+                        "volume": float(volume),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
@@ -358,11 +397,11 @@ class CCXTProvider(BaseProvider):
                 data=data,
                 success=True,
                 metadata={
-                    'exchange_symbol': exchange_symbol,
-                    'exchange': self.exchange_id,
-                    'requests_made': iterations,
-                    'candles_fetched': len(data),
-                }
+                    "exchange_symbol": exchange_symbol,
+                    "exchange": self.exchange_id,
+                    "requests_made": iterations,
+                    "candles_fetched": len(data),
+                },
             )
 
         except Exception as e:
@@ -371,7 +410,7 @@ class CCXTProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"{self.exchange_id}: {str(e)}"
+                error=f"{self.exchange_id}: {str(e)}",
             )
 
     def search_symbols(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -396,18 +435,22 @@ class CCXTProvider(BaseProvider):
             # Search through available markets
             for symbol, market in self.exchange.markets.items():
                 # Match query in symbol or base/quote currency
-                if (query_upper in symbol or
-                    query_upper in market.get('base', '') or
-                    query_upper in market.get('quote', '')):
+                if (
+                    query_upper in symbol
+                    or query_upper in market.get("base", "")
+                    or query_upper in market.get("quote", "")
+                ):
 
-                    results.append({
-                        'symbol': symbol,
-                        'name': f"{market.get('base', '')}/{market.get('quote', '')}",
-                        'type': market.get('type', 'spot'),
-                        'provider': self.name,
-                        'exchange': self.exchange_id.title(),
-                        'active': market.get('active', True),
-                    })
+                    results.append(
+                        {
+                            "symbol": symbol,
+                            "name": f"{market.get('base', '')}/{market.get('quote', '')}",
+                            "type": market.get("type", "spot"),
+                            "provider": self.name,
+                            "exchange": self.exchange_id.title(),
+                            "active": market.get("active", True),
+                        }
+                    )
 
                     if len(results) >= limit:
                         break
@@ -439,14 +482,12 @@ class CCXTProvider(BaseProvider):
         """CCXT providers don't support options, so no expirations."""
         return []
 
-    def fetch_options_chain(
-        self, request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """CCXT providers generally don't support options."""
         return OptionsChainResponse(
             symbol=request.symbol,
             provider=self.name,
             contracts=[],
             success=False,
-            error="Options trading not supported on most crypto exchanges"
+            error="Options trading not supported on most crypto exchanges",
         )

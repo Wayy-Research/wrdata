@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class HuobiProvider(BaseProvider):
@@ -37,12 +41,12 @@ class HuobiProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Huobi."""
         try:
             # Huobi format: btcusdt (lowercase, no separator)
-            symbol = symbol.lower().replace('-', '').replace('_', '')
+            symbol = symbol.lower().replace("-", "").replace("_", "")
 
             # Map intervals
             interval_map = {
@@ -63,25 +67,31 @@ class HuobiProvider(BaseProvider):
             params = {
                 "symbol": symbol,
                 "period": huobi_interval,
-                "size": 2000  # Max allowed
+                "size": 2000,  # Max allowed
             }
 
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
 
-            if data.get('status') != 'ok':
+            if data.get("status") != "ok":
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"Huobi error: {data.get('err-msg', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"Huobi error: {data.get('err-msg', 'Unknown error')}",
                 )
 
-            klines = data.get('data', [])
+            klines = data.get("data", [])
 
             if not klines:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             # Filter by date range
@@ -91,39 +101,52 @@ class HuobiProvider(BaseProvider):
             records = []
             for kline in klines:
                 # Huobi format: {id: timestamp, open, close, low, high, amount, vol, count}
-                timestamp = kline['id']
+                timestamp = kline["id"]
                 dt = datetime.fromtimestamp(timestamp)
 
                 if start_dt <= dt.date() <= end_dt:
-                    records.append({
-                        'Date': dt.strftime('%Y-%m-%d'),
-                        'open': float(kline['open']),
-                        'high': float(kline['high']),
-                        'low': float(kline['low']),
-                        'close': float(kline['close']),
-                        'volume': float(kline['amount']),
-                    })
+                    records.append(
+                        {
+                            "Date": dt.strftime("%Y-%m-%d"),
+                            "open": float(kline["open"]),
+                            "high": float(kline["high"]),
+                            "low": float(kline["low"]),
+                            "close": float(kline["close"]),
+                            "volume": float(kline["amount"]),
+                        }
+                    )
 
             # Huobi returns newest first, reverse it
             records.reverse()
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Huobi'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Huobi",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Huobi error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Huobi error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Huobi does not provide traditional options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Huobi does not provide traditional options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -134,7 +157,7 @@ class HuobiProvider(BaseProvider):
             url = f"{self.base_url}/v1/common/timestamp"
             response = requests.get(url, timeout=5)
             data = response.json()
-            return data.get('status') == 'ok'
+            return data.get("status") == "ok"
         except:
             return False
 

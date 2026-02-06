@@ -80,9 +80,7 @@ class BinanceStreamProvider(BaseStreamProvider):
         self.session = None
 
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time ticker/trade stream.
@@ -90,7 +88,7 @@ class BinanceStreamProvider(BaseStreamProvider):
         Binance provides tick-by-tick trade data.
         """
         # Normalize symbol (BTCUSDT)
-        symbol = symbol.upper().replace('/', '').replace('-', '')
+        symbol = symbol.upper().replace("/", "").replace("-", "")
         stream_name = f"{symbol.lower()}@trade"
 
         stream_id = f"ticker_{symbol}"
@@ -102,12 +100,12 @@ class BinanceStreamProvider(BaseStreamProvider):
                 # Parse Binance trade message
                 stream_msg = StreamMessage(
                     symbol=symbol,
-                    timestamp=datetime.fromtimestamp(message['T'] / 1000),
-                    price=float(message['p']),
-                    volume=float(message['q']),
+                    timestamp=datetime.fromtimestamp(message["T"] / 1000),
+                    price=float(message["p"]),
+                    volume=float(message["q"]),
                     provider=self.name,
                     stream_type="trade",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Notify callbacks
@@ -123,7 +121,7 @@ class BinanceStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time kline/candlestick stream.
@@ -133,19 +131,19 @@ class BinanceStreamProvider(BaseStreamProvider):
             interval: Kline interval (1m, 5m, 15m, 1h, 4h, 1d)
         """
         # Normalize symbol
-        symbol = symbol.upper().replace('/', '').replace('-', '')
+        symbol = symbol.upper().replace("/", "").replace("-", "")
 
         # Map interval to Binance format
         interval_map = {
-            '1m': '1m',
-            '5m': '5m',
-            '15m': '15m',
-            '30m': '30m',
-            '1h': '1h',
-            '4h': '4h',
-            '1d': '1d',
+            "1m": "1m",
+            "5m": "5m",
+            "15m": "15m",
+            "30m": "30m",
+            "1h": "1h",
+            "4h": "4h",
+            "1d": "1d",
         }
-        binance_interval = interval_map.get(interval, '1m')
+        binance_interval = interval_map.get(interval, "1m")
 
         stream_name = f"{symbol.lower()}@kline_{binance_interval}"
 
@@ -156,19 +154,19 @@ class BinanceStreamProvider(BaseStreamProvider):
         async for message in self._stream_endpoint(stream_name):
             try:
                 # Parse Binance kline message
-                kline = message['k']
+                kline = message["k"]
 
                 stream_msg = StreamMessage(
                     symbol=symbol,
-                    timestamp=datetime.fromtimestamp(kline['t'] / 1000),
-                    open=float(kline['o']),
-                    high=float(kline['h']),
-                    low=float(kline['l']),
-                    close=float(kline['c']),
-                    volume=float(kline['v']),
+                    timestamp=datetime.fromtimestamp(kline["t"] / 1000),
+                    open=float(kline["o"]),
+                    high=float(kline["h"]),
+                    low=float(kline["l"]),
+                    close=float(kline["c"]),
+                    volume=float(kline["v"]),
                     provider=self.name,
                     stream_type="kline",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Notify callbacks
@@ -181,9 +179,7 @@ class BinanceStreamProvider(BaseStreamProvider):
                 continue
 
     async def subscribe_depth(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to order book depth stream.
@@ -191,7 +187,7 @@ class BinanceStreamProvider(BaseStreamProvider):
         Provides top 20 bids/asks with updates.
         """
         # Normalize symbol
-        symbol = symbol.upper().replace('/', '').replace('-', '')
+        symbol = symbol.upper().replace("/", "").replace("-", "")
         stream_name = f"{symbol.lower()}@depth20@100ms"
 
         stream_id = f"depth_{symbol}"
@@ -203,11 +199,11 @@ class BinanceStreamProvider(BaseStreamProvider):
                 stream_msg = StreamMessage(
                     symbol=symbol,
                     timestamp=datetime.now(),
-                    bids=[[float(p), float(q)] for p, q in message['bids'][:5]],
-                    asks=[[float(p), float(q)] for p, q in message['asks'][:5]],
+                    bids=[[float(p), float(q)] for p, q in message["bids"][:5]],
+                    asks=[[float(p), float(q)] for p, q in message["asks"][:5]],
                     provider=self.name,
                     stream_type="depth",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Notify callbacks
@@ -226,7 +222,7 @@ class BinanceStreamProvider(BaseStreamProvider):
         whale_callback: Optional[Callable[[WhaleTransaction], None]] = None,
         enable_whale_detection: bool = False,
         percentile_threshold: float = 99.0,
-        min_usd_value: Optional[float] = None
+        min_usd_value: Optional[float] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to aggregate trade stream for whale detection.
@@ -252,11 +248,11 @@ class BinanceStreamProvider(BaseStreamProvider):
                 default_percentile=percentile_threshold,
                 min_usd_value=min_usd_value,
                 window_size=1000,
-                time_window_seconds=3600
+                time_window_seconds=3600,
             )
 
         # Normalize symbol
-        symbol = symbol.upper().replace('/', '').replace('-', '')
+        symbol = symbol.upper().replace("/", "").replace("-", "")
         stream_name = f"{symbol.lower()}@aggTrade"
 
         stream_id = f"aggtrade_{symbol}"
@@ -280,10 +276,10 @@ class BinanceStreamProvider(BaseStreamProvider):
                 #   "m": true,        # Is the buyer the market maker?
                 # }
 
-                price = float(message['p'])
-                quantity = float(message['q'])
-                timestamp = datetime.fromtimestamp(message['T'] / 1000)
-                is_buyer_maker = message['m']
+                price = float(message["p"])
+                quantity = float(message["q"])
+                timestamp = datetime.fromtimestamp(message["T"] / 1000)
+                is_buyer_maker = message["m"]
 
                 stream_msg = StreamMessage(
                     symbol=symbol,
@@ -292,7 +288,7 @@ class BinanceStreamProvider(BaseStreamProvider):
                     volume=quantity,
                     provider=self.name,
                     stream_type="aggtrade",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Whale detection
@@ -303,7 +299,7 @@ class BinanceStreamProvider(BaseStreamProvider):
                         price=price,
                         exchange="binance",
                         timestamp=timestamp,
-                        percentile_threshold=percentile_threshold
+                        percentile_threshold=percentile_threshold,
                     )
 
                     if is_whale:
@@ -312,17 +308,17 @@ class BinanceStreamProvider(BaseStreamProvider):
                             symbol=symbol,
                             timestamp=timestamp,
                             exchange="binance",
-                            transaction_id=str(message['a']),
+                            transaction_id=str(message["a"]),
                             size=Decimal(str(quantity)),
                             price=Decimal(str(price)),
-                            usd_value=Decimal(str(metadata['usd_value'])),
-                            percentile=metadata['percentile'],
-                            volume_rank=metadata['rank'],
+                            usd_value=Decimal(str(metadata["usd_value"])),
+                            percentile=metadata["percentile"],
+                            volume_rank=metadata["rank"],
                             transaction_type="trade",
                             side="sell" if is_buyer_maker else "buy",
                             is_maker=is_buyer_maker,
                             provider=self.name,
-                            raw_data=message
+                            raw_data=message,
                         )
 
                         # Notify whale callback
@@ -335,7 +331,7 @@ class BinanceStreamProvider(BaseStreamProvider):
                         # Add whale metadata to stream message
                         if stream_msg.raw_data is None:
                             stream_msg.raw_data = {}
-                        stream_msg.raw_data['whale_metadata'] = metadata
+                        stream_msg.raw_data["whale_metadata"] = metadata
 
                 # Notify callbacks
                 await self._notify_callbacks(stream_id, stream_msg)
@@ -388,7 +384,7 @@ class BinanceStreamProvider(BaseStreamProvider):
 
                 # Exponential backoff for reconnection
                 if self._reconnect_attempts < self._max_reconnect_attempts:
-                    wait_time = min(2 ** self._reconnect_attempts, 60)
+                    wait_time = min(2**self._reconnect_attempts, 60)
                     print(f"Reconnecting in {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     self._reconnect_attempts += 1

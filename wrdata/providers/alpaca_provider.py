@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class AlpacaProvider(BaseProvider):
@@ -32,7 +36,7 @@ class AlpacaProvider(BaseProvider):
         self,
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
-        paper: bool = True
+        paper: bool = True,
     ):
         super().__init__(name="alpaca", api_key=api_key)
 
@@ -56,7 +60,7 @@ class AlpacaProvider(BaseProvider):
         # Set up auth headers
         self.headers = {
             "APCA-API-KEY-ID": self.api_key,
-            "APCA-API-SECRET-KEY": self.api_secret
+            "APCA-API-SECRET-KEY": self.api_secret,
         }
 
     def fetch_timeseries(
@@ -65,7 +69,7 @@ class AlpacaProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical stock data from Alpaca.
@@ -103,58 +107,62 @@ class AlpacaProvider(BaseProvider):
             # Build request - using v2 API
             url = f"{self.data_url}/v2/stocks/{symbol}/bars"
             params = {
-                'start': start_date,
-                'end': end_date,
-                'timeframe': timeframe,
-                'limit': 10000,  # Max bars to return
-                'adjustment': 'split',  # Adjust for splits
-                'feed': 'iex',  # IEX feed (free tier)
+                "start": start_date,
+                "end": end_date,
+                "timeframe": timeframe,
+                "limit": 10000,  # Max bars to return
+                "adjustment": "split",  # Adjust for splits
+                "feed": "iex",  # IEX feed (free tier)
             }
 
             # Make request
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
 
             data = response.json()
 
             # Check for errors
-            if 'bars' not in data:
+            if "bars" not in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
-            bars = data.get('bars', [])
+            bars = data.get("bars", [])
             if not bars:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No bars returned for {symbol}"
+                    error=f"No bars returned for {symbol}",
                 )
 
             # Convert to standard format
             records = []
             for bar in bars:
                 # Parse timestamp
-                timestamp = bar.get('t', '')
-                if 'T' in timestamp:
-                    date_str = timestamp.split('T')[0]
+                timestamp = bar.get("t", "")
+                if "T" in timestamp:
+                    date_str = timestamp.split("T")[0]
                 else:
                     date_str = timestamp[:10]
 
-                records.append({
-                    'Date': date_str,
-                    'open': float(bar.get('o', 0)),
-                    'high': float(bar.get('h', 0)),
-                    'low': float(bar.get('l', 0)),
-                    'close': float(bar.get('c', 0)),
-                    'volume': int(bar.get('v', 0)),
-                })
+                records.append(
+                    {
+                        "Date": date_str,
+                        "open": float(bar.get("o", 0)),
+                        "high": float(bar.get("h", 0)),
+                        "low": float(bar.get("l", 0)),
+                        "close": float(bar.get("c", 0)),
+                        "volume": int(bar.get("v", 0)),
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -162,7 +170,7 @@ class AlpacaProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data in date range {start_date} to {end_date}"
+                    error=f"No data in date range {start_date} to {end_date}",
                 )
 
             return DataResponse(
@@ -170,15 +178,15 @@ class AlpacaProvider(BaseProvider):
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Alpaca IEX',
-                    'timeframe': timeframe,
-                    'next_page_token': data.get('next_page_token')
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Alpaca IEX",
+                    "timeframe": timeframe,
+                    "next_page_token": data.get("next_page_token"),
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -187,7 +195,7 @@ class AlpacaProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Alpaca API request failed: {str(e)}"
+                error=f"Alpaca API request failed: {str(e)}",
             )
         except Exception as e:
             return DataResponse(
@@ -195,7 +203,7 @@ class AlpacaProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
     def get_latest_quote(self, symbol: str) -> dict:
@@ -211,13 +219,15 @@ class AlpacaProvider(BaseProvider):
         try:
             symbol = symbol.upper()
             url = f"{self.data_url}/v2/stocks/{symbol}/quotes/latest"
-            params = {'feed': 'iex'}
+            params = {"feed": "iex"}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
-            return data.get('quote', {})
+            return data.get("quote", {})
 
         except Exception as e:
             print(f"Failed to get latest quote: {e}")
@@ -236,13 +246,15 @@ class AlpacaProvider(BaseProvider):
         try:
             symbol = symbol.upper()
             url = f"{self.data_url}/v2/stocks/{symbol}/trades/latest"
-            params = {'feed': 'iex'}
+            params = {"feed": "iex"}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             data = response.json()
-            return data.get('trade', {})
+            return data.get("trade", {})
 
         except Exception as e:
             print(f"Failed to get latest trade: {e}")
@@ -261,9 +273,11 @@ class AlpacaProvider(BaseProvider):
         try:
             symbol = symbol.upper()
             url = f"{self.data_url}/v2/stocks/{symbol}/snapshot"
-            params = {'feed': 'iex'}
+            params = {"feed": "iex"}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             return response.json()
@@ -322,9 +336,11 @@ class AlpacaProvider(BaseProvider):
         """
         try:
             url = f"{self.base_url}/v2/orders"
-            params = {'status': status}
+            params = {"status": status}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=10)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=10
+            )
             response.raise_for_status()
 
             return response.json()
@@ -333,10 +349,7 @@ class AlpacaProvider(BaseProvider):
             print(f"Failed to get orders: {e}")
             return []
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Alpaca does not provide options data.
         Use Tradier or IBKR for options.
@@ -346,7 +359,7 @@ class AlpacaProvider(BaseProvider):
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="Alpaca does not provide options data. Use Tradier or IBKR instead."
+            error="Alpaca does not provide options data. Use Tradier or IBKR instead.",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -366,7 +379,7 @@ class AlpacaProvider(BaseProvider):
 
             data = response.json()
             # Valid response should have account_number
-            return 'account_number' in data
+            return "account_number" in data
 
         except Exception:
             return False
@@ -378,17 +391,17 @@ class AlpacaProvider(BaseProvider):
 
 # Alpaca data feeds
 ALPACA_FEEDS = {
-    'iex': 'IEX feed (free tier)',
-    'sip': 'SIP feed (consolidated, paid plans)',
-    'otc': 'OTC markets (paid plans)',
+    "iex": "IEX feed (free tier)",
+    "sip": "SIP feed (consolidated, paid plans)",
+    "otc": "OTC markets (paid plans)",
 }
 
 # Alpaca timeframes
 ALPACA_TIMEFRAMES = {
-    '1Min': '1 minute bars',
-    '5Min': '5 minute bars',
-    '15Min': '15 minute bars',
-    '30Min': '30 minute bars',
-    '1Hour': '1 hour bars',
-    '1Day': 'Daily bars',
+    "1Min": "1 minute bars",
+    "5Min": "5 minute bars",
+    "15Min": "15 minute bars",
+    "30Min": "30 minute bars",
+    "1Hour": "1 hour bars",
+    "1Day": "Daily bars",
 }

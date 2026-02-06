@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class GeminiProvider(BaseProvider):
@@ -41,12 +45,12 @@ class GeminiProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Gemini."""
         try:
             # Gemini format: btcusd (lowercase, no separator)
-            symbol = symbol.lower().replace('-', '').replace('_', '')
+            symbol = symbol.lower().replace("-", "").replace("_", "")
 
             # Map intervals
             interval_map = {
@@ -70,8 +74,11 @@ class GeminiProvider(BaseProvider):
 
             if not data:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             # Convert to date objects for filtering
@@ -86,35 +93,48 @@ class GeminiProvider(BaseProvider):
 
                 # Filter by date range
                 if start_dt <= dt.date() <= end_dt:
-                    records.append({
-                        'Date': dt.strftime('%Y-%m-%d'),
-                        'open': float(candle[1]),
-                        'high': float(candle[2]),
-                        'low': float(candle[3]),
-                        'close': float(candle[4]),
-                        'volume': float(candle[5]),
-                    })
+                    records.append(
+                        {
+                            "Date": dt.strftime("%Y-%m-%d"),
+                            "open": float(candle[1]),
+                            "high": float(candle[2]),
+                            "low": float(candle[3]),
+                            "close": float(candle[4]),
+                            "volume": float(candle[5]),
+                        }
+                    )
 
             # Gemini returns newest first, reverse for chronological order
             records.reverse()
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Gemini'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Gemini",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Gemini error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Gemini error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Gemini does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Gemini does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

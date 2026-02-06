@@ -13,7 +13,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class CoinbaseProvider(BaseProvider):
@@ -34,7 +38,7 @@ class CoinbaseProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical candle data from Coinbase.
@@ -50,18 +54,18 @@ class CoinbaseProvider(BaseProvider):
         """
         try:
             # Normalize symbol (add dash if missing)
-            if '-' not in symbol:
+            if "-" not in symbol:
                 # Try to split common crypto pairs
                 symbol = self._normalize_symbol(symbol)
 
             # Map interval to Coinbase granularity (in seconds)
             granularity_map = {
-                '1m': 60,
-                '5m': 300,
-                '15m': 900,
-                '1h': 3600,
-                '6h': 21600,
-                '1d': 86400,
+                "1m": 60,
+                "5m": 300,
+                "15m": 900,
+                "1h": 3600,
+                "6h": 21600,
+                "1d": 86400,
             }
             granularity = granularity_map.get(interval, 86400)
 
@@ -80,12 +84,15 @@ class CoinbaseProvider(BaseProvider):
             while current_start < end_dt:
                 # Calculate chunk end (max 300 candles worth)
                 from datetime import timedelta
-                chunk_end = min(current_start + timedelta(seconds=chunk_seconds), end_dt)
+
+                chunk_end = min(
+                    current_start + timedelta(seconds=chunk_seconds), end_dt
+                )
 
                 params = {
-                    'start': current_start.isoformat(),
-                    'end': chunk_end.isoformat(),
-                    'granularity': granularity
+                    "start": current_start.isoformat(),
+                    "end": chunk_end.isoformat(),
+                    "granularity": granularity,
                 }
 
                 # Make request
@@ -95,13 +102,13 @@ class CoinbaseProvider(BaseProvider):
                 candles = response.json()
 
                 # Check if it's an error response
-                if isinstance(candles, dict) and 'message' in candles:
+                if isinstance(candles, dict) and "message" in candles:
                     return DataResponse(
                         symbol=symbol,
                         provider=self.name,
                         data=[],
                         success=False,
-                        error=candles['message']
+                        error=candles["message"],
                     )
 
                 if candles:
@@ -116,7 +123,7 @@ class CoinbaseProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
             # Coinbase returns: [timestamp, low, high, open, close, volume]
@@ -128,31 +135,33 @@ class CoinbaseProvider(BaseProvider):
                 if ts not in seen_timestamps:
                     seen_timestamps.add(ts)
                     timestamp = datetime.fromtimestamp(ts)
-                    records.append({
-                        'Date': timestamp.isoformat(),
-                        'open': float(candle[3]),
-                        'high': float(candle[2]),
-                        'low': float(candle[1]),
-                        'close': float(candle[4]),
-                        'volume': float(candle[5]),
-                    })
+                    records.append(
+                        {
+                            "Date": timestamp.isoformat(),
+                            "open": float(candle[3]),
+                            "high": float(candle[2]),
+                            "low": float(candle[1]),
+                            "close": float(candle[4]),
+                            "volume": float(candle[5]),
+                        }
+                    )
 
             # Sort by date (oldest first)
-            records.sort(key=lambda x: x['Date'])
+            records.sort(key=lambda x: x["Date"])
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'granularity': granularity,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Coinbase Exchange'
+                    "interval": interval,
+                    "granularity": granularity,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Coinbase Exchange",
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -161,7 +170,7 @@ class CoinbaseProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Coinbase API request failed: {str(e)}"
+                error=f"Coinbase API request failed: {str(e)}",
             )
         except Exception as e:
             return DataResponse(
@@ -169,7 +178,7 @@ class CoinbaseProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
     def _normalize_symbol(self, symbol: str) -> str:
@@ -185,15 +194,15 @@ class CoinbaseProvider(BaseProvider):
         symbol = symbol.upper()
 
         # Already has dash
-        if '-' in symbol:
+        if "-" in symbol:
             return symbol
 
         # Common base currencies
-        quote_currencies = ['USD', 'USDT', 'EUR', 'GBP', 'BTC', 'ETH']
+        quote_currencies = ["USD", "USDT", "EUR", "GBP", "BTC", "ETH"]
 
         for quote in quote_currencies:
             if symbol.endswith(quote):
-                base = symbol[:-len(quote)]
+                base = symbol[: -len(quote)]
                 return f"{base}-{quote}"
 
         # Default: assume USD
@@ -224,17 +233,14 @@ class CoinbaseProvider(BaseProvider):
             print(f"Failed to get Coinbase products: {e}")
             return []
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """Coinbase does not provide options data."""
         return OptionsChainResponse(
             symbol=request.symbol,
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="Coinbase does not provide options data"
+            error="Coinbase does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -253,7 +259,7 @@ class CoinbaseProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return 'iso' in data or 'epoch' in data
+            return "iso" in data or "epoch" in data
 
         except Exception:
             return False
@@ -265,8 +271,24 @@ class CoinbaseProvider(BaseProvider):
 
 # Popular Coinbase trading pairs
 POPULAR_PAIRS = [
-    'BTC-USD', 'ETH-USD', 'BNB-USD', 'SOL-USD', 'ADA-USD',
-    'XRP-USD', 'DOT-USD', 'DOGE-USD', 'AVAX-USD', 'MATIC-USD',
-    'LINK-USD', 'UNI-USD', 'ATOM-USD', 'LTC-USD', 'BCH-USD',
-    'NEAR-USD', 'ALGO-USD', 'VET-USD', 'FIL-USD', 'TRX-USD',
+    "BTC-USD",
+    "ETH-USD",
+    "BNB-USD",
+    "SOL-USD",
+    "ADA-USD",
+    "XRP-USD",
+    "DOT-USD",
+    "DOGE-USD",
+    "AVAX-USD",
+    "MATIC-USD",
+    "LINK-USD",
+    "UNI-USD",
+    "ATOM-USD",
+    "LTC-USD",
+    "BCH-USD",
+    "NEAR-USD",
+    "ALGO-USD",
+    "VET-USD",
+    "FIL-USD",
+    "TRX-USD",
 ]

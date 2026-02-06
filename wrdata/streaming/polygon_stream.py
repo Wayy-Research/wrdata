@@ -58,21 +58,18 @@ class PolygonStreamProvider(BaseStreamProvider):
             print(f"✓ Connected to Polygon.io WebSocket")
 
             # Authenticate
-            auth_message = {
-                "action": "auth",
-                "params": self.api_key
-            }
+            auth_message = {"action": "auth", "params": self.api_key}
             await self.websocket.send_json(auth_message)
 
             # Wait for auth response
             response = await self.websocket.receive_json()
 
-            if response[0].get('status') == 'auth_success':
+            if response[0].get("status") == "auth_success":
                 self._authenticated = True
                 print("✓ Authenticated with Polygon.io")
                 return True
             else:
-                error = response[0].get('message', 'Authentication failed')
+                error = response[0].get("message", "Authentication failed")
                 print(f"✗ Polygon authentication failed: {error}")
                 return False
 
@@ -103,7 +100,7 @@ class PolygonStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time trades.
@@ -128,7 +125,7 @@ class PolygonStreamProvider(BaseStreamProvider):
             # Subscribe to trades
             subscribe_msg = {
                 "action": "subscribe",
-                "params": f"T.{symbol}"  # T = Trades
+                "params": f"T.{symbol}",  # T = Trades
             }
             await self.websocket.send_json(subscribe_msg)
 
@@ -141,20 +138,22 @@ class PolygonStreamProvider(BaseStreamProvider):
 
                     for event in data:
                         # Check if it's a trade event
-                        if event.get('ev') == 'T':
+                        if event.get("ev") == "T":
                             stream_msg = StreamMessage(
-                                symbol=event.get('sym'),
-                                timestamp=datetime.fromtimestamp(event.get('t', 0) / 1000),
-                                price=float(event.get('p', 0)),
-                                volume=float(event.get('s', 0)),  # Size
+                                symbol=event.get("sym"),
+                                timestamp=datetime.fromtimestamp(
+                                    event.get("t", 0) / 1000
+                                ),
+                                price=float(event.get("p", 0)),
+                                volume=float(event.get("s", 0)),  # Size
                                 provider=self.name,
                                 stream_type="trade",
                                 raw_data={
-                                    'exchange': event.get('x'),
-                                    'conditions': event.get('c', []),
-                                    'id': event.get('i'),
-                                    'tape': event.get('z'),
-                                }
+                                    "exchange": event.get("x"),
+                                    "conditions": event.get("c", []),
+                                    "id": event.get("i"),
+                                    "tape": event.get("z"),
+                                },
                             )
 
                             await self._notify_callbacks(stream_id, stream_msg)
@@ -166,10 +165,7 @@ class PolygonStreamProvider(BaseStreamProvider):
 
         except asyncio.CancelledError:
             # Unsubscribe
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "params": f"T.{symbol}"
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "params": f"T.{symbol}"}
             await self.websocket.send_json(unsubscribe_msg)
             raise
 
@@ -180,7 +176,7 @@ class PolygonStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time quotes (bid/ask).
@@ -205,7 +201,7 @@ class PolygonStreamProvider(BaseStreamProvider):
             # Subscribe to quotes
             subscribe_msg = {
                 "action": "subscribe",
-                "params": f"Q.{symbol}"  # Q = Quotes
+                "params": f"Q.{symbol}",  # Q = Quotes
             }
             await self.websocket.send_json(subscribe_msg)
 
@@ -218,21 +214,23 @@ class PolygonStreamProvider(BaseStreamProvider):
 
                     for event in data:
                         # Check if it's a quote event
-                        if event.get('ev') == 'Q':
+                        if event.get("ev") == "Q":
                             stream_msg = StreamMessage(
-                                symbol=event.get('sym'),
-                                timestamp=datetime.fromtimestamp(event.get('t', 0) / 1000),
-                                bid=float(event.get('bp', 0)),  # Bid price
-                                ask=float(event.get('ap', 0)),  # Ask price
+                                symbol=event.get("sym"),
+                                timestamp=datetime.fromtimestamp(
+                                    event.get("t", 0) / 1000
+                                ),
+                                bid=float(event.get("bp", 0)),  # Bid price
+                                ask=float(event.get("ap", 0)),  # Ask price
                                 provider=self.name,
                                 stream_type="quote",
                                 raw_data={
-                                    'bid_size': event.get('bs'),
-                                    'ask_size': event.get('as'),
-                                    'bid_exchange': event.get('bx'),
-                                    'ask_exchange': event.get('ax'),
-                                    'conditions': event.get('c', []),
-                                }
+                                    "bid_size": event.get("bs"),
+                                    "ask_size": event.get("as"),
+                                    "bid_exchange": event.get("bx"),
+                                    "ask_exchange": event.get("ax"),
+                                    "conditions": event.get("c", []),
+                                },
                             )
 
                             await self._notify_callbacks(stream_id, stream_msg)
@@ -244,10 +242,7 @@ class PolygonStreamProvider(BaseStreamProvider):
 
         except asyncio.CancelledError:
             # Unsubscribe
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "params": f"Q.{symbol}"
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "params": f"Q.{symbol}"}
             await self.websocket.send_json(unsubscribe_msg)
             raise
 
@@ -259,7 +254,7 @@ class PolygonStreamProvider(BaseStreamProvider):
         symbol: str,
         interval: str = "1m",
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time aggregates (bars).
@@ -283,7 +278,7 @@ class PolygonStreamProvider(BaseStreamProvider):
 
         # Map interval to Polygon channel
         interval_map = {
-            "1s": "A",   # Second aggregates
+            "1s": "A",  # Second aggregates
             "1m": "AM",  # Minute aggregates
         }
 
@@ -291,10 +286,7 @@ class PolygonStreamProvider(BaseStreamProvider):
 
         try:
             # Subscribe to aggregates
-            subscribe_msg = {
-                "action": "subscribe",
-                "params": f"{channel}.{symbol}"
-            }
+            subscribe_msg = {"action": "subscribe", "params": f"{channel}.{symbol}"}
             await self.websocket.send_json(subscribe_msg)
 
             print(f"✓ Subscribed to {symbol} {interval} aggregates")
@@ -306,23 +298,25 @@ class PolygonStreamProvider(BaseStreamProvider):
 
                     for event in data:
                         # Check if it's an aggregate event
-                        if event.get('ev') in ['A', 'AM']:
+                        if event.get("ev") in ["A", "AM"]:
                             stream_msg = StreamMessage(
-                                symbol=event.get('sym'),
-                                timestamp=datetime.fromtimestamp(event.get('s', 0) / 1000),
-                                open=float(event.get('o', 0)),
-                                high=float(event.get('h', 0)),
-                                low=float(event.get('l', 0)),
-                                close=float(event.get('c', 0)),
-                                volume=float(event.get('v', 0)),
+                                symbol=event.get("sym"),
+                                timestamp=datetime.fromtimestamp(
+                                    event.get("s", 0) / 1000
+                                ),
+                                open=float(event.get("o", 0)),
+                                high=float(event.get("h", 0)),
+                                low=float(event.get("l", 0)),
+                                close=float(event.get("c", 0)),
+                                volume=float(event.get("v", 0)),
                                 provider=self.name,
                                 stream_type="bar",
                                 raw_data={
-                                    'vwap': event.get('vw'),  # Volume weighted average
-                                    'avg_price': event.get('a'),
-                                    'start_time': event.get('s'),
-                                    'end_time': event.get('e'),
-                                }
+                                    "vwap": event.get("vw"),  # Volume weighted average
+                                    "avg_price": event.get("a"),
+                                    "start_time": event.get("s"),
+                                    "end_time": event.get("e"),
+                                },
                             )
 
                             await self._notify_callbacks(stream_id, stream_msg)
@@ -334,10 +328,7 @@ class PolygonStreamProvider(BaseStreamProvider):
 
         except asyncio.CancelledError:
             # Unsubscribe
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "params": f"{channel}.{symbol}"
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "params": f"{channel}.{symbol}"}
             await self.websocket.send_json(unsubscribe_msg)
             raise
 
@@ -348,7 +339,7 @@ class PolygonStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to ticker updates (aggregates).
@@ -363,14 +354,16 @@ class PolygonStreamProvider(BaseStreamProvider):
         symbol: str,
         interval: str = "1m",
         callback: Optional[Callable[[StreamMessage], None]] = None,
-        **kwargs
+        **kwargs,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to kline/candlestick data.
 
         This is an alias for subscribe_aggregates for consistency with other providers.
         """
-        async for msg in self.subscribe_aggregates(symbol, interval, callback, **kwargs):
+        async for msg in self.subscribe_aggregates(
+            symbol, interval, callback, **kwargs
+        ):
             yield msg
 
     def is_connected(self) -> bool:

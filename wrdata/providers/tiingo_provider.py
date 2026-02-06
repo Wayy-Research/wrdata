@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class TiingoProvider(BaseProvider):
@@ -42,7 +46,7 @@ class TiingoProvider(BaseProvider):
         self.base_url = "https://api.tiingo.com"
         self.headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Token {self.api_key}"
+            "Authorization": f"Token {self.api_key}",
         }
 
     def fetch_timeseries(
@@ -51,7 +55,7 @@ class TiingoProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical stock data from Tiingo."""
         try:
@@ -60,51 +64,65 @@ class TiingoProvider(BaseProvider):
             # Build URL
             url = f"{self.base_url}/tiingo/daily/{symbol}/prices"
 
-            params = {
-                "startDate": start_date,
-                "endDate": end_date,
-                "format": "json"
-            }
+            params = {"startDate": start_date, "endDate": end_date, "format": "json"}
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
             data = response.json()
 
             if not data:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
             for bar in data:
-                records.append({
-                    'Date': bar.get('date', '')[:10],
-                    'open': float(bar.get('open', 0)),
-                    'high': float(bar.get('high', 0)),
-                    'low': float(bar.get('low', 0)),
-                    'close': float(bar.get('close', 0)),
-                    'volume': int(bar.get('volume', 0)),
-                })
+                records.append(
+                    {
+                        "Date": bar.get("date", "")[:10],
+                        "open": float(bar.get("open", 0)),
+                        "high": float(bar.get("high", 0)),
+                        "low": float(bar.get("low", 0)),
+                        "close": float(bar.get("close", 0)),
+                        "volume": int(bar.get("volume", 0)),
+                    }
+                )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Tiingo'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Tiingo",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Tiingo error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Tiingo error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """Tiingo does not support options."""
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Tiingo does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Tiingo does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

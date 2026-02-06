@@ -21,14 +21,16 @@ import time
 @dataclass
 class TimeWindow:
     """A time window for parallel fetching."""
+
     start_ts: int  # milliseconds
-    end_ts: int    # milliseconds
-    index: int     # for ordering results
+    end_ts: int  # milliseconds
+    index: int  # for ordering results
 
 
 @dataclass
 class FetchResult:
     """Result from a single window fetch."""
+
     window: TimeWindow
     data: List[List]  # OHLCV candles
     success: bool
@@ -50,42 +52,42 @@ class AsyncOHLCVFetcher:
 
     # Provider-specific configurations
     PROVIDER_CONFIG = {
-        'binance': {
-            'max_candles': 1000,
-            'rate_limit_per_sec': 10,
-            'base_url': 'https://api.binance.com/api/v3/klines',
+        "binance": {
+            "max_candles": 1000,
+            "rate_limit_per_sec": 10,
+            "base_url": "https://api.binance.com/api/v3/klines",
         },
-        'coinbase': {
-            'max_candles': 300,
-            'rate_limit_per_sec': 5,
-            'base_url': 'https://api.exchange.coinbase.com/products/{symbol}/candles',
+        "coinbase": {
+            "max_candles": 300,
+            "rate_limit_per_sec": 5,
+            "base_url": "https://api.exchange.coinbase.com/products/{symbol}/candles",
         },
-        'kraken': {
-            'max_candles': 720,
-            'rate_limit_per_sec': 3,
-            'base_url': 'https://api.kraken.com/0/public/OHLC',
+        "kraken": {
+            "max_candles": 720,
+            "rate_limit_per_sec": 3,
+            "base_url": "https://api.kraken.com/0/public/OHLC",
         },
     }
 
     # Interval to milliseconds
     INTERVAL_MS = {
-        '1m': 60 * 1000,
-        '3m': 3 * 60 * 1000,
-        '5m': 5 * 60 * 1000,
-        '15m': 15 * 60 * 1000,
-        '30m': 30 * 60 * 1000,
-        '1h': 60 * 60 * 1000,
-        '2h': 2 * 60 * 60 * 1000,
-        '4h': 4 * 60 * 60 * 1000,
-        '6h': 6 * 60 * 60 * 1000,
-        '12h': 12 * 60 * 60 * 1000,
-        '1d': 24 * 60 * 60 * 1000,
-        '1w': 7 * 24 * 60 * 60 * 1000,
+        "1m": 60 * 1000,
+        "3m": 3 * 60 * 1000,
+        "5m": 5 * 60 * 1000,
+        "15m": 15 * 60 * 1000,
+        "30m": 30 * 60 * 1000,
+        "1h": 60 * 60 * 1000,
+        "2h": 2 * 60 * 60 * 1000,
+        "4h": 4 * 60 * 60 * 1000,
+        "6h": 6 * 60 * 60 * 1000,
+        "12h": 12 * 60 * 60 * 1000,
+        "1d": 24 * 60 * 60 * 1000,
+        "1w": 7 * 24 * 60 * 60 * 1000,
     }
 
     def __init__(
         self,
-        provider: str = 'binance',
+        provider: str = "binance",
         max_concurrent: int = 10,
         max_retries: int = 3,
         timeout: int = 30,
@@ -100,7 +102,9 @@ class AsyncOHLCVFetcher:
             timeout: Request timeout in seconds (default: 30)
         """
         self.provider = provider.lower()
-        self.config = self.PROVIDER_CONFIG.get(self.provider, self.PROVIDER_CONFIG['binance'])
+        self.config = self.PROVIDER_CONFIG.get(
+            self.provider, self.PROVIDER_CONFIG["binance"]
+        )
         self.max_concurrent = max_concurrent
         self.max_retries = max_retries
         self.timeout = timeout
@@ -127,7 +131,7 @@ class AsyncOHLCVFetcher:
             List of TimeWindow objects
         """
         ms_per_candle = self.INTERVAL_MS.get(interval, 60 * 1000)
-        max_candles = self.config['max_candles']
+        max_candles = self.config["max_candles"]
         window_size_ms = max_candles * ms_per_candle
 
         windows = []
@@ -136,11 +140,13 @@ class AsyncOHLCVFetcher:
 
         while current_start < end_ts:
             window_end = min(current_start + window_size_ms, end_ts)
-            windows.append(TimeWindow(
-                start_ts=current_start,
-                end_ts=window_end,
-                index=index,
-            ))
+            windows.append(
+                TimeWindow(
+                    start_ts=current_start,
+                    end_ts=window_end,
+                    index=index,
+                )
+            )
             current_start = window_end
             index += 1
 
@@ -155,18 +161,18 @@ class AsyncOHLCVFetcher:
     ) -> FetchResult:
         """Fetch a single window from Binance."""
         params = {
-            'symbol': symbol.replace('/', '').replace('-', ''),
-            'interval': interval,
-            'startTime': window.start_ts,
-            'endTime': window.end_ts,
-            'limit': self.config['max_candles'],
+            "symbol": symbol.replace("/", "").replace("-", ""),
+            "interval": interval,
+            "startTime": window.start_ts,
+            "endTime": window.end_ts,
+            "limit": self.config["max_candles"],
         }
 
         async with self._semaphore:
             for attempt in range(self.max_retries):
                 try:
                     async with session.get(
-                        self.config['base_url'],
+                        self.config["base_url"],
                         params=params,
                         timeout=aiohttp.ClientTimeout(total=self.timeout),
                     ) as response:
@@ -175,29 +181,46 @@ class AsyncOHLCVFetcher:
                             # Binance format: [open_time, open, high, low, close, volume, ...]
                             # Convert to standard: [timestamp, open, high, low, close, volume]
                             candles = [
-                                [c[0], float(c[1]), float(c[2]), float(c[3]), float(c[4]), float(c[5])]
+                                [
+                                    c[0],
+                                    float(c[1]),
+                                    float(c[2]),
+                                    float(c[3]),
+                                    float(c[4]),
+                                    float(c[5]),
+                                ]
                                 for c in data
                             ]
-                            return FetchResult(window=window, data=candles, success=True)
+                            return FetchResult(
+                                window=window, data=candles, success=True
+                            )
                         elif response.status == 429:
                             # Rate limited - wait and retry
-                            await asyncio.sleep(2 ** attempt)
+                            await asyncio.sleep(2**attempt)
                         else:
                             text = await response.text()
                             return FetchResult(
-                                window=window, data=[], success=False,
-                                error=f"HTTP {response.status}: {text[:200]}"
+                                window=window,
+                                data=[],
+                                success=False,
+                                error=f"HTTP {response.status}: {text[:200]}",
                             )
                 except asyncio.TimeoutError:
                     if attempt == self.max_retries - 1:
-                        return FetchResult(window=window, data=[], success=False, error="Timeout")
+                        return FetchResult(
+                            window=window, data=[], success=False, error="Timeout"
+                        )
                     await asyncio.sleep(1)
                 except Exception as e:
                     if attempt == self.max_retries - 1:
-                        return FetchResult(window=window, data=[], success=False, error=str(e))
+                        return FetchResult(
+                            window=window, data=[], success=False, error=str(e)
+                        )
                     await asyncio.sleep(1)
 
-        return FetchResult(window=window, data=[], success=False, error="Max retries exceeded")
+        return FetchResult(
+            window=window, data=[], success=False, error="Max retries exceeded"
+        )
 
     async def _fetch_window_coinbase(
         self,
@@ -209,32 +232,36 @@ class AsyncOHLCVFetcher:
         """Fetch a single window from Coinbase."""
         # Coinbase granularity in seconds
         granularity_map = {
-            '1m': 60, '5m': 300, '15m': 900,
-            '1h': 3600, '6h': 21600, '1d': 86400,
+            "1m": 60,
+            "5m": 300,
+            "15m": 900,
+            "1h": 3600,
+            "6h": 21600,
+            "1d": 86400,
         }
         granularity = granularity_map.get(interval, 86400)
 
         # Normalize symbol to Coinbase format (BTC-USD)
-        if '/' in symbol:
-            symbol = symbol.replace('/', '-')
-        elif '-' not in symbol:
+        if "/" in symbol:
+            symbol = symbol.replace("/", "-")
+        elif "-" not in symbol:
             # Try to split (BTCUSD -> BTC-USD)
-            for quote in ['USD', 'USDT', 'EUR', 'GBP', 'BTC', 'ETH']:
+            for quote in ["USD", "USDT", "EUR", "GBP", "BTC", "ETH"]:
                 if symbol.upper().endswith(quote):
-                    base = symbol[:-len(quote)]
+                    base = symbol[: -len(quote)]
                     symbol = f"{base}-{quote}"
                     break
 
-        url = self.config['base_url'].format(symbol=symbol.upper())
+        url = self.config["base_url"].format(symbol=symbol.upper())
 
         # Coinbase uses ISO format
         start_iso = datetime.utcfromtimestamp(window.start_ts / 1000).isoformat()
         end_iso = datetime.utcfromtimestamp(window.end_ts / 1000).isoformat()
 
         params = {
-            'start': start_iso,
-            'end': end_iso,
-            'granularity': granularity,
+            "start": start_iso,
+            "end": end_iso,
+            "granularity": granularity,
         }
 
         async with self._semaphore:
@@ -247,36 +274,55 @@ class AsyncOHLCVFetcher:
                     ) as response:
                         if response.status == 200:
                             data = await response.json()
-                            if isinstance(data, dict) and 'message' in data:
+                            if isinstance(data, dict) and "message" in data:
                                 return FetchResult(
-                                    window=window, data=[], success=False,
-                                    error=data['message']
+                                    window=window,
+                                    data=[],
+                                    success=False,
+                                    error=data["message"],
                                 )
                             # Coinbase format: [timestamp, low, high, open, close, volume]
                             # Convert to standard: [timestamp_ms, open, high, low, close, volume]
                             candles = [
-                                [c[0] * 1000, float(c[3]), float(c[2]), float(c[1]), float(c[4]), float(c[5])]
+                                [
+                                    c[0] * 1000,
+                                    float(c[3]),
+                                    float(c[2]),
+                                    float(c[1]),
+                                    float(c[4]),
+                                    float(c[5]),
+                                ]
                                 for c in data
                             ]
-                            return FetchResult(window=window, data=candles, success=True)
+                            return FetchResult(
+                                window=window, data=candles, success=True
+                            )
                         elif response.status == 429:
-                            await asyncio.sleep(2 ** attempt)
+                            await asyncio.sleep(2**attempt)
                         else:
                             text = await response.text()
                             return FetchResult(
-                                window=window, data=[], success=False,
-                                error=f"HTTP {response.status}: {text[:200]}"
+                                window=window,
+                                data=[],
+                                success=False,
+                                error=f"HTTP {response.status}: {text[:200]}",
                             )
                 except asyncio.TimeoutError:
                     if attempt == self.max_retries - 1:
-                        return FetchResult(window=window, data=[], success=False, error="Timeout")
+                        return FetchResult(
+                            window=window, data=[], success=False, error="Timeout"
+                        )
                     await asyncio.sleep(1)
                 except Exception as e:
                     if attempt == self.max_retries - 1:
-                        return FetchResult(window=window, data=[], success=False, error=str(e))
+                        return FetchResult(
+                            window=window, data=[], success=False, error=str(e)
+                        )
                     await asyncio.sleep(1)
 
-        return FetchResult(window=window, data=[], success=False, error="Max retries exceeded")
+        return FetchResult(
+            window=window, data=[], success=False, error="Max retries exceeded"
+        )
 
     async def _fetch_window(
         self,
@@ -286,9 +332,9 @@ class AsyncOHLCVFetcher:
         interval: str,
     ) -> FetchResult:
         """Route to appropriate provider fetch method."""
-        if self.provider == 'binance':
+        if self.provider == "binance":
             return await self._fetch_window_binance(session, symbol, window, interval)
-        elif self.provider == 'coinbase':
+        elif self.provider == "coinbase":
             return await self._fetch_window_coinbase(session, symbol, window, interval)
         else:
             # Default to binance-style
@@ -299,7 +345,7 @@ class AsyncOHLCVFetcher:
         symbol: str,
         start: str,
         end: str,
-        interval: str = '1d',
+        interval: str = "1d",
         progress_callback: Optional[callable] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -316,8 +362,8 @@ class AsyncOHLCVFetcher:
             List of OHLCV dictionaries sorted by timestamp
         """
         # Parse dates to timestamps
-        start_ts = int(datetime.strptime(start, '%Y-%m-%d').timestamp() * 1000)
-        end_ts = int(datetime.strptime(end, '%Y-%m-%d').timestamp() * 1000)
+        start_ts = int(datetime.strptime(start, "%Y-%m-%d").timestamp() * 1000)
+        end_ts = int(datetime.strptime(end, "%Y-%m-%d").timestamp() * 1000)
 
         # Calculate windows
         windows = self._calculate_time_windows(start_ts, end_ts, interval)
@@ -370,19 +416,25 @@ class AsyncOHLCVFetcher:
         data = []
         for candle in unique_candles:
             timestamp, open_p, high, low, close, volume = candle
-            data.append({
-                'timestamp': datetime.utcfromtimestamp(timestamp / 1000).isoformat(),
-                'open': open_p,
-                'high': high,
-                'low': low,
-                'close': close,
-                'volume': volume,
-            })
+            data.append(
+                {
+                    "timestamp": datetime.utcfromtimestamp(
+                        timestamp / 1000
+                    ).isoformat(),
+                    "open": open_p,
+                    "high": high,
+                    "low": low,
+                    "close": close,
+                    "volume": volume,
+                }
+            )
 
         # Log performance
         candles_per_sec = len(data) / elapsed if elapsed > 0 else 0
-        print(f"Fetched {len(data):,} candles in {elapsed:.1f}s ({candles_per_sec:,.0f}/sec) "
-              f"from {len(windows)} windows ({failed_windows} failed)")
+        print(
+            f"Fetched {len(data):,} candles in {elapsed:.1f}s ({candles_per_sec:,.0f}/sec) "
+            f"from {len(windows)} windows ({failed_windows} failed)"
+        )
 
         return data
 
@@ -398,7 +450,7 @@ class AsyncCCXTFetcher:
 
     def __init__(
         self,
-        exchange_id: str = 'binance',
+        exchange_id: str = "binance",
         max_concurrent: int = 10,
         max_retries: int = 3,
     ):
@@ -412,13 +464,16 @@ class AsyncCCXTFetcher:
         """Lazy initialize async exchange."""
         if self._exchange is None:
             import ccxt.async_support as ccxt_async
+
             if not hasattr(ccxt_async, self.exchange_id):
                 raise ValueError(f"Exchange '{self.exchange_id}' not supported by CCXT")
             exchange_class = getattr(ccxt_async, self.exchange_id)
-            self._exchange = exchange_class({
-                'enableRateLimit': True,
-                'timeout': 30000,
-            })
+            self._exchange = exchange_class(
+                {
+                    "enableRateLimit": True,
+                    "timeout": 30000,
+                }
+            )
             try:
                 await self._exchange.load_markets()
             except Exception as e:
@@ -460,7 +515,7 @@ class AsyncCCXTFetcher:
         symbol: str,
         start: str,
         end: str,
-        interval: str = '1d',
+        interval: str = "1d",
     ) -> List[Dict[str, Any]]:
         """
         Fetch OHLCV data in parallel using CCXT async.
@@ -477,26 +532,26 @@ class AsyncCCXTFetcher:
         exchange = await self._get_exchange()
 
         # Normalize symbol
-        if '-' in symbol:
-            symbol = symbol.replace('-', '/')
+        if "-" in symbol:
+            symbol = symbol.replace("-", "/")
 
         # Check if symbol exists
         if symbol not in exchange.markets:
             # Try common variations
-            base = symbol.split('/')[0] if '/' in symbol else symbol[:-4]
-            for quote in ['USDT', 'USD', 'USDC', 'BUSD']:
+            base = symbol.split("/")[0] if "/" in symbol else symbol[:-4]
+            for quote in ["USDT", "USD", "USDC", "BUSD"]:
                 alt = f"{base}/{quote}"
                 if alt in exchange.markets:
                     symbol = alt
                     break
 
         # Parse dates
-        start_ts = int(datetime.strptime(start, '%Y-%m-%d').timestamp() * 1000)
-        end_ts = int(datetime.strptime(end, '%Y-%m-%d').timestamp() * 1000)
+        start_ts = int(datetime.strptime(start, "%Y-%m-%d").timestamp() * 1000)
+        end_ts = int(datetime.strptime(end, "%Y-%m-%d").timestamp() * 1000)
 
         # Calculate window parameters
         ms_per_candle = self.INTERVAL_MS.get(interval, 60 * 1000)
-        limit = 1000 if self.exchange_id == 'binance' else 500
+        limit = 1000 if self.exchange_id == "binance" else 500
         window_size = limit * ms_per_candle
 
         # Generate all time windows
@@ -551,18 +606,22 @@ class AsyncCCXTFetcher:
         # Convert to dict format
         data = []
         for c in unique:
-            data.append({
-                'timestamp': datetime.utcfromtimestamp(c[0] / 1000).isoformat(),
-                'open': float(c[1]),
-                'high': float(c[2]),
-                'low': float(c[3]),
-                'close': float(c[4]),
-                'volume': float(c[5]),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.utcfromtimestamp(c[0] / 1000).isoformat(),
+                    "open": float(c[1]),
+                    "high": float(c[2]),
+                    "low": float(c[3]),
+                    "close": float(c[4]),
+                    "volume": float(c[5]),
+                }
+            )
 
         rate = len(data) / elapsed if elapsed > 0 else 0
-        print(f"Fetched {len(data):,} candles in {elapsed:.1f}s ({rate:,.0f}/sec) "
-              f"via {self.exchange_id} ({errors} errors)")
+        print(
+            f"Fetched {len(data):,} candles in {elapsed:.1f}s ({rate:,.0f}/sec) "
+            f"via {self.exchange_id} ({errors} errors)"
+        )
 
         return data
 
@@ -572,8 +631,8 @@ async def fast_fetch(
     symbol: str,
     start: str,
     end: str,
-    interval: str = '1d',
-    provider: str = 'binance',
+    interval: str = "1d",
+    provider: str = "binance",
     max_concurrent: int = 10,
 ) -> List[Dict[str, Any]]:
     """

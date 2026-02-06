@@ -24,7 +24,7 @@ class VolumeTracker:
         self,
         window_size: int = 1000,
         time_window_seconds: Optional[int] = None,
-        percentile_threshold: float = 99.0
+        percentile_threshold: float = 99.0,
     ):
         """
         Initialize volume tracker.
@@ -47,10 +47,7 @@ class VolumeTracker:
         self._cache_invalidation: Dict[str, int] = {}
 
     def add_transaction(
-        self,
-        symbol: str,
-        volume: float,
-        timestamp: Optional[datetime] = None
+        self, symbol: str, volume: float, timestamp: Optional[datetime] = None
     ) -> None:
         """
         Add a transaction to the rolling window.
@@ -75,18 +72,19 @@ class VolumeTracker:
 
             # Prune old entries if time window is set
             if self.time_window_seconds:
-                cutoff_time = datetime.now() - timedelta(seconds=self.time_window_seconds)
-                while self._volumes[symbol] and self._volumes[symbol][0][1] < cutoff_time:
+                cutoff_time = datetime.now() - timedelta(
+                    seconds=self.time_window_seconds
+                )
+                while (
+                    self._volumes[symbol] and self._volumes[symbol][0][1] < cutoff_time
+                ):
                     self._volumes[symbol].popleft()
 
             # Invalidate cache
             self._cache_invalidation[symbol] += 1
 
     def is_whale_transaction(
-        self,
-        symbol: str,
-        volume: float,
-        percentile_threshold: Optional[float] = None
+        self, symbol: str, volume: float, percentile_threshold: Optional[float] = None
     ) -> Tuple[bool, Optional[float], Optional[int]]:
         """
         Check if a transaction qualifies as a whale transaction.
@@ -115,11 +113,17 @@ class VolumeTracker:
             if len(volumes) < 2:
                 percentile = 100.0  # Single transaction is always top percentile
             else:
-                percentile = float(np.percentile(volumes, (volume >= np.array(volumes)).mean() * 100))
+                percentile = float(
+                    np.percentile(volumes, (volume >= np.array(volumes)).mean() * 100)
+                )
 
             # Calculate rank
             sorted_volumes = sorted(volumes, reverse=True)
-            rank = sorted_volumes.index(volume) + 1 if volume in sorted_volumes else len(sorted_volumes) + 1
+            rank = (
+                sorted_volumes.index(volume) + 1
+                if volume in sorted_volumes
+                else len(sorted_volumes) + 1
+            )
 
             is_whale = percentile >= threshold
 
@@ -151,18 +155,18 @@ class VolumeTracker:
             volumes_array = np.array(volumes)
 
             stats = {
-                'count': len(volumes),
-                'mean': float(np.mean(volumes_array)),
-                'median': float(np.median(volumes_array)),
-                'std': float(np.std(volumes_array)),
-                'min': float(np.min(volumes_array)),
-                'max': float(np.max(volumes_array)),
-                'p50': float(np.percentile(volumes_array, 50)),
-                'p75': float(np.percentile(volumes_array, 75)),
-                'p90': float(np.percentile(volumes_array, 90)),
-                'p95': float(np.percentile(volumes_array, 95)),
-                'p99': float(np.percentile(volumes_array, 99)),
-                'p99_9': float(np.percentile(volumes_array, 99.9)),
+                "count": len(volumes),
+                "mean": float(np.mean(volumes_array)),
+                "median": float(np.median(volumes_array)),
+                "std": float(np.std(volumes_array)),
+                "min": float(np.min(volumes_array)),
+                "max": float(np.max(volumes_array)),
+                "p50": float(np.percentile(volumes_array, 50)),
+                "p75": float(np.percentile(volumes_array, 75)),
+                "p90": float(np.percentile(volumes_array, 90)),
+                "p95": float(np.percentile(volumes_array, 95)),
+                "p99": float(np.percentile(volumes_array, 99)),
+                "p99_9": float(np.percentile(volumes_array, 99.9)),
             }
 
             # Cache results
@@ -171,7 +175,9 @@ class VolumeTracker:
 
             return stats
 
-    def get_threshold_volume(self, symbol: str, percentile: float = 99.0) -> Optional[float]:
+    def get_threshold_volume(
+        self, symbol: str, percentile: float = 99.0
+    ) -> Optional[float]:
         """
         Get the volume threshold for a given percentile.
 
@@ -224,7 +230,7 @@ class WhaleDetector:
         default_percentile: float = 99.0,
         window_size: int = 1000,
         time_window_seconds: Optional[int] = 3600,
-        min_usd_value: Optional[float] = None
+        min_usd_value: Optional[float] = None,
     ):
         """
         Initialize whale detector.
@@ -245,7 +251,7 @@ class WhaleDetector:
         self._global_tracker = VolumeTracker(
             window_size=window_size,
             time_window_seconds=time_window_seconds,
-            percentile_threshold=default_percentile
+            percentile_threshold=default_percentile,
         )
 
     def get_tracker(self, exchange: Optional[str] = None) -> VolumeTracker:
@@ -265,7 +271,7 @@ class WhaleDetector:
             self._trackers[exchange] = VolumeTracker(
                 window_size=self.window_size,
                 time_window_seconds=self.time_window_seconds,
-                percentile_threshold=self.default_percentile
+                percentile_threshold=self.default_percentile,
             )
 
         return self._trackers[exchange]
@@ -277,7 +283,7 @@ class WhaleDetector:
         price: float,
         exchange: Optional[str] = None,
         timestamp: Optional[datetime] = None,
-        percentile_threshold: Optional[float] = None
+        percentile_threshold: Optional[float] = None,
     ) -> Tuple[bool, Dict]:
         """
         Process a transaction and determine if it's a whale transaction.
@@ -297,7 +303,7 @@ class WhaleDetector:
 
         # Check absolute USD value threshold if set
         if self.min_usd_value and usd_value < self.min_usd_value:
-            return False, {'reason': 'below_min_usd_value'}
+            return False, {"reason": "below_min_usd_value"}
 
         # Get appropriate tracker
         tracker = self.get_tracker(exchange)
@@ -311,10 +317,10 @@ class WhaleDetector:
         )
 
         metadata = {
-            'percentile': percentile,
-            'rank': rank,
-            'usd_value': usd_value,
-            'statistics': tracker.get_statistics(symbol)
+            "percentile": percentile,
+            "rank": rank,
+            "usd_value": usd_value,
+            "statistics": tracker.get_statistics(symbol),
         }
 
         return is_whale, metadata

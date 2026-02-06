@@ -16,6 +16,7 @@ class StreamMessage:
 
     All providers normalize their data to this format.
     """
+
     symbol: str
     timestamp: datetime
     price: Optional[float] = None
@@ -41,18 +42,18 @@ class StreamMessage:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'symbol': self.symbol,
-            'timestamp': self.timestamp.isoformat(),
-            'price': self.price,
-            'bid': self.bid,
-            'ask': self.ask,
-            'volume': self.volume,
-            'open': self.open,
-            'high': self.high,
-            'low': self.low,
-            'close': self.close,
-            'provider': self.provider,
-            'stream_type': self.stream_type,
+            "symbol": self.symbol,
+            "timestamp": self.timestamp.isoformat(),
+            "price": self.price,
+            "bid": self.bid,
+            "ask": self.ask,
+            "volume": self.volume,
+            "open": self.open,
+            "high": self.high,
+            "low": self.low,
+            "close": self.close,
+            "provider": self.provider,
+            "stream_type": self.stream_type,
         }
 
 
@@ -86,9 +87,7 @@ class BaseStreamProvider(ABC):
 
     @abstractmethod
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time ticker/trade stream.
@@ -107,7 +106,7 @@ class BaseStreamProvider(ABC):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time kline/candlestick stream.
@@ -123,9 +122,7 @@ class BaseStreamProvider(ABC):
         pass
 
     async def subscribe_depth(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to order book depth stream.

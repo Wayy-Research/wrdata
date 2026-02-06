@@ -15,7 +15,11 @@ import time
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class AlphaVantageProvider(BaseProvider):
@@ -54,7 +58,7 @@ class AlphaVantageProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical timeseries data from Alpha Vantage.
@@ -73,7 +77,7 @@ class AlphaVantageProvider(BaseProvider):
             self._rate_limit()
 
             # Determine data type and function
-            if '/' in symbol or len(symbol) == 6:
+            if "/" in symbol or len(symbol) == 6:
                 # Forex pair (EUR/USD or EURUSD)
                 return self._fetch_forex(symbol, start_date, end_date, interval)
             else:
@@ -86,39 +90,35 @@ class AlphaVantageProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
     def _fetch_stock(
-        self,
-        symbol: str,
-        start_date: str,
-        end_date: str,
-        interval: str
+        self, symbol: str, start_date: str, end_date: str, interval: str
     ) -> DataResponse:
         """Fetch stock data from Alpha Vantage."""
         try:
             # Map interval to Alpha Vantage function
-            if interval in ['1m', '5m', '15m', '30m', '60m']:
+            if interval in ["1m", "5m", "15m", "30m", "60m"]:
                 # Intraday data
-                function = 'TIME_SERIES_INTRADAY'
+                function = "TIME_SERIES_INTRADAY"
                 interval_param = interval
             else:
                 # Daily data
-                function = 'TIME_SERIES_DAILY'
+                function = "TIME_SERIES_DAILY"
                 interval_param = None
 
             # Build request
             params = {
-                'function': function,
-                'symbol': symbol,
-                'apikey': self.api_key,
-                'outputsize': 'full',
-                'datatype': 'json'
+                "function": function,
+                "symbol": symbol,
+                "apikey": self.api_key,
+                "outputsize": "full",
+                "datatype": "json",
             }
 
             if interval_param:
-                params['interval'] = interval_param
+                params["interval"] = interval_param
 
             # Make request
             response = requests.get(self.base_url, params=params, timeout=10)
@@ -127,28 +127,28 @@ class AlphaVantageProvider(BaseProvider):
             data = response.json()
 
             # Check for API errors
-            if 'Error Message' in data:
+            if "Error Message" in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=data['Error Message']
+                    error=data["Error Message"],
                 )
 
-            if 'Note' in data:
+            if "Note" in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="API call frequency limit reached. Please wait."
+                    error="API call frequency limit reached. Please wait.",
                 )
 
             # Extract time series data
             time_series_key = None
             for key in data.keys():
-                if 'Time Series' in key:
+                if "Time Series" in key:
                     time_series_key = key
                     break
 
@@ -158,7 +158,7 @@ class AlphaVantageProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="No time series data in response"
+                    error="No time series data in response",
                 )
 
             time_series = data[time_series_key]
@@ -171,14 +171,16 @@ class AlphaVantageProvider(BaseProvider):
                 if ts_date < start_date or ts_date > end_date:
                     continue
 
-                records.append({
-                    'Date': timestamp,
-                    'open': float(values.get('1. open', 0)),
-                    'high': float(values.get('2. high', 0)),
-                    'low': float(values.get('3. low', 0)),
-                    'close': float(values.get('4. close', 0)),
-                    'volume': int(values.get('5. volume', 0)),
-                })
+                records.append(
+                    {
+                        "Date": timestamp,
+                        "open": float(values.get("1. open", 0)),
+                        "high": float(values.get("2. high", 0)),
+                        "low": float(values.get("3. low", 0)),
+                        "close": float(values.get("4. close", 0)),
+                        "volume": int(values.get("5. volume", 0)),
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -186,24 +188,24 @@ class AlphaVantageProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found in date range {start_date} to {end_date}"
+                    error=f"No data found in date range {start_date} to {end_date}",
                 )
 
             # Sort by date (oldest first)
-            records.sort(key=lambda x: x['Date'])
+            records.sort(key=lambda x: x["Date"])
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Alpha Vantage'
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Alpha Vantage",
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -212,46 +214,42 @@ class AlphaVantageProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Alpha Vantage API request failed: {str(e)}"
+                error=f"Alpha Vantage API request failed: {str(e)}",
             )
 
     def _fetch_forex(
-        self,
-        symbol: str,
-        start_date: str,
-        end_date: str,
-        interval: str
+        self, symbol: str, start_date: str, end_date: str, interval: str
     ) -> DataResponse:
         """Fetch forex data from Alpha Vantage."""
         try:
             # Parse forex pair
-            if '/' in symbol:
-                from_currency, to_currency = symbol.split('/')
+            if "/" in symbol:
+                from_currency, to_currency = symbol.split("/")
             else:
                 # Assume format like EURUSD
                 from_currency = symbol[:3]
                 to_currency = symbol[3:]
 
             # Map interval to function
-            if interval in ['1m', '5m', '15m', '30m', '60m']:
-                function = 'FX_INTRADAY'
+            if interval in ["1m", "5m", "15m", "30m", "60m"]:
+                function = "FX_INTRADAY"
                 interval_param = interval
             else:
-                function = 'FX_DAILY'
+                function = "FX_DAILY"
                 interval_param = None
 
             # Build request
             params = {
-                'function': function,
-                'from_symbol': from_currency.upper(),
-                'to_symbol': to_currency.upper(),
-                'apikey': self.api_key,
-                'outputsize': 'full',
-                'datatype': 'json'
+                "function": function,
+                "from_symbol": from_currency.upper(),
+                "to_symbol": to_currency.upper(),
+                "apikey": self.api_key,
+                "outputsize": "full",
+                "datatype": "json",
             }
 
             if interval_param:
-                params['interval'] = interval_param
+                params["interval"] = interval_param
 
             # Make request
             response = requests.get(self.base_url, params=params, timeout=10)
@@ -260,28 +258,28 @@ class AlphaVantageProvider(BaseProvider):
             data = response.json()
 
             # Check for errors
-            if 'Error Message' in data:
+            if "Error Message" in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=data['Error Message']
+                    error=data["Error Message"],
                 )
 
-            if 'Note' in data:
+            if "Note" in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="API call frequency limit reached. Please wait."
+                    error="API call frequency limit reached. Please wait.",
                 )
 
             # Extract time series
             time_series_key = None
             for key in data.keys():
-                if 'Time Series' in key:
+                if "Time Series" in key:
                     time_series_key = key
                     break
 
@@ -291,7 +289,7 @@ class AlphaVantageProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="No time series data in response"
+                    error="No time series data in response",
                 )
 
             time_series = data[time_series_key]
@@ -303,14 +301,16 @@ class AlphaVantageProvider(BaseProvider):
                 if ts_date < start_date or ts_date > end_date:
                     continue
 
-                records.append({
-                    'Date': timestamp,
-                    'open': float(values.get('1. open', 0)),
-                    'high': float(values.get('2. high', 0)),
-                    'low': float(values.get('3. low', 0)),
-                    'close': float(values.get('4. close', 0)),
-                    'volume': 0,  # Forex doesn't have volume
-                })
+                records.append(
+                    {
+                        "Date": timestamp,
+                        "open": float(values.get("1. open", 0)),
+                        "high": float(values.get("2. high", 0)),
+                        "low": float(values.get("3. low", 0)),
+                        "close": float(values.get("4. close", 0)),
+                        "volume": 0,  # Forex doesn't have volume
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -318,21 +318,21 @@ class AlphaVantageProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found in date range"
+                    error=f"No data found in date range",
                 )
 
-            records.sort(key=lambda x: x['Date'])
+            records.sort(key=lambda x: x["Date"])
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'pair': f"{from_currency}/{to_currency}",
-                    'interval': interval,
-                    'records': len(records)
+                    "pair": f"{from_currency}/{to_currency}",
+                    "interval": interval,
+                    "records": len(records),
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -341,20 +341,17 @@ class AlphaVantageProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Alpha Vantage forex request failed: {str(e)}"
+                error=f"Alpha Vantage forex request failed: {str(e)}",
             )
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """Alpha Vantage does not provide options chain data in free tier."""
         return OptionsChainResponse(
             symbol=request.symbol,
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="Options data not available in Alpha Vantage free tier"
+            error="Options data not available in Alpha Vantage free tier",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -372,9 +369,9 @@ class AlphaVantageProvider(BaseProvider):
             self._rate_limit()
 
             params = {
-                'function': 'GLOBAL_QUOTE',
-                'symbol': 'AAPL',
-                'apikey': self.api_key
+                "function": "GLOBAL_QUOTE",
+                "symbol": "AAPL",
+                "apikey": self.api_key,
             }
 
             response = requests.get(self.base_url, params=params, timeout=5)
@@ -383,7 +380,7 @@ class AlphaVantageProvider(BaseProvider):
             data = response.json()
 
             # Check if we got valid data
-            return 'Global Quote' in data
+            return "Global Quote" in data
 
         except Exception:
             return False

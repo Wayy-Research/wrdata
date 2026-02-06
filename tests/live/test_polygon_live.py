@@ -70,10 +70,7 @@ def test_historical_data():
         print(f"\nFetching {symbol} from {start_date} to {end_date}...")
 
         response = provider.fetch_timeseries(
-            symbol=symbol,
-            start_date=start_date,
-            end_date=end_date,
-            interval="1d"
+            symbol=symbol, start_date=start_date, end_date=end_date, interval="1d"
         )
 
         if response.success:
@@ -97,6 +94,7 @@ def test_historical_data():
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -154,14 +152,14 @@ def test_ticker_details():
             print(f"  Exchange: {data.get('primary_exchange')}")
             print(f"  Type: {data.get('type')}")
             print(f"  Currency: {data.get('currency_name')}")
-            if data.get('description'):
-                desc = data.get('description')
+            if data.get("description"):
+                desc = data.get("description")
                 print(f"  Description: {desc[:100]}...")
-            if data.get('homepage_url'):
+            if data.get("homepage_url"):
                 print(f"  Website: {data.get('homepage_url')}")
-            if data.get('total_employees'):
+            if data.get("total_employees"):
                 print(f"  Employees: {data.get('total_employees'):,}")
-            if data.get('market_cap'):
+            if data.get("market_cap"):
                 print(f"  Market Cap: ${data.get('market_cap'):,.0f}")
             return True
         else:
@@ -190,14 +188,14 @@ def test_market_status():
             print(f"  Market: {data.get('market')}")
             print(f"  Server Time: {data.get('serverTime')}")
 
-            if 'exchanges' in data:
+            if "exchanges" in data:
                 print(f"\n  Exchanges:")
-                for exchange, status in data['exchanges'].items():
+                for exchange, status in data["exchanges"].items():
                     print(f"    {exchange}: {status}")
 
-            if 'currencies' in data:
+            if "currencies" in data:
                 print(f"\n  Currencies:")
-                for currency, status in data['currencies'].items():
+                for currency, status in data["currencies"].items():
                     print(f"    {currency}: {status}")
 
             return True
@@ -226,15 +224,14 @@ def test_multi_symbol():
 
         for symbol in symbols:
             response = provider.fetch_timeseries(
-                symbol=symbol,
-                start_date=start_date,
-                end_date=end_date,
-                interval="1d"
+                symbol=symbol, start_date=start_date, end_date=end_date, interval="1d"
             )
 
             if response.success:
                 latest = response.data[-1] if response.data else {}
-                print(f"  ✓ {symbol}: {len(response.data)} records, Latest close: ${latest.get('close', 'N/A')}")
+                print(
+                    f"  ✓ {symbol}: {len(response.data)} records, Latest close: ${latest.get('close', 'N/A')}"
+                )
             else:
                 print(f"  ✗ {symbol}: {response.error}")
 
@@ -260,10 +257,7 @@ def test_intraday_data():
         print(f"\nFetching {symbol} 5-minute bars for today...")
 
         response = provider.fetch_timeseries(
-            symbol=symbol,
-            start_date=start_date,
-            end_date=end_date,
-            interval="5m"
+            symbol=symbol, start_date=start_date, end_date=end_date, interval="5m"
         )
 
         if response.success:
@@ -311,6 +305,7 @@ def run_all_tests():
         except Exception as e:
             print(f"\n✗ Test '{name}' crashed: {e}")
             import traceback
+
             traceback.print_exc()
             results[name] = False
 

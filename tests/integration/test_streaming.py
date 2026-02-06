@@ -24,7 +24,9 @@ async def test_streaming():
     print("\nTest 2: Streaming ETHUSDT 1m candles...")
     count = 0
     async for candle in stream.stream("ETHUSDT", stream_type="kline", interval="1m"):
-        print(f"  ✓ Received candle: O=${candle.open:.2f} H=${candle.high:.2f} L=${candle.low:.2f} C=${candle.close:.2f}")
+        print(
+            f"  ✓ Received candle: O=${candle.open:.2f} H=${candle.high:.2f} L=${candle.low:.2f} C=${candle.close:.2f}"
+        )
         count += 1
         if count >= 1:
             break

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ProviderConfig(BaseModel):
     """Configuration for a data provider."""
+
     name: str
     provider_type: str
     api_key_required: bool = False
@@ -22,6 +23,7 @@ class ProviderConfig(BaseModel):
 
 class SymbolInfo(BaseModel):
     """Information about a symbol."""
+
     symbol: str
     name: Optional[str] = None
     description: Optional[str] = None
@@ -35,6 +37,7 @@ class SymbolInfo(BaseModel):
 
 class DataRequest(BaseModel):
     """Request for fetching time series data."""
+
     symbol: str
     asset_type: str = "equity"  # stock, crypto, forex, economic, bond, commodity
     start_date: str
@@ -45,6 +48,7 @@ class DataRequest(BaseModel):
 
 class DataResponse(BaseModel):
     """Response containing time series data."""
+
     symbol: str
     provider: str
     data: List[Dict[str, Any]]
@@ -55,6 +59,7 @@ class DataResponse(BaseModel):
 
 class SymbolSearchRequest(BaseModel):
     """Request for searching symbols."""
+
     query: str
     asset_type: Optional[str] = None
     exchange: Optional[str] = None
@@ -63,6 +68,7 @@ class SymbolSearchRequest(BaseModel):
 
 class SymbolSearchResponse(BaseModel):
     """Response from symbol search."""
+
     query: str
     count: int
     results: List[SymbolInfo]
@@ -70,6 +76,7 @@ class SymbolSearchResponse(BaseModel):
 
 class ProviderStatus(BaseModel):
     """Status of a data provider."""
+
     name: str
     is_active: bool
     has_api_key: bool
@@ -81,8 +88,10 @@ class ProviderStatus(BaseModel):
 
 # Options Chain Schemas
 
+
 class OptionsContractInfo(BaseModel):
     """Information about a specific options contract."""
+
     contract_symbol: str
     underlying_symbol: str
     option_type: str  # "call" or "put"
@@ -97,6 +106,7 @@ class OptionsContractInfo(BaseModel):
 
 class OptionsGreeks(BaseModel):
     """Greeks for an options contract."""
+
     delta: Optional[float] = None
     gamma: Optional[float] = None
     theta: Optional[float] = None
@@ -106,6 +116,7 @@ class OptionsGreeks(BaseModel):
 
 class OptionsChainData(BaseModel):
     """Complete options chain data for a specific contract at a point in time."""
+
     contract_symbol: str
     option_type: str
     strike_price: Decimal
@@ -138,6 +149,7 @@ class OptionsChainData(BaseModel):
 
 class OptionsChainRequest(BaseModel):
     """Request for fetching options chain data."""
+
     symbol: str
     expiration_date: Optional[date] = None  # If None, fetch all available expirations
     start_date: Optional[str] = None  # For historical timeseries
@@ -152,6 +164,7 @@ class OptionsChainRequest(BaseModel):
 
 class OptionsChainResponse(BaseModel):
     """Response containing options chain data."""
+
     symbol: str
     provider: str
     snapshot_timestamp: datetime
@@ -171,6 +184,7 @@ class OptionsChainResponse(BaseModel):
 
 class OptionsTimeseriesRequest(BaseModel):
     """Request for historical timeseries of options chain data."""
+
     contract_symbol: Optional[str] = None  # Specific contract
     underlying_symbol: Optional[str] = None  # Or get all contracts for underlying
     expiration_date: Optional[date] = None
@@ -185,6 +199,7 @@ class OptionsTimeseriesRequest(BaseModel):
 
 class OptionsTimeseriesResponse(BaseModel):
     """Response containing historical timeseries of options data."""
+
     symbol: str
     provider: str
     data: List[Dict[str, Any]]  # List of snapshots over time
@@ -195,6 +210,7 @@ class OptionsTimeseriesResponse(BaseModel):
 
 # Whale Transaction Schemas
 
+
 class WhaleTransaction(BaseModel):
     """
     Whale transaction data model for large volume cryptocurrency transactions.
@@ -202,6 +218,7 @@ class WhaleTransaction(BaseModel):
     Represents a single large transaction detected based on percentile thresholds
     or absolute volume/value criteria.
     """
+
     # Core identification
     symbol: str
     timestamp: datetime
@@ -237,23 +254,23 @@ class WhaleTransaction(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with serialized decimals."""
         return {
-            'symbol': self.symbol,
-            'timestamp': self.timestamp.isoformat(),
-            'exchange': self.exchange,
-            'transaction_id': self.transaction_id,
-            'size': float(self.size) if self.size else None,
-            'price': float(self.price) if self.price else None,
-            'usd_value': float(self.usd_value) if self.usd_value else None,
-            'percentile': self.percentile,
-            'volume_rank': self.volume_rank,
-            'transaction_type': self.transaction_type,
-            'side': self.side,
-            'is_maker': self.is_maker,
-            'from_address': self.from_address,
-            'to_address': self.to_address,
-            'blockchain': self.blockchain,
-            'tx_hash': self.tx_hash,
-            'provider': self.provider,
+            "symbol": self.symbol,
+            "timestamp": self.timestamp.isoformat(),
+            "exchange": self.exchange,
+            "transaction_id": self.transaction_id,
+            "size": float(self.size) if self.size else None,
+            "price": float(self.price) if self.price else None,
+            "usd_value": float(self.usd_value) if self.usd_value else None,
+            "percentile": self.percentile,
+            "volume_rank": self.volume_rank,
+            "transaction_type": self.transaction_type,
+            "side": self.side,
+            "is_maker": self.is_maker,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "blockchain": self.blockchain,
+            "tx_hash": self.tx_hash,
+            "provider": self.provider,
         }
 
 
@@ -263,6 +280,7 @@ class WhaleAlert(BaseModel):
 
     Defines thresholds and filters for whale detection.
     """
+
     # Volume thresholds
     percentile_threshold: float = Field(default=99.0, ge=0, le=100)  # Top 1% by default
     min_usd_value: Optional[Decimal] = None  # Absolute minimum USD value
@@ -282,6 +300,7 @@ class WhaleAlert(BaseModel):
 
 class WhaleTransactionBatch(BaseModel):
     """Batch of whale transactions with metadata."""
+
     transactions: List[WhaleTransaction]
     count: int
     start_time: Optional[datetime] = None

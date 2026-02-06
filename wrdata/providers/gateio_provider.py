@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class GateIOProvider(BaseProvider):
@@ -41,13 +45,13 @@ class GateIOProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Gate.io."""
         try:
             # Gate.io format: BTC_USDT
-            symbol = symbol.upper().replace('-', '_')
-            if '_' not in symbol:
+            symbol = symbol.upper().replace("-", "_")
+            if "_" not in symbol:
                 symbol = f"{symbol}_USDT"
 
             # Map intervals
@@ -75,7 +79,7 @@ class GateIOProvider(BaseProvider):
                 "interval": gateio_interval,
                 "from": start_ts,
                 "to": end_ts,
-                "limit": 1000
+                "limit": 1000,
             }
 
             response = requests.get(url, params=params, timeout=30)
@@ -84,8 +88,11 @@ class GateIOProvider(BaseProvider):
 
             if not data:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
@@ -94,32 +101,45 @@ class GateIOProvider(BaseProvider):
                 timestamp = int(candle[0])
                 dt = datetime.fromtimestamp(timestamp)
 
-                records.append({
-                    'Date': dt.strftime('%Y-%m-%d'),
-                    'open': float(candle[5]),
-                    'high': float(candle[3]),
-                    'low': float(candle[4]),
-                    'close': float(candle[2]),
-                    'volume': float(candle[1]),
-                })
+                records.append(
+                    {
+                        "Date": dt.strftime("%Y-%m-%d"),
+                        "open": float(candle[5]),
+                        "high": float(candle[3]),
+                        "low": float(candle[4]),
+                        "close": float(candle[2]),
+                        "volume": float(candle[1]),
+                    }
+                )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Gate.io'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Gate.io",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Gate.io error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Gate.io error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Gate.io does not provide traditional options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Gate.io does not provide traditional options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

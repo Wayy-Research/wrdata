@@ -17,12 +17,17 @@ import secrets
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 # Optional imports for JWT authentication
 try:
     import jwt
     from cryptography.hazmat.primitives import serialization
+
     HAS_JWT = True
 except ImportError:
     HAS_JWT = False
@@ -50,14 +55,16 @@ class CoinbaseAdvancedProvider(BaseProvider):
             api_secret: EC private key in PEM format (can have escaped \\n)
         """
         super().__init__(name="coinbase_advanced", api_key=api_key)
-        self.api_secret = self._normalize_private_key(api_secret) if api_secret else None
+        self.api_secret = (
+            self._normalize_private_key(api_secret) if api_secret else None
+        )
         self.base_url = "https://api.coinbase.com/api/v3/brokerage"
         self._authenticated = bool(api_key and self.api_secret and HAS_JWT)
 
     def _normalize_private_key(self, key: str) -> str:
         """Convert escaped newlines to actual newlines in PEM key."""
-        if key and '\\n' in key:
-            return key.replace('\\n', '\n')
+        if key and "\\n" in key:
+            return key.replace("\\n", "\n")
         return key
 
     def _build_jwt(self, request_method: str, request_path: str) -> str:
@@ -72,27 +79,31 @@ class CoinbaseAdvancedProvider(BaseProvider):
             JWT token string
         """
         if not HAS_JWT:
-            raise ImportError("PyJWT and cryptography packages required for authentication. "
-                            "Install with: pip install PyJWT cryptography")
+            raise ImportError(
+                "PyJWT and cryptography packages required for authentication. "
+                "Install with: pip install PyJWT cryptography"
+            )
 
-        private_key_bytes = self.api_secret.encode('utf-8')
-        private_key = serialization.load_pem_private_key(private_key_bytes, password=None)
+        private_key_bytes = self.api_secret.encode("utf-8")
+        private_key = serialization.load_pem_private_key(
+            private_key_bytes, password=None
+        )
 
         uri = f"{request_method} api.coinbase.com{request_path}"
 
         jwt_payload = {
-            'sub': self.api_key,
-            'iss': "coinbase-cloud",
-            'nbf': int(time.time()),
-            'exp': int(time.time()) + 120,  # 2 minute expiry
-            'uri': uri,
+            "sub": self.api_key,
+            "iss": "coinbase-cloud",
+            "nbf": int(time.time()),
+            "exp": int(time.time()) + 120,  # 2 minute expiry
+            "uri": uri,
         }
 
         jwt_token = jwt.encode(
             jwt_payload,
             private_key,
-            algorithm='ES256',
-            headers={'kid': self.api_key, 'nonce': secrets.token_hex()},
+            algorithm="ES256",
+            headers={"kid": self.api_key, "nonce": secrets.token_hex()},
         )
         return jwt_token
 
@@ -106,7 +117,9 @@ class CoinbaseAdvancedProvider(BaseProvider):
             headers["Authorization"] = f"Bearer {jwt_token}"
         return headers
 
-    def _make_request(self, method: str, path: str, params: Optional[Dict] = None) -> requests.Response:
+    def _make_request(
+        self, method: str, path: str, params: Optional[Dict] = None
+    ) -> requests.Response:
         """Make an authenticated or unauthenticated request."""
         url = f"https://api.coinbase.com{path}"
         headers = self._get_headers(method, path)
@@ -115,15 +128,15 @@ class CoinbaseAdvancedProvider(BaseProvider):
     def _normalize_symbol(self, symbol: str) -> str:
         """Normalize symbol to Coinbase format (BTC-USD)."""
         symbol = symbol.upper()
-        if '-' in symbol:
+        if "-" in symbol:
             return symbol
         # Handle common patterns
-        if '/' in symbol:
-            return symbol.replace('/', '-')
+        if "/" in symbol:
+            return symbol.replace("/", "-")
         # Try to detect quote currency
-        for quote in ['USDT', 'USDC', 'USD', 'EUR', 'GBP', 'BTC', 'ETH']:
+        for quote in ["USDT", "USDC", "USD", "EUR", "GBP", "BTC", "ETH"]:
             if symbol.endswith(quote):
-                base = symbol[:-len(quote)]
+                base = symbol[: -len(quote)]
                 return f"{base}-{quote}"
         return f"{symbol}-USD"
 
@@ -133,7 +146,7 @@ class CoinbaseAdvancedProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical crypto data from Coinbase Advanced.
@@ -163,11 +176,15 @@ class CoinbaseAdvancedProvider(BaseProvider):
                 "1D": ("ONE_DAY", 86400),
             }
 
-            granularity, interval_seconds = interval_map.get(interval, ("ONE_DAY", 86400))
+            granularity, interval_seconds = interval_map.get(
+                interval, ("ONE_DAY", 86400)
+            )
 
             # Parse dates
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-            end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)  # Include end date
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(
+                days=1
+            )  # Include end date
 
             # Coinbase limits to 350 candles per request, paginate if needed
             max_candles = 350
@@ -178,89 +195,99 @@ class CoinbaseAdvancedProvider(BaseProvider):
 
             while current_start < end_dt:
                 chunk_end = min(
-                    current_start + timedelta(seconds=max_span_seconds),
-                    end_dt
+                    current_start + timedelta(seconds=max_span_seconds), end_dt
                 )
 
                 start_ts = int(current_start.timestamp())
                 end_ts = int(chunk_end.timestamp())
 
                 path = f"/api/v3/brokerage/products/{symbol}/candles"
-                params = {
-                    "start": start_ts,
-                    "end": end_ts,
-                    "granularity": granularity
-                }
+                params = {"start": start_ts, "end": end_ts, "granularity": granularity}
 
                 response = self._make_request("GET", path, params)
                 response.raise_for_status()
                 data = response.json()
 
-                candles = data.get('candles', [])
+                candles = data.get("candles", [])
 
                 for candle in candles:
-                    timestamp = int(candle['start'])
+                    timestamp = int(candle["start"])
                     dt = datetime.fromtimestamp(timestamp)
 
                     # Use appropriate date format based on interval
-                    if interval in ['1m', '5m', '15m', '30m', '1h', '2h', '6h']:
-                        date_str = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    if interval in ["1m", "5m", "15m", "30m", "1h", "2h", "6h"]:
+                        date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
                     else:
-                        date_str = dt.strftime('%Y-%m-%d')
+                        date_str = dt.strftime("%Y-%m-%d")
 
-                    all_records.append({
-                        'Date': date_str,
-                        'open': float(candle['open']),
-                        'high': float(candle['high']),
-                        'low': float(candle['low']),
-                        'close': float(candle['close']),
-                        'volume': float(candle['volume']),
-                    })
+                    all_records.append(
+                        {
+                            "Date": date_str,
+                            "open": float(candle["open"]),
+                            "high": float(candle["high"]),
+                            "low": float(candle["low"]),
+                            "close": float(candle["close"]),
+                            "volume": float(candle["volume"]),
+                        }
+                    )
 
                 current_start = chunk_end
 
             if not all_records:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             # Sort by date (oldest first) and deduplicate
-            all_records.sort(key=lambda x: x['Date'])
+            all_records.sort(key=lambda x: x["Date"])
             seen = set()
             unique_records = []
             for r in all_records:
-                if r['Date'] not in seen:
-                    seen.add(r['Date'])
+                if r["Date"] not in seen:
+                    seen.add(r["Date"])
                     unique_records.append(r)
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=unique_records,
+                symbol=symbol,
+                provider=self.name,
+                data=unique_records,
                 metadata={
-                    'interval': interval,
-                    'records': len(unique_records),
-                    'source': 'Coinbase Advanced',
-                    'authenticated': self._authenticated
+                    "interval": interval,
+                    "records": len(unique_records),
+                    "source": "Coinbase Advanced",
+                    "authenticated": self._authenticated,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Coinbase API error: {e.response.status_code} - {e.response.text}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Coinbase API error: {e.response.status_code} - {e.response.text}",
             )
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Coinbase Advanced error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Coinbase Advanced error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Coinbase Advanced does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Coinbase Advanced does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -290,7 +317,10 @@ class CoinbaseAdvancedProvider(BaseProvider):
             Dict with accounts data or error information
         """
         if not self._authenticated:
-            return {"success": False, "error": "Authentication required. Provide api_key and api_secret."}
+            return {
+                "success": False,
+                "error": "Authentication required. Provide api_key and api_secret.",
+            }
 
         try:
             path = "/api/v3/brokerage/accounts"
@@ -394,7 +424,9 @@ class CoinbaseAdvancedProvider(BaseProvider):
             path = "/api/v3/brokerage/best_bid_ask"
             params = {}
             if product_ids:
-                params["product_ids"] = ",".join([self._normalize_symbol(p) for p in product_ids])
+                params["product_ids"] = ",".join(
+                    [self._normalize_symbol(p) for p in product_ids]
+                )
 
             response = self._make_request("GET", path, params)
             response.raise_for_status()
@@ -450,7 +482,7 @@ class CoinbaseAdvancedProvider(BaseProvider):
         """
         try:
             # Don't normalize futures symbols
-            if '-CDE' not in product_id.upper():
+            if "-CDE" not in product_id.upper():
                 product_id = self._normalize_symbol(product_id)
             else:
                 product_id = product_id.upper()

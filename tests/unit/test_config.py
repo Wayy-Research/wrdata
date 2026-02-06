@@ -36,7 +36,7 @@ class TestSettings:
         settings = Settings(_env_file=None, ALPHA_VANTAGE_API_KEY=None)
         assert settings.has_alpha_vantage_key is False
 
-        settings = Settings(_env_file=None, ALPHA_VANTAGE_API_KEY='test_key')
+        settings = Settings(_env_file=None, ALPHA_VANTAGE_API_KEY="test_key")
         assert settings.has_alpha_vantage_key is True
 
     def test_has_binance_key(self):
@@ -45,9 +45,7 @@ class TestSettings:
         assert settings.has_binance_key is False
 
         settings = Settings(
-            _env_file=None,
-            BINANCE_API_KEY='test_key',
-            BINANCE_API_SECRET='test_secret'
+            _env_file=None, BINANCE_API_KEY="test_key", BINANCE_API_SECRET="test_secret"
         )
         assert settings.has_binance_key is True
 
@@ -56,7 +54,7 @@ class TestSettings:
         settings = Settings(_env_file=None, WHALE_ALERT_API_KEY=None)
         assert settings.has_whale_alert_key is False
 
-        settings = Settings(_env_file=None, WHALE_ALERT_API_KEY='test_key')
+        settings = Settings(_env_file=None, WHALE_ALERT_API_KEY="test_key")
         assert settings.has_whale_alert_key is True
 
     def test_has_coinbase_advanced_key(self):
@@ -66,8 +64,8 @@ class TestSettings:
 
         settings = Settings(
             _env_file=None,
-            COINBASE_KEY='organizations/123/apiKeys/456',
-            COINBASE_PRIVATE_KEY='-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----'
+            COINBASE_KEY="organizations/123/apiKeys/456",
+            COINBASE_PRIVATE_KEY="-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----",
         )
         assert settings.has_coinbase_advanced_key is True
 
@@ -76,5 +74,5 @@ class TestSettings:
         settings = Settings(_env_file=None, TWELVE_DATA_API_KEY=None)
         assert settings.has_twelve_data_key is False
 
-        settings = Settings(_env_file=None, TWELVE_DATA_API_KEY='test_key')
+        settings = Settings(_env_file=None, TWELVE_DATA_API_KEY="test_key")
         assert settings.has_twelve_data_key is True

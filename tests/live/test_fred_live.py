@@ -17,10 +17,12 @@ def test_fred_provider():
     print("=" * 60)
 
     # Get API key from environment
-    api_key = os.getenv('FRED_API_KEY')
+    api_key = os.getenv("FRED_API_KEY")
     if not api_key:
         print("\n❌ FRED_API_KEY not set!")
-        print("Get a free API key at: https://fred.stlouisfed.org/docs/api/api_key.html")
+        print(
+            "Get a free API key at: https://fred.stlouisfed.org/docs/api/api_key.html"
+        )
         print("Then set it: export FRED_API_KEY='your_key_here'")
         return
 
@@ -49,9 +51,7 @@ def test_fred_provider():
     # Test data fetch - Unemployment Rate
     print("\n✓ Fetching Unemployment Rate (UNRATE)...")
     response = provider.fetch_timeseries(
-        symbol="UNRATE",
-        start_date="2020-01-01",
-        end_date="2024-01-01"
+        symbol="UNRATE", start_date="2020-01-01", end_date="2024-01-01"
     )
 
     if response.success:
@@ -73,7 +73,7 @@ def test_datastream_with_fred():
     print("=" * 60)
 
     # Get API key
-    api_key = os.getenv('FRED_API_KEY')
+    api_key = os.getenv("FRED_API_KEY")
     if not api_key:
         print("\n❌ Skipping DataStream test - no API key")
         return
@@ -84,17 +84,12 @@ def test_datastream_with_fred():
     # Check provider status
     status = stream.status()
     print(f"\n✓ Available providers: {list(stream.providers.keys())}")
-    if 'fred' in status:
+    if "fred" in status:
         print(f"  FRED connected: {status['fred'].get('connected', False)}")
 
     # Fetch GDP data
     print("\n✓ Fetching GDP data...")
-    df = stream.get(
-        "GDP",
-        start="2020-01-01",
-        end="2024-01-01",
-        asset_type="economic"
-    )
+    df = stream.get("GDP", start="2020-01-01", end="2024-01-01", asset_type="economic")
 
     print(f"  ✓ Got {len(df)} rows of GDP data")
     print("\n  Latest GDP values:")
@@ -103,10 +98,7 @@ def test_datastream_with_fred():
     # Fetch Unemployment Rate
     print("\n✓ Fetching Unemployment Rate...")
     df = stream.get(
-        "UNRATE",
-        start="2023-01-01",
-        end="2024-01-01",
-        asset_type="economic"
+        "UNRATE", start="2023-01-01", end="2024-01-01", asset_type="economic"
     )
 
     print(f"  ✓ Got {len(df)} rows")
@@ -116,10 +108,7 @@ def test_datastream_with_fred():
     # Fetch 10-Year Treasury Rate
     print("\n✓ Fetching 10-Year Treasury Rate...")
     df = stream.get(
-        "DGS10",
-        start="2023-01-01",
-        end="2024-01-01",
-        asset_type="economic"
+        "DGS10", start="2023-01-01", end="2024-01-01", asset_type="economic"
     )
 
     print(f"  ✓ Got {len(df)} rows")
@@ -138,12 +127,12 @@ def show_popular_series():
     print("=" * 60)
 
     categories = {
-        'GDP & Growth': ['GDP', 'GDPC1', 'A191RL1Q225SBEA'],
-        'Unemployment': ['UNRATE', 'PAYEMS', 'U6RATE'],
-        'Inflation': ['CPIAUCSL', 'PCEPI'],
-        'Interest Rates': ['DGS10', 'DGS2', 'DFF', 'MORTGAGE30US'],
-        'Housing': ['CSUSHPISA', 'HOUST'],
-        'Commodities': ['DCOILWTICO', 'GOLDAMGBD228NLBM'],
+        "GDP & Growth": ["GDP", "GDPC1", "A191RL1Q225SBEA"],
+        "Unemployment": ["UNRATE", "PAYEMS", "U6RATE"],
+        "Inflation": ["CPIAUCSL", "PCEPI"],
+        "Interest Rates": ["DGS10", "DGS2", "DFF", "MORTGAGE30US"],
+        "Housing": ["CSUSHPISA", "HOUST"],
+        "Commodities": ["DCOILWTICO", "GOLDAMGBD228NLBM"],
     }
 
     for category, series_list in categories.items():

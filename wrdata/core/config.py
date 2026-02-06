@@ -90,41 +90,33 @@ class Settings(BaseSettings):
     # FREE TIER DATA PROVIDERS
     # ============================================================================
     ALPHA_VANTAGE_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Alpha Vantage API key (Free: 5 calls/min)"
+        default=None, description="Alpha Vantage API key (Free: 5 calls/min)"
     )
 
     TWELVE_DATA_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Twelve Data API key (Free: 8 calls/min)"
+        default=None, description="Twelve Data API key (Free: 8 calls/min)"
     )
 
     COINGECKO_API_KEY: Optional[str] = Field(
-        default=None,
-        description="CoinGecko API key (Optional - free tier available)"
+        default=None, description="CoinGecko API key (Optional - free tier available)"
     )
 
     FRED_API_KEY: Optional[str] = Field(
-        default=None,
-        description="FRED (Federal Reserve) API key"
+        default=None, description="FRED (Federal Reserve) API key"
     )
 
     FINNHUB_API_KEY: Optional[str] = Field(
         default=None,
-        description="Finnhub API key (Free tier: 60 calls/min + WebSocket)"
+        description="Finnhub API key (Free tier: 60 calls/min + WebSocket)",
     )
 
-    TIINGO_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Tiingo API key"
-    )
+    TIINGO_API_KEY: Optional[str] = Field(default=None, description="Tiingo API key")
 
     # ============================================================================
     # PREMIUM DATA PROVIDERS
     # ============================================================================
     POLYGON_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Polygon.io API key (Paid)"
+        default=None, description="Polygon.io API key (Paid)"
     )
 
     # ============================================================================
@@ -132,102 +124,87 @@ class Settings(BaseSettings):
     # ============================================================================
     ALPACA_API_KEY: Optional[str] = Field(
         default=None,
-        description="Alpaca API key (Free: Real-time IEX data + paper trading)"
+        description="Alpaca API key (Free: Real-time IEX data + paper trading)",
     )
 
     ALPACA_API_SECRET: Optional[str] = Field(
-        default=None,
-        description="Alpaca API secret"
+        default=None, description="Alpaca API secret"
     )
 
     ALPACA_PAPER: bool = Field(
         default=True,
-        description="Use Alpaca paper trading (True) or live trading (False)"
+        description="Use Alpaca paper trading (True) or live trading (False)",
     )
 
     IBKR_USERNAME: Optional[str] = Field(
-        default=None,
-        description="Interactive Brokers username"
+        default=None, description="Interactive Brokers username"
     )
 
     IBKR_PASSWORD: Optional[str] = Field(
-        default=None,
-        description="Interactive Brokers password"
+        default=None, description="Interactive Brokers password"
     )
 
     IBKR_ACCOUNT: Optional[str] = Field(
-        default=None,
-        description="Interactive Brokers account ID"
+        default=None, description="Interactive Brokers account ID"
     )
 
     IBKR_GATEWAY_PORT: int = Field(
         default=4002,
-        description="Interactive Brokers gateway port (4002=paper, 4001=live)"
+        description="Interactive Brokers gateway port (4002=paper, 4001=live)",
     )
 
     TD_AMERITRADE_API_KEY: Optional[str] = Field(
-        default=None,
-        description="TD Ameritrade API key"
+        default=None, description="TD Ameritrade API key"
     )
 
     TD_AMERITRADE_REDIRECT_URI: Optional[str] = Field(
-        default=None,
-        description="TD Ameritrade OAuth redirect URI"
+        default=None, description="TD Ameritrade OAuth redirect URI"
     )
 
     TD_AMERITRADE_ACCOUNT_ID: Optional[str] = Field(
-        default=None,
-        description="TD Ameritrade account ID"
+        default=None, description="TD Ameritrade account ID"
     )
 
     # ============================================================================
     # CRYPTO EXCHANGE API KEYS (OPTIONAL - HIGHER RATE LIMITS)
     # ============================================================================
     BINANCE_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Binance API key (optional, increases rate limits)"
+        default=None, description="Binance API key (optional, increases rate limits)"
     )
 
     BINANCE_API_SECRET: Optional[str] = Field(
-        default=None,
-        description="Binance API secret"
+        default=None, description="Binance API secret"
     )
 
     # Legacy Coinbase Pro credentials (deprecated)
     COINBASE_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Coinbase Pro API key (legacy)"
+        default=None, description="Coinbase Pro API key (legacy)"
     )
 
     COINBASE_API_SECRET: Optional[str] = Field(
-        default=None,
-        description="Coinbase Pro API secret (legacy)"
+        default=None, description="Coinbase Pro API secret (legacy)"
     )
 
     COINBASE_PASSPHRASE: Optional[str] = Field(
-        default=None,
-        description="Coinbase Pro API passphrase (legacy)"
+        default=None, description="Coinbase Pro API passphrase (legacy)"
     )
 
     # Coinbase Advanced Trade API credentials (CDP keys)
     COINBASE_KEY: Optional[str] = Field(
         default=None,
-        description="Coinbase CDP API key (format: organizations/{org_id}/apiKeys/{key_id})"
+        description="Coinbase CDP API key (format: organizations/{org_id}/apiKeys/{key_id})",
     )
 
     COINBASE_PRIVATE_KEY: Optional[str] = Field(
-        default=None,
-        description="Coinbase CDP private key (EC PEM format)"
+        default=None, description="Coinbase CDP private key (EC PEM format)"
     )
 
     KRAKEN_API_KEY: Optional[str] = Field(
-        default=None,
-        description="Kraken API key (optional, increases rate limits)"
+        default=None, description="Kraken API key (optional, increases rate limits)"
     )
 
     KRAKEN_API_SECRET: Optional[str] = Field(
-        default=None,
-        description="Kraken API secret"
+        default=None, description="Kraken API secret"
     )
 
     # ============================================================================
@@ -235,32 +212,33 @@ class Settings(BaseSettings):
     # ============================================================================
     WHALE_ALERT_API_KEY: Optional[str] = Field(
         default=None,
-        description="Whale Alert API key (Paid: ~$30/mo for whale transaction tracking)"
+        description="Whale Alert API key (Paid: ~$30/mo for whale transaction tracking)",
     )
 
     # ============================================================================
     # PREDICTION MARKETS
     # ============================================================================
-    KALSHI_KEY: Optional[str] = Field(
-        default=None,
-        description="Kalshi API key ID"
-    )
+    KALSHI_KEY: Optional[str] = Field(default=None, description="Kalshi API key ID")
 
     KALSHI_PRIVATE_KEY: Optional[str] = Field(
-        default=None,
-        description="Kalshi RSA private key (PEM format)"
+        default=None, description="Kalshi RSA private key (PEM format)"
     )
 
     # Helper properties
     @property
     def has_alpha_vantage_key(self) -> bool:
         """Check if Alpha Vantage API key is configured."""
-        return self.ALPHA_VANTAGE_API_KEY is not None and len(self.ALPHA_VANTAGE_API_KEY) > 0
+        return (
+            self.ALPHA_VANTAGE_API_KEY is not None
+            and len(self.ALPHA_VANTAGE_API_KEY) > 0
+        )
 
     @property
     def has_twelve_data_key(self) -> bool:
         """Check if Twelve Data API key is configured."""
-        return self.TWELVE_DATA_API_KEY is not None and len(self.TWELVE_DATA_API_KEY) > 0
+        return (
+            self.TWELVE_DATA_API_KEY is not None and len(self.TWELVE_DATA_API_KEY) > 0
+        )
 
     @property
     def has_binance_key(self) -> bool:
@@ -274,7 +252,9 @@ class Settings(BaseSettings):
     @property
     def has_whale_alert_key(self) -> bool:
         """Check if Whale Alert API key is configured."""
-        return self.WHALE_ALERT_API_KEY is not None and len(self.WHALE_ALERT_API_KEY) > 0
+        return (
+            self.WHALE_ALERT_API_KEY is not None and len(self.WHALE_ALERT_API_KEY) > 0
+        )
 
     @property
     def has_coinbase_advanced_key(self) -> bool:

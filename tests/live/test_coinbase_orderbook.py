@@ -36,7 +36,11 @@ async def test_orderbook_stream():
         print(f"Mid Price: ${message.price:,.2f}" if message.price else "N/A")
         print(f"Best Bid: ${message.bid:,.2f}" if message.bid else "N/A")
         print(f"Best Ask: ${message.ask:,.2f}" if message.ask else "N/A")
-        print(f"Spread: ${(message.ask - message.bid):.2f}" if (message.bid and message.ask) else "N/A")
+        print(
+            f"Spread: ${(message.ask - message.bid):.2f}"
+            if (message.bid and message.ask)
+            else "N/A"
+        )
 
         if message.bids:
             print(f"\nTop 5 Bids:")
@@ -88,12 +92,12 @@ async def test_orderbook_snapshot():
         print(f"Bids: {len(snapshot['bids'])} price levels")
         print(f"Asks: {len(snapshot['asks'])} price levels")
 
-        if snapshot['bids']:
-            best_bid = max(snapshot['bids'].keys())
+        if snapshot["bids"]:
+            best_bid = max(snapshot["bids"].keys())
             print(f"Best bid: ${best_bid:,.2f}")
 
-        if snapshot['asks']:
-            best_ask = min(snapshot['asks'].keys())
+        if snapshot["asks"]:
+            best_ask = min(snapshot["asks"].keys())
             print(f"Best ask: ${best_ask:,.2f}")
     else:
         print("No snapshot available")
@@ -116,16 +120,16 @@ async def test_multiple_symbols():
         async for msg in provider.subscribe_depth(symbol):
             count += 1
             spread = (msg.ask - msg.bid) if (msg.bid and msg.ask) else None
-            print(f"{symbol}: Bid ${msg.bid:,.2f} | Ask ${msg.ask:,.2f} | Spread ${spread:.2f}"
-                  if spread else f"{symbol}: Waiting for data...")
+            print(
+                f"{symbol}: Bid ${msg.bid:,.2f} | Ask ${msg.ask:,.2f} | Spread ${spread:.2f}"
+                if spread
+                else f"{symbol}: Waiting for data..."
+            )
             if count >= num_updates:
                 break
 
     # Monitor BTC and ETH simultaneously
-    await asyncio.gather(
-        monitor_symbol("BTC-USD", 3),
-        monitor_symbol("ETH-USD", 3)
-    )
+    await asyncio.gather(monitor_symbol("BTC-USD", 3), monitor_symbol("ETH-USD", 3))
 
     await provider.disconnect()
     print("\nMultiple symbol test complete")

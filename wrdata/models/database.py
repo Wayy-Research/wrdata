@@ -4,7 +4,19 @@ Database models for wrdata package.
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, Index, Float, Date, Numeric
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Text,
+    Boolean,
+    ForeignKey,
+    Index,
+    Float,
+    Date,
+    Numeric,
+)
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -14,6 +26,7 @@ class DataProvider(Base):
     """
     Data provider model representing external data sources.
     """
+
     __tablename__ = "data_providers"
 
     id = Column(Integer, primary_key=True)
@@ -29,18 +42,21 @@ class DataProvider(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    symbols = relationship("Symbol", back_populates="provider", cascade="all, delete-orphan")
+    symbols = relationship(
+        "Symbol", back_populates="provider", cascade="all, delete-orphan"
+    )
 
 
 class Symbol(Base):
     """
     Symbol model representing tradeable assets across providers.
     """
+
     __tablename__ = "symbols"
     __table_args__ = (
-        Index('idx_symbol_provider', 'symbol', 'provider_id'),
-        Index('idx_asset_type', 'asset_type'),
-        Index('idx_exchange', 'exchange'),
+        Index("idx_symbol_provider", "symbol", "provider_id"),
+        Index("idx_asset_type", "asset_type"),
+        Index("idx_exchange", "exchange"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -51,7 +67,9 @@ class Symbol(Base):
     asset_type = Column(String(50), nullable=True)  # stock, crypto, forex, bond, etc.
     exchange = Column(String(100), nullable=True)
     currency = Column(String(10), nullable=True)
-    extra_metadata = Column(Text, nullable=True)  # JSON for additional provider-specific data
+    extra_metadata = Column(
+        Text, nullable=True
+    )  # JSON for additional provider-specific data
     is_active = Column(Boolean, default=True)
     last_verified = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -59,7 +77,11 @@ class Symbol(Base):
 
     # Relationships
     provider = relationship("DataProvider", back_populates="symbols")
-    options_contracts = relationship("OptionsContract", back_populates="underlying_symbol", cascade="all, delete-orphan")
+    options_contracts = relationship(
+        "OptionsContract",
+        back_populates="underlying_symbol",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<Symbol(symbol='{self.symbol}', provider='{self.provider.name if self.provider else 'N/A'}', type='{self.asset_type}')>"
@@ -69,16 +91,19 @@ class OptionsContract(Base):
     """
     Options contract metadata - represents a specific options contract.
     """
+
     __tablename__ = "options_contracts"
     __table_args__ = (
-        Index('idx_underlying_expiry', 'underlying_symbol_id', 'expiration_date'),
-        Index('idx_contract_symbol', 'contract_symbol'),
-        Index('idx_option_type_strike', 'option_type', 'strike_price'),
+        Index("idx_underlying_expiry", "underlying_symbol_id", "expiration_date"),
+        Index("idx_contract_symbol", "contract_symbol"),
+        Index("idx_option_type_strike", "option_type", "strike_price"),
     )
 
     id = Column(Integer, primary_key=True)
     underlying_symbol_id = Column(Integer, ForeignKey("symbols.id"), nullable=False)
-    contract_symbol = Column(String(100), unique=True, nullable=False)  # e.g., "AAPL250117C00150000"
+    contract_symbol = Column(
+        String(100), unique=True, nullable=False
+    )  # e.g., "AAPL250117C00150000"
     option_type = Column(String(10), nullable=False)  # "call" or "put"
     strike_price = Column(Numeric(precision=12, scale=4), nullable=False)
     expiration_date = Column(Date, nullable=False)
@@ -90,7 +115,9 @@ class OptionsContract(Base):
 
     # Relationships
     underlying_symbol = relationship("Symbol", back_populates="options_contracts")
-    chain_snapshots = relationship("OptionsChainSnapshot", back_populates="contract", cascade="all, delete-orphan")
+    chain_snapshots = relationship(
+        "OptionsChainSnapshot", back_populates="contract", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<OptionsContract(symbol='{self.contract_symbol}', type='{self.option_type}', strike={self.strike_price}, expiry='{self.expiration_date}')>"
@@ -101,11 +128,12 @@ class OptionsChainSnapshot(Base):
     Point-in-time snapshot of options chain data.
     Stores historical timeseries of options prices, greeks, and other metrics.
     """
+
     __tablename__ = "options_chain_snapshots"
     __table_args__ = (
-        Index('idx_contract_timestamp', 'contract_id', 'snapshot_timestamp'),
-        Index('idx_snapshot_timestamp', 'snapshot_timestamp'),
-        Index('idx_provider_snapshot', 'provider_id', 'snapshot_timestamp'),
+        Index("idx_contract_timestamp", "contract_id", "snapshot_timestamp"),
+        Index("idx_snapshot_timestamp", "snapshot_timestamp"),
+        Index("idx_provider_snapshot", "provider_id", "snapshot_timestamp"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -117,7 +145,9 @@ class OptionsChainSnapshot(Base):
     bid = Column(Numeric(precision=12, scale=4), nullable=True)
     ask = Column(Numeric(precision=12, scale=4), nullable=True)
     last_price = Column(Numeric(precision=12, scale=4), nullable=True)
-    mark_price = Column(Numeric(precision=12, scale=4), nullable=True)  # (bid + ask) / 2
+    mark_price = Column(
+        Numeric(precision=12, scale=4), nullable=True
+    )  # (bid + ask) / 2
 
     # Volume and interest
     volume = Column(Integer, nullable=True)

@@ -15,7 +15,11 @@ from typing import Optional, List
 from datetime import datetime, date, timedelta
 import time
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class FinnhubProvider(BaseProvider):
@@ -56,7 +60,7 @@ class FinnhubProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical stock data from Finnhub.
@@ -99,11 +103,11 @@ class FinnhubProvider(BaseProvider):
             # Build request - use stock/candle endpoint
             url = f"{self.base_url}/stock/candle"
             params = {
-                'symbol': symbol,
-                'resolution': finnhub_interval,
-                'from': start,
-                'to': end,
-                'token': self.api_key
+                "symbol": symbol,
+                "resolution": finnhub_interval,
+                "from": start,
+                "to": end,
+                "token": self.api_key,
             }
 
             # Make request
@@ -113,45 +117,47 @@ class FinnhubProvider(BaseProvider):
             data = response.json()
 
             # Check for errors
-            if data.get('s') == 'no_data':
+            if data.get("s") == "no_data":
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
-            if 's' not in data or data['s'] != 'ok':
+            if "s" not in data or data["s"] != "ok":
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Invalid response from Finnhub: {data}"
+                    error=f"Invalid response from Finnhub: {data}",
                 )
 
             # Convert to standard format
             records = []
-            timestamps = data.get('t', [])
-            opens = data.get('o', [])
-            highs = data.get('h', [])
-            lows = data.get('l', [])
-            closes = data.get('c', [])
-            volumes = data.get('v', [])
+            timestamps = data.get("t", [])
+            opens = data.get("o", [])
+            highs = data.get("h", [])
+            lows = data.get("l", [])
+            closes = data.get("c", [])
+            volumes = data.get("v", [])
 
             for i in range(len(timestamps)):
                 # Convert Unix timestamp to date string
-                date_str = datetime.fromtimestamp(timestamps[i]).strftime('%Y-%m-%d')
+                date_str = datetime.fromtimestamp(timestamps[i]).strftime("%Y-%m-%d")
 
-                records.append({
-                    'Date': date_str,
-                    'open': float(opens[i]),
-                    'high': float(highs[i]),
-                    'low': float(lows[i]),
-                    'close': float(closes[i]),
-                    'volume': int(volumes[i]),
-                })
+                records.append(
+                    {
+                        "Date": date_str,
+                        "open": float(opens[i]),
+                        "high": float(highs[i]),
+                        "low": float(lows[i]),
+                        "close": float(closes[i]),
+                        "volume": int(volumes[i]),
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -159,7 +165,7 @@ class FinnhubProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data in date range {start_date} to {end_date}"
+                    error=f"No data in date range {start_date} to {end_date}",
                 )
 
             return DataResponse(
@@ -167,14 +173,14 @@ class FinnhubProvider(BaseProvider):
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Finnhub',
-                    'resolution': finnhub_interval
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Finnhub",
+                    "resolution": finnhub_interval,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -183,7 +189,7 @@ class FinnhubProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Finnhub API request failed: {str(e)}"
+                error=f"Finnhub API request failed: {str(e)}",
             )
         except Exception as e:
             return DataResponse(
@@ -191,7 +197,7 @@ class FinnhubProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
     def get_quote(self, symbol: str) -> dict:
@@ -214,10 +220,7 @@ class FinnhubProvider(BaseProvider):
             self._rate_limit()
 
             url = f"{self.base_url}/quote"
-            params = {
-                'symbol': symbol,
-                'token': self.api_key
-            }
+            params = {"symbol": symbol, "token": self.api_key}
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -243,10 +246,7 @@ class FinnhubProvider(BaseProvider):
             self._rate_limit()
 
             url = f"{self.base_url}/stock/profile2"
-            params = {
-                'symbol': symbol,
-                'token': self.api_key
-            }
+            params = {"symbol": symbol, "token": self.api_key}
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -257,7 +257,9 @@ class FinnhubProvider(BaseProvider):
             print(f"Failed to get company profile: {e}")
             return {}
 
-    def get_company_news(self, symbol: str, start_date: str, end_date: str) -> List[dict]:
+    def get_company_news(
+        self, symbol: str, start_date: str, end_date: str
+    ) -> List[dict]:
         """
         Get company news.
 
@@ -275,10 +277,10 @@ class FinnhubProvider(BaseProvider):
 
             url = f"{self.base_url}/company-news"
             params = {
-                'symbol': symbol,
-                'from': start_date,
-                'to': end_date,
-                'token': self.api_key
+                "symbol": symbol,
+                "from": start_date,
+                "to": end_date,
+                "token": self.api_key,
             }
 
             response = requests.get(url, params=params, timeout=10)
@@ -304,25 +306,19 @@ class FinnhubProvider(BaseProvider):
             self._rate_limit()
 
             url = f"{self.base_url}/search"
-            params = {
-                'q': query,
-                'token': self.api_key
-            }
+            params = {"q": query, "token": self.api_key}
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
-            return data.get('result', [])
+            return data.get("result", [])
 
         except Exception as e:
             print(f"Failed to search symbols: {e}")
             return []
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Finnhub does not provide options chain data.
         Use TradierProvider or AlpacaProvider for options.
@@ -332,7 +328,7 @@ class FinnhubProvider(BaseProvider):
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="Finnhub does not provide options data. Use Tradier or Alpaca instead."
+            error="Finnhub does not provide options data. Use Tradier or Alpaca instead.",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -349,17 +345,14 @@ class FinnhubProvider(BaseProvider):
             self._rate_limit()
 
             url = f"{self.base_url}/quote"
-            params = {
-                'symbol': 'AAPL',
-                'token': self.api_key
-            }
+            params = {"symbol": "AAPL", "token": self.api_key}
 
             response = requests.get(url, params=params, timeout=5)
             response.raise_for_status()
 
             data = response.json()
             # Valid response should have current price
-            return 'c' in data and data['c'] > 0
+            return "c" in data and data["c"] > 0
 
         except Exception:
             return False
@@ -371,17 +364,17 @@ class FinnhubProvider(BaseProvider):
 
 # Popular Finnhub endpoints
 FINNHUB_ENDPOINTS = {
-    'quote': 'Real-time quote',
-    'candle': 'Historical OHLCV',
-    'profile2': 'Company profile',
-    'company-news': 'Company news',
-    'search': 'Symbol search',
-    'recommendation': 'Analyst recommendations',
-    'price-target': 'Price targets',
-    'earnings': 'Earnings data',
-    'financials': 'Financial statements',
-    'metrics': 'Financial metrics',
-    'peers': 'Peer companies',
-    'split': 'Stock splits',
-    'dividend': 'Dividends',
+    "quote": "Real-time quote",
+    "candle": "Historical OHLCV",
+    "profile2": "Company profile",
+    "company-news": "Company news",
+    "search": "Symbol search",
+    "recommendation": "Analyst recommendations",
+    "price-target": "Price targets",
+    "earnings": "Earnings data",
+    "financials": "Financial statements",
+    "metrics": "Financial metrics",
+    "peers": "Peer companies",
+    "split": "Stock splits",
+    "dividend": "Dividends",
 }

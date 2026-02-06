@@ -81,9 +81,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         self.session = None
 
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time ticker stream.
@@ -101,25 +99,27 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         subscribe_message = {
             "type": "subscribe",
             "product_ids": [symbol],
-            "channels": ["ticker"]
+            "channels": ["ticker"],
         }
 
         async for message in self._stream_channel(subscribe_message):
             try:
-                if message.get('type') != 'ticker':
+                if message.get("type") != "ticker":
                     continue
 
                 # Parse Coinbase ticker message
                 stream_msg = StreamMessage(
-                    symbol=message['product_id'],
-                    timestamp=datetime.fromisoformat(message['time'].replace('Z', '+00:00')),
-                    price=float(message.get('price', 0)),
-                    bid=float(message.get('best_bid', 0)),
-                    ask=float(message.get('best_ask', 0)),
-                    volume=float(message.get('last_size', 0)),
+                    symbol=message["product_id"],
+                    timestamp=datetime.fromisoformat(
+                        message["time"].replace("Z", "+00:00")
+                    ),
+                    price=float(message.get("price", 0)),
+                    bid=float(message.get("best_bid", 0)),
+                    ask=float(message.get("best_ask", 0)),
+                    volume=float(message.get("last_size", 0)),
                     provider=self.name,
                     stream_type="ticker",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Notify callbacks
@@ -135,7 +135,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time trade matches (simulates kline data).
@@ -154,7 +154,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         subscribe_message = {
             "type": "subscribe",
             "product_ids": [symbol],
-            "channels": ["matches"]
+            "channels": ["matches"],
         }
 
         # Aggregate trades into candles
@@ -163,33 +163,32 @@ class CoinbaseStreamProvider(BaseStreamProvider):
 
         async for message in self._stream_channel(subscribe_message):
             try:
-                if message.get('type') != 'match':
+                if message.get("type") != "match":
                     continue
 
-                timestamp = datetime.fromisoformat(message['time'].replace('Z', '+00:00'))
-                price = float(message['price'])
-                volume = float(message['size'])
+                timestamp = datetime.fromisoformat(
+                    message["time"].replace("Z", "+00:00")
+                )
+                price = float(message["price"])
+                volume = float(message["size"])
 
                 # Get candle start time
-                candle_start = timestamp.replace(
-                    second=0,
-                    microsecond=0
-                )
+                candle_start = timestamp.replace(second=0, microsecond=0)
 
                 # Create new candle or update existing
-                if current_candle is None or candle_start != current_candle['start']:
+                if current_candle is None or candle_start != current_candle["start"]:
                     # Emit previous candle if exists
                     if current_candle:
                         stream_msg = StreamMessage(
                             symbol=symbol,
-                            timestamp=current_candle['start'],
-                            open=current_candle['open'],
-                            high=current_candle['high'],
-                            low=current_candle['low'],
-                            close=current_candle['close'],
-                            volume=current_candle['volume'],
+                            timestamp=current_candle["start"],
+                            open=current_candle["open"],
+                            high=current_candle["high"],
+                            low=current_candle["low"],
+                            close=current_candle["close"],
+                            volume=current_candle["volume"],
                             provider=self.name,
-                            stream_type="kline"
+                            stream_type="kline",
                         )
 
                         await self._notify_callbacks(stream_id, stream_msg)
@@ -197,28 +196,26 @@ class CoinbaseStreamProvider(BaseStreamProvider):
 
                     # Start new candle
                     current_candle = {
-                        'start': candle_start,
-                        'open': price,
-                        'high': price,
-                        'low': price,
-                        'close': price,
-                        'volume': volume
+                        "start": candle_start,
+                        "open": price,
+                        "high": price,
+                        "low": price,
+                        "close": price,
+                        "volume": volume,
                     }
                 else:
                     # Update current candle
-                    current_candle['high'] = max(current_candle['high'], price)
-                    current_candle['low'] = min(current_candle['low'], price)
-                    current_candle['close'] = price
-                    current_candle['volume'] += volume
+                    current_candle["high"] = max(current_candle["high"], price)
+                    current_candle["low"] = min(current_candle["low"], price)
+                    current_candle["close"] = price
+                    current_candle["volume"] += volume
 
             except Exception as e:
                 print(f"Error processing Coinbase match: {e}")
                 continue
 
     async def subscribe_depth(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to Level2 orderbook updates.
@@ -242,29 +239,29 @@ class CoinbaseStreamProvider(BaseStreamProvider):
 
         # Initialize orderbook state
         self._orderbooks[symbol] = {
-            'bids': {},  # price -> size
-            'asks': {},  # price -> size
+            "bids": {},  # price -> size
+            "asks": {},  # price -> size
         }
 
         # Subscribe to level2 channel (Advanced Trade API format)
         subscribe_message = {
             "type": "subscribe",
             "product_ids": [symbol],
-            "channel": "level2"  # Singular for Advanced Trade API
+            "channel": "level2",  # Singular for Advanced Trade API
         }
 
         async for message in self._stream_channel(subscribe_message):
             try:
                 # Advanced Trade API format
-                channel = message.get('channel')
-                if channel != 'l2_data':
+                channel = message.get("channel")
+                if channel != "l2_data":
                     continue
 
-                events = message.get('events', [])
+                events = message.get("events", [])
                 for event in events:
-                    event_type = event.get('type')
+                    event_type = event.get("type")
 
-                    if event_type == 'snapshot':
+                    if event_type == "snapshot":
                         # Full orderbook snapshot
                         self._process_advanced_snapshot(symbol, event)
 
@@ -272,7 +269,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                         await self._notify_callbacks(stream_id, stream_msg)
                         yield stream_msg
 
-                    elif event_type == 'update':
+                    elif event_type == "update":
                         # Incremental update
                         self._process_advanced_update(symbol, event)
 
@@ -283,6 +280,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
             except Exception as e:
                 print(f"Error processing Coinbase orderbook update: {e}")
                 import traceback
+
                 traceback.print_exc()
                 continue
 
@@ -293,7 +291,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         whale_callback: Optional[Callable[[WhaleTransaction], None]] = None,
         enable_whale_detection: bool = False,
         percentile_threshold: float = 99.0,
-        min_usd_value: Optional[float] = None
+        min_usd_value: Optional[float] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to trade matches stream for whale detection.
@@ -318,7 +316,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                 default_percentile=percentile_threshold,
                 min_usd_value=min_usd_value,
                 window_size=1000,
-                time_window_seconds=3600
+                time_window_seconds=3600,
             )
 
         # Normalize symbol
@@ -332,12 +330,12 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         subscribe_message = {
             "type": "subscribe",
             "product_ids": [symbol],
-            "channels": ["matches"]
+            "channels": ["matches"],
         }
 
         async for message in self._stream_channel(subscribe_message):
             try:
-                if message.get('type') != 'match':
+                if message.get("type") != "match":
                     continue
 
                 # Parse Coinbase match message
@@ -355,10 +353,12 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                 #   "sequence": 1234567890
                 # }
 
-                timestamp = datetime.fromisoformat(message['time'].replace('Z', '+00:00'))
-                price = float(message['price'])
-                size = float(message['size'])
-                side = message.get('side', 'unknown')
+                timestamp = datetime.fromisoformat(
+                    message["time"].replace("Z", "+00:00")
+                )
+                price = float(message["price"])
+                size = float(message["size"])
+                side = message.get("side", "unknown")
 
                 stream_msg = StreamMessage(
                     symbol=symbol,
@@ -367,7 +367,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                     volume=size,
                     provider=self.name,
                     stream_type="match",
-                    raw_data=message
+                    raw_data=message,
                 )
 
                 # Whale detection
@@ -378,7 +378,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                         price=price,
                         exchange="coinbase",
                         timestamp=timestamp,
-                        percentile_threshold=percentile_threshold
+                        percentile_threshold=percentile_threshold,
                     )
 
                     if is_whale:
@@ -387,16 +387,16 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                             symbol=symbol,
                             timestamp=timestamp,
                             exchange="coinbase",
-                            transaction_id=str(message.get('trade_id')),
+                            transaction_id=str(message.get("trade_id")),
                             size=Decimal(str(size)),
                             price=Decimal(str(price)),
-                            usd_value=Decimal(str(metadata['usd_value'])),
-                            percentile=metadata['percentile'],
-                            volume_rank=metadata['rank'],
+                            usd_value=Decimal(str(metadata["usd_value"])),
+                            percentile=metadata["percentile"],
+                            volume_rank=metadata["rank"],
                             transaction_type="trade",
                             side=side,
                             provider=self.name,
-                            raw_data=message
+                            raw_data=message,
                         )
 
                         # Notify whale callback
@@ -409,7 +409,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                         # Add whale metadata to stream message
                         if stream_msg.raw_data is None:
                             stream_msg.raw_data = {}
-                        stream_msg.raw_data['whale_metadata'] = metadata
+                        stream_msg.raw_data["whale_metadata"] = metadata
 
                 # Notify callbacks
                 await self._notify_callbacks(stream_id, stream_msg)
@@ -421,9 +421,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                 continue
 
     async def subscribe_market_trades(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to market trades stream (Advanced Trade API).
@@ -443,7 +441,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
             StreamMessage objects for each trade
         """
         # Don't normalize futures symbols (they have special format)
-        if '-CDE' not in symbol.upper():
+        if "-CDE" not in symbol.upper():
             symbol = self._normalize_symbol(symbol)
         else:
             symbol = symbol.upper()
@@ -456,41 +454,41 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         subscribe_message = {
             "type": "subscribe",
             "product_ids": [symbol],
-            "channel": "market_trades"
+            "channel": "market_trades",
         }
 
         async for message in self._stream_channel(subscribe_message):
             try:
-                channel = message.get('channel')
-                if channel != 'market_trades':
+                channel = message.get("channel")
+                if channel != "market_trades":
                     continue
 
-                events = message.get('events', [])
+                events = message.get("events", [])
                 for event in events:
-                    event_type = event.get('type')
+                    event_type = event.get("type")
 
                     # Process both snapshot and update events
-                    trades = event.get('trades', [])
+                    trades = event.get("trades", [])
                     for trade in trades:
                         # Handle various timestamp formats from Coinbase
-                        time_str = trade['time']
+                        time_str = trade["time"]
                         try:
                             # Remove timezone suffix for consistent parsing
-                            if time_str.endswith('Z'):
+                            if time_str.endswith("Z"):
                                 time_str = time_str[:-1]
-                            elif '+' in time_str:
-                                time_str = time_str.split('+')[0]
+                            elif "+" in time_str:
+                                time_str = time_str.split("+")[0]
                             # Normalize microseconds to 6 digits
-                            if '.' in time_str:
-                                main, micro = time_str.rsplit('.', 1)
-                                micro = micro[:6].ljust(6, '0')
+                            if "." in time_str:
+                                main, micro = time_str.rsplit(".", 1)
+                                micro = micro[:6].ljust(6, "0")
                                 time_str = f"{main}.{micro}"
                             timestamp = datetime.fromisoformat(time_str)
                         except (ValueError, AttributeError):
                             timestamp = datetime.utcnow()
-                        price = float(trade['price'])
-                        size = float(trade['size'])
-                        side = trade.get('side', 'unknown').lower()
+                        price = float(trade["price"])
+                        size = float(trade["size"])
+                        side = trade.get("side", "unknown").lower()
 
                         stream_msg = StreamMessage(
                             symbol=symbol,
@@ -500,11 +498,11 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                             provider=self.name,
                             stream_type="trade",
                             raw_data={
-                                'trade_id': trade.get('trade_id'),
-                                'side': side,
-                                'product_id': trade.get('product_id'),
-                                'event_type': event_type
-                            }
+                                "trade_id": trade.get("trade_id"),
+                                "side": side,
+                                "product_id": trade.get("product_id"),
+                                "event_type": event_type,
+                            },
                         )
 
                         await self._notify_callbacks(stream_id, stream_msg)
@@ -519,28 +517,28 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         orderbook = self._orderbooks[symbol]
 
         # Reset orderbook
-        orderbook['bids'] = {}
-        orderbook['asks'] = {}
+        orderbook["bids"] = {}
+        orderbook["asks"] = {}
 
         # Add all bids [price, size]
-        for price, size in message.get('bids', []):
-            orderbook['bids'][float(price)] = float(size)
+        for price, size in message.get("bids", []):
+            orderbook["bids"][float(price)] = float(size)
 
         # Add all asks [price, size]
-        for price, size in message.get('asks', []):
-            orderbook['asks'][float(price)] = float(size)
+        for price, size in message.get("asks", []):
+            orderbook["asks"][float(price)] = float(size)
 
     def _process_l2update(self, symbol: str, message: dict):
         """Process incremental orderbook update (Legacy Exchange API)."""
         orderbook = self._orderbooks[symbol]
 
         # changes format: [side, price, size]
-        for change in message.get('changes', []):
+        for change in message.get("changes", []):
             side, price, size = change
             price = float(price)
             size = float(size)
 
-            book = orderbook['bids'] if side == 'buy' else orderbook['asks']
+            book = orderbook["bids"] if side == "buy" else orderbook["asks"]
 
             if size == 0:
                 # Remove price level
@@ -554,16 +552,16 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         orderbook = self._orderbooks[symbol]
 
         # Reset orderbook
-        orderbook['bids'] = {}
-        orderbook['asks'] = {}
+        orderbook["bids"] = {}
+        orderbook["asks"] = {}
 
         # updates format: [{"side": "bid"/"ask", "price_level": "123.45", "new_quantity": "1.23"}, ...]
-        for update in event.get('updates', []):
-            side = update.get('side')
-            price = float(update.get('price_level'))
-            size = float(update.get('new_quantity'))
+        for update in event.get("updates", []):
+            side = update.get("side")
+            price = float(update.get("price_level"))
+            size = float(update.get("new_quantity"))
 
-            book = orderbook['bids'] if side == 'bid' else orderbook['asks']
+            book = orderbook["bids"] if side == "bid" else orderbook["asks"]
             if size > 0:
                 book[price] = size
 
@@ -572,12 +570,12 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         orderbook = self._orderbooks[symbol]
 
         # updates format: [{"side": "bid"/"ask", "price_level": "123.45", "new_quantity": "1.23"}, ...]
-        for update in event.get('updates', []):
-            side = update.get('side')
-            price = float(update.get('price_level'))
-            size = float(update.get('new_quantity'))
+        for update in event.get("updates", []):
+            side = update.get("side")
+            price = float(update.get("price_level"))
+            size = float(update.get("new_quantity"))
 
-            book = orderbook['bids'] if side == 'bid' else orderbook['asks']
+            book = orderbook["bids"] if side == "bid" else orderbook["asks"]
 
             if size == 0:
                 # Remove price level
@@ -593,16 +591,19 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         # Sort and convert to list of [price, size]
         # Bids: highest to lowest
         bids = sorted(
-            [[p, s] for p, s in orderbook['bids'].items()],
+            [[p, s] for p, s in orderbook["bids"].items()],
             key=lambda x: x[0],
-            reverse=True
-        )[:20]  # Top 20 levels
+            reverse=True,
+        )[
+            :20
+        ]  # Top 20 levels
 
         # Asks: lowest to highest
         asks = sorted(
-            [[p, s] for p, s in orderbook['asks'].items()],
-            key=lambda x: x[0]
-        )[:20]  # Top 20 levels
+            [[p, s] for p, s in orderbook["asks"].items()], key=lambda x: x[0]
+        )[
+            :20
+        ]  # Top 20 levels
 
         # Calculate best bid/ask
         best_bid = bids[0][0] if bids else None
@@ -618,7 +619,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
             bids=bids,
             asks=asks,
             provider=self.name,
-            stream_type="depth"
+            stream_type="depth",
         )
 
     def get_orderbook_snapshot(self, symbol: str) -> Optional[Dict]:
@@ -637,13 +638,13 @@ class CoinbaseStreamProvider(BaseStreamProvider):
     def _interval_to_seconds(self, interval: str) -> int:
         """Convert interval string to seconds."""
         interval_map = {
-            '1m': 60,
-            '5m': 300,
-            '15m': 900,
-            '30m': 1800,
-            '1h': 3600,
-            '4h': 14400,
-            '1d': 86400,
+            "1m": 60,
+            "5m": 300,
+            "15m": 900,
+            "30m": 1800,
+            "1h": 3600,
+            "4h": 14400,
+            "1d": 86400,
         }
         return interval_map.get(interval, 60)
 
@@ -653,15 +654,15 @@ class CoinbaseStreamProvider(BaseStreamProvider):
         """
         symbol = symbol.upper()
 
-        if '-' in symbol:
+        if "-" in symbol:
             return symbol
 
         # Common quote currencies
-        quote_currencies = ['USD', 'USDT', 'EUR', 'GBP', 'BTC', 'ETH']
+        quote_currencies = ["USD", "USDT", "EUR", "GBP", "BTC", "ETH"]
 
         for quote in quote_currencies:
             if symbol.endswith(quote):
-                base = symbol[:-len(quote)]
+                base = symbol[: -len(quote)]
                 return f"{base}-{quote}"
 
         # Default to USD
@@ -683,7 +684,9 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                     self.session = aiohttp.ClientSession()
 
                 # Increase max_msg_size to handle large orderbook snapshots (~5MB)
-                async with self.session.ws_connect(self.ws_url, max_msg_size=10*1024*1024) as ws:
+                async with self.session.ws_connect(
+                    self.ws_url, max_msg_size=10 * 1024 * 1024
+                ) as ws:
                     self.websocket = ws
                     self._connected = True
                     self._reconnect_attempts = 0
@@ -691,8 +694,12 @@ class CoinbaseStreamProvider(BaseStreamProvider):
                     # Send subscription
                     await ws.send_json(subscribe_message)
                     # Handle both old (channels) and new (channel) format
-                    channels = subscribe_message.get('channels') or [subscribe_message.get('channel')]
-                    print(f"Subscribed to Coinbase: {channels} for {subscribe_message['product_ids']}")
+                    channels = subscribe_message.get("channels") or [
+                        subscribe_message.get("channel")
+                    ]
+                    print(
+                        f"Subscribed to Coinbase: {channels} for {subscribe_message['product_ids']}"
+                    )
 
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
@@ -713,7 +720,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
 
                 # Exponential backoff
                 if self._reconnect_attempts < self._max_reconnect_attempts:
-                    wait_time = min(2 ** self._reconnect_attempts, 60)
+                    wait_time = min(2**self._reconnect_attempts, 60)
                     print(f"Reconnecting in {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     self._reconnect_attempts += 1

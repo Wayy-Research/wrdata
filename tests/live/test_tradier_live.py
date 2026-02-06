@@ -107,7 +107,9 @@ def test_real_time_quote():
             print(f"  Last: ${quote.get('last')}")
             print(f"  Bid: ${quote.get('bid')} x {quote.get('bid_size')}")
             print(f"  Ask: ${quote.get('ask')} x {quote.get('ask_size')}")
-            print(f"  Change: ${quote.get('change')} ({quote.get('change_percentage')}%)")
+            print(
+                f"  Change: ${quote.get('change')} ({quote.get('change_percentage')}%)"
+            )
             print(f"  Volume: {quote.get('volume'):,}")
             print(f"  Prev Close: ${quote.get('prev_close')}")
             return True
@@ -135,10 +137,7 @@ def test_historical_data():
         print(f"\nFetching {symbol} from {start_date} to {end_date}...")
 
         response = provider.fetch_timeseries(
-            symbol=symbol,
-            start_date=start_date,
-            end_date=end_date,
-            interval="1d"
+            symbol=symbol, start_date=start_date, end_date=end_date, interval="1d"
         )
 
         if response.success:
@@ -212,7 +211,7 @@ def test_options_strikes():
             print("⚠ No expirations available, skipping strike test")
             return True
 
-        expiry = expirations[0].strftime('%Y-%m-%d')
+        expiry = expirations[0].strftime("%Y-%m-%d")
         print(f"\nGetting strike prices for {symbol} expiring {expiry}...")
 
         strikes = provider.get_option_strikes(symbol, expiry)
@@ -250,10 +249,7 @@ def test_options_chain():
 
         from wrdata.models.schemas import OptionsChainRequest
 
-        request = OptionsChainRequest(
-            symbol=symbol,
-            expiry=expirations[0]
-        )
+        request = OptionsChainRequest(symbol=symbol, expiry=expirations[0])
 
         print(f"\nFetching options chain for {symbol} expiring {expirations[0]}...")
 
@@ -271,6 +267,7 @@ def test_options_chain():
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -287,11 +284,11 @@ def test_market_calendar():
 
         calendar = provider.get_market_calendar()
 
-        if calendar and 'calendar' in calendar:
-            cal_data = calendar['calendar']
+        if calendar and "calendar" in calendar:
+            cal_data = calendar["calendar"]
 
-            if 'days' in cal_data and 'day' in cal_data['days']:
-                days = cal_data['days']['day']
+            if "days" in cal_data and "day" in cal_data["days"]:
+                days = cal_data["days"]["day"]
                 print(f"✓ Market calendar retrieved:")
                 print(f"  Total days: {len(days) if isinstance(days, list) else 1}")
 
@@ -346,6 +343,7 @@ def run_all_tests():
         except Exception as e:
             print(f"\n✗ Test '{name}' crashed: {e}")
             import traceback
+
             traceback.print_exc()
             results[name] = False
 

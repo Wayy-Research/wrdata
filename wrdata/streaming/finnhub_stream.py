@@ -79,9 +79,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
         self.session = None
 
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time trade data.
@@ -104,10 +102,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Subscribe to symbol
-        subscribe_msg = {
-            "type": "subscribe",
-            "symbol": symbol
-        }
+        subscribe_msg = {"type": "subscribe", "symbol": symbol}
 
         try:
             await self.websocket.send_json(subscribe_msg)
@@ -120,23 +115,25 @@ class FinnhubStreamProvider(BaseStreamProvider):
                         data = json.loads(msg.data)
 
                         # Finnhub sends trade data
-                        if data.get('type') == 'trade':
-                            for trade in data.get('data', []):
+                        if data.get("type") == "trade":
+                            for trade in data.get("data", []):
                                 stream_msg = StreamMessage(
-                                    symbol=trade.get('s', symbol),
-                                    timestamp=datetime.fromtimestamp(trade.get('t', 0) / 1000),
-                                    price=float(trade.get('p', 0)),
-                                    volume=float(trade.get('v', 0)),
+                                    symbol=trade.get("s", symbol),
+                                    timestamp=datetime.fromtimestamp(
+                                        trade.get("t", 0) / 1000
+                                    ),
+                                    price=float(trade.get("p", 0)),
+                                    volume=float(trade.get("v", 0)),
                                     provider=self.name,
                                     stream_type="trade",
-                                    raw_data=trade
+                                    raw_data=trade,
                                 )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
                                 yield stream_msg
 
                         # Ping/pong for connection keep-alive
-                        elif data.get('type') == 'ping':
+                        elif data.get("type") == "ping":
                             await self.websocket.send_json({"type": "pong"})
 
                     except json.JSONDecodeError:
@@ -151,10 +148,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
 
         except asyncio.CancelledError:
             # Unsubscribe when cancelled
-            unsubscribe_msg = {
-                "type": "unsubscribe",
-                "symbol": symbol
-            }
+            unsubscribe_msg = {"type": "unsubscribe", "symbol": symbol}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
             except:
@@ -167,7 +161,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
 
             # Attempt reconnection
             if self._reconnect_attempts < self._max_reconnect_attempts:
-                wait_time = min(2 ** self._reconnect_attempts, 60)
+                wait_time = min(2**self._reconnect_attempts, 60)
                 print(f"Reconnecting in {wait_time}s...")
                 await asyncio.sleep(wait_time)
                 self._reconnect_attempts += 1
@@ -177,7 +171,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Finnhub doesn't provide native kline/candle streams.
@@ -191,7 +185,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
     async def subscribe_multiple(
         self,
         symbols: list[str],
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to multiple symbols at once.
@@ -205,10 +199,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
         # Subscribe to all symbols
         for symbol in symbols:
             symbol = symbol.upper()
-            subscribe_msg = {
-                "type": "subscribe",
-                "symbol": symbol
-            }
+            subscribe_msg = {"type": "subscribe", "symbol": symbol}
             await self.websocket.send_json(subscribe_msg)
             print(f"✓ Subscribed to {symbol}")
 
@@ -223,22 +214,24 @@ class FinnhubStreamProvider(BaseStreamProvider):
                     try:
                         data = json.loads(msg.data)
 
-                        if data.get('type') == 'trade':
-                            for trade in data.get('data', []):
+                        if data.get("type") == "trade":
+                            for trade in data.get("data", []):
                                 stream_msg = StreamMessage(
-                                    symbol=trade.get('s'),
-                                    timestamp=datetime.fromtimestamp(trade.get('t', 0) / 1000),
-                                    price=float(trade.get('p', 0)),
-                                    volume=float(trade.get('v', 0)),
+                                    symbol=trade.get("s"),
+                                    timestamp=datetime.fromtimestamp(
+                                        trade.get("t", 0) / 1000
+                                    ),
+                                    price=float(trade.get("p", 0)),
+                                    volume=float(trade.get("v", 0)),
                                     provider=self.name,
                                     stream_type="trade",
-                                    raw_data=trade
+                                    raw_data=trade,
                                 )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
                                 yield stream_msg
 
-                        elif data.get('type') == 'ping':
+                        elif data.get("type") == "ping":
                             await self.websocket.send_json({"type": "pong"})
 
                     except Exception as e:
@@ -252,10 +245,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
         except asyncio.CancelledError:
             # Unsubscribe all symbols
             for symbol in symbols:
-                unsubscribe_msg = {
-                    "type": "unsubscribe",
-                    "symbol": symbol.upper()
-                }
+                unsubscribe_msg = {"type": "unsubscribe", "symbol": symbol.upper()}
                 try:
                     await self.websocket.send_json(unsubscribe_msg)
                 except:

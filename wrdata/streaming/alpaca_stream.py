@@ -33,7 +33,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
         self,
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
-        paper: bool = True
+        paper: bool = True,
     ):
         super().__init__(name="alpaca_stream", api_key=api_key)
 
@@ -63,20 +63,26 @@ class AlpacaStreamProvider(BaseStreamProvider):
 
             # Wait for welcome message
             welcome = await self.websocket.receive_json()
-            if welcome[0].get('T') == 'success' and welcome[0].get('msg') == 'connected':
+            if (
+                welcome[0].get("T") == "success"
+                and welcome[0].get("msg") == "connected"
+            ):
                 print(f"✓ Connected to Alpaca WebSocket")
 
             # Authenticate
             auth_msg = {
                 "action": "auth",
                 "key": self.api_key,
-                "secret": self.api_secret
+                "secret": self.api_secret,
             }
             await self.websocket.send_json(auth_msg)
 
             # Wait for auth response
             auth_response = await self.websocket.receive_json()
-            if auth_response[0].get('T') == 'success' and auth_response[0].get('msg') == 'authenticated':
+            if (
+                auth_response[0].get("T") == "success"
+                and auth_response[0].get("msg") == "authenticated"
+            ):
                 print(f"✓ Authenticated with Alpaca")
                 self._connected = True
                 self._authenticated = True
@@ -115,9 +121,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
         self.session = None
 
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time trade data.
@@ -140,15 +144,12 @@ class AlpacaStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Subscribe to trades
-        subscribe_msg = {
-            "action": "subscribe",
-            "trades": [symbol]
-        }
+        subscribe_msg = {"action": "subscribe", "trades": [symbol]}
         await self.websocket.send_json(subscribe_msg)
 
         # Wait for subscription confirmation
         confirm = await self.websocket.receive_json()
-        if confirm[0].get('T') == 'subscription':
+        if confirm[0].get("T") == "subscription":
             print(f"✓ Subscribed to {symbol} trades")
 
         # Listen for messages
@@ -159,18 +160,20 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         messages = json.loads(msg.data)
 
                         for message in messages:
-                            msg_type = message.get('T')
+                            msg_type = message.get("T")
 
                             # Trade message
-                            if msg_type == 't':
+                            if msg_type == "t":
                                 stream_msg = StreamMessage(
-                                    symbol=message.get('S', symbol),
-                                    timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                    price=float(message.get('p', 0)),
-                                    volume=float(message.get('s', 0)),
+                                    symbol=message.get("S", symbol),
+                                    timestamp=datetime.fromisoformat(
+                                        message.get("t", "").replace("Z", "+00:00")
+                                    ),
+                                    price=float(message.get("p", 0)),
+                                    volume=float(message.get("s", 0)),
                                     provider=self.name,
                                     stream_type="trade",
-                                    raw_data=message
+                                    raw_data=message,
                                 )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
@@ -188,10 +191,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
 
         except asyncio.CancelledError:
             # Unsubscribe when cancelled
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "trades": [symbol]
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "trades": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
             except:
@@ -204,16 +204,14 @@ class AlpacaStreamProvider(BaseStreamProvider):
 
             # Attempt reconnection
             if self._reconnect_attempts < self._max_reconnect_attempts:
-                wait_time = min(2 ** self._reconnect_attempts, 60)
+                wait_time = min(2**self._reconnect_attempts, 60)
                 print(f"Reconnecting in {wait_time}s...")
                 await asyncio.sleep(wait_time)
                 self._reconnect_attempts += 1
                 await self.reconnect()
 
     async def subscribe_quotes(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time quote data (bid/ask).
@@ -235,14 +233,11 @@ class AlpacaStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Subscribe to quotes
-        subscribe_msg = {
-            "action": "subscribe",
-            "quotes": [symbol]
-        }
+        subscribe_msg = {"action": "subscribe", "quotes": [symbol]}
         await self.websocket.send_json(subscribe_msg)
 
         confirm = await self.websocket.receive_json()
-        if confirm[0].get('T') == 'subscription':
+        if confirm[0].get("T") == "subscription":
             print(f"✓ Subscribed to {symbol} quotes")
 
         try:
@@ -252,16 +247,19 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         messages = json.loads(msg.data)
 
                         for message in messages:
-                            if message.get('T') == 'q':  # Quote message
+                            if message.get("T") == "q":  # Quote message
                                 stream_msg = StreamMessage(
-                                    symbol=message.get('S', symbol),
-                                    timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                    bid=float(message.get('bp', 0)),
-                                    ask=float(message.get('ap', 0)),
-                                    volume=float(message.get('bs', 0)) + float(message.get('as', 0)),
+                                    symbol=message.get("S", symbol),
+                                    timestamp=datetime.fromisoformat(
+                                        message.get("t", "").replace("Z", "+00:00")
+                                    ),
+                                    bid=float(message.get("bp", 0)),
+                                    ask=float(message.get("ap", 0)),
+                                    volume=float(message.get("bs", 0))
+                                    + float(message.get("as", 0)),
                                     provider=self.name,
                                     stream_type="quote",
-                                    raw_data=message
+                                    raw_data=message,
                                 )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
@@ -272,10 +270,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         continue
 
         except asyncio.CancelledError:
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "quotes": [symbol]
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "quotes": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
             except:
@@ -286,7 +281,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time bar (candle) data.
@@ -303,7 +298,9 @@ class AlpacaStreamProvider(BaseStreamProvider):
             StreamMessage with bar data
         """
         if interval != "1m":
-            raise ValueError("Alpaca WebSocket only supports 1-minute bars. Use '1m' interval.")
+            raise ValueError(
+                "Alpaca WebSocket only supports 1-minute bars. Use '1m' interval."
+            )
 
         symbol = symbol.upper()
 
@@ -315,14 +312,11 @@ class AlpacaStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Subscribe to bars
-        subscribe_msg = {
-            "action": "subscribe",
-            "bars": [symbol]
-        }
+        subscribe_msg = {"action": "subscribe", "bars": [symbol]}
         await self.websocket.send_json(subscribe_msg)
 
         confirm = await self.websocket.receive_json()
-        if confirm[0].get('T') == 'subscription':
+        if confirm[0].get("T") == "subscription":
             print(f"✓ Subscribed to {symbol} 1-min bars")
 
         try:
@@ -332,18 +326,20 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         messages = json.loads(msg.data)
 
                         for message in messages:
-                            if message.get('T') == 'b':  # Bar message
+                            if message.get("T") == "b":  # Bar message
                                 stream_msg = StreamMessage(
-                                    symbol=message.get('S', symbol),
-                                    timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                    open=float(message.get('o', 0)),
-                                    high=float(message.get('h', 0)),
-                                    low=float(message.get('l', 0)),
-                                    close=float(message.get('c', 0)),
-                                    volume=float(message.get('v', 0)),
+                                    symbol=message.get("S", symbol),
+                                    timestamp=datetime.fromisoformat(
+                                        message.get("t", "").replace("Z", "+00:00")
+                                    ),
+                                    open=float(message.get("o", 0)),
+                                    high=float(message.get("h", 0)),
+                                    low=float(message.get("l", 0)),
+                                    close=float(message.get("c", 0)),
+                                    volume=float(message.get("v", 0)),
                                     provider=self.name,
                                     stream_type="kline",
-                                    raw_data=message
+                                    raw_data=message,
                                 )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
@@ -354,10 +350,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         continue
 
         except asyncio.CancelledError:
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                "bars": [symbol]
-            }
+            unsubscribe_msg = {"action": "unsubscribe", "bars": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
             except:
@@ -368,7 +361,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
         self,
         symbols: list[str],
         data_type: str = "trades",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to multiple symbols at once.
@@ -387,14 +380,11 @@ class AlpacaStreamProvider(BaseStreamProvider):
         symbols = [s.upper() for s in symbols]
 
         # Subscribe to all symbols
-        subscribe_msg = {
-            "action": "subscribe",
-            data_type: symbols
-        }
+        subscribe_msg = {"action": "subscribe", data_type: symbols}
         await self.websocket.send_json(subscribe_msg)
 
         confirm = await self.websocket.receive_json()
-        if confirm[0].get('T') == 'subscription':
+        if confirm[0].get("T") == "subscription":
             print(f"✓ Subscribed to {len(symbols)} symbols for {data_type}")
 
         stream_id = f"multi_{len(symbols)}_{data_type}"
@@ -402,12 +392,8 @@ class AlpacaStreamProvider(BaseStreamProvider):
             self.add_callback(stream_id, callback)
 
         # Message type mapping
-        type_map = {
-            'trades': 't',
-            'quotes': 'q',
-            'bars': 'b'
-        }
-        expected_type = type_map.get(data_type, 't')
+        type_map = {"trades": "t", "quotes": "q", "bars": "b"}
+        expected_type = type_map.get(data_type, "t")
 
         try:
             async for msg in self.websocket:
@@ -416,39 +402,45 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         messages = json.loads(msg.data)
 
                         for message in messages:
-                            if message.get('T') == expected_type:
-                                if data_type == 'trades':
+                            if message.get("T") == expected_type:
+                                if data_type == "trades":
                                     stream_msg = StreamMessage(
-                                        symbol=message.get('S'),
-                                        timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                        price=float(message.get('p', 0)),
-                                        volume=float(message.get('s', 0)),
+                                        symbol=message.get("S"),
+                                        timestamp=datetime.fromisoformat(
+                                            message.get("t", "").replace("Z", "+00:00")
+                                        ),
+                                        price=float(message.get("p", 0)),
+                                        volume=float(message.get("s", 0)),
                                         provider=self.name,
                                         stream_type="trade",
-                                        raw_data=message
+                                        raw_data=message,
                                     )
-                                elif data_type == 'quotes':
+                                elif data_type == "quotes":
                                     stream_msg = StreamMessage(
-                                        symbol=message.get('S'),
-                                        timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                        bid=float(message.get('bp', 0)),
-                                        ask=float(message.get('ap', 0)),
+                                        symbol=message.get("S"),
+                                        timestamp=datetime.fromisoformat(
+                                            message.get("t", "").replace("Z", "+00:00")
+                                        ),
+                                        bid=float(message.get("bp", 0)),
+                                        ask=float(message.get("ap", 0)),
                                         provider=self.name,
                                         stream_type="quote",
-                                        raw_data=message
+                                        raw_data=message,
                                     )
                                 else:  # bars
                                     stream_msg = StreamMessage(
-                                        symbol=message.get('S'),
-                                        timestamp=datetime.fromisoformat(message.get('t', '').replace('Z', '+00:00')),
-                                        open=float(message.get('o', 0)),
-                                        high=float(message.get('h', 0)),
-                                        low=float(message.get('l', 0)),
-                                        close=float(message.get('c', 0)),
-                                        volume=float(message.get('v', 0)),
+                                        symbol=message.get("S"),
+                                        timestamp=datetime.fromisoformat(
+                                            message.get("t", "").replace("Z", "+00:00")
+                                        ),
+                                        open=float(message.get("o", 0)),
+                                        high=float(message.get("h", 0)),
+                                        low=float(message.get("l", 0)),
+                                        close=float(message.get("c", 0)),
+                                        volume=float(message.get("v", 0)),
                                         provider=self.name,
                                         stream_type="kline",
-                                        raw_data=message
+                                        raw_data=message,
                                     )
 
                                 await self._notify_callbacks(stream_id, stream_msg)
@@ -459,10 +451,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
                         continue
 
         except asyncio.CancelledError:
-            unsubscribe_msg = {
-                "action": "unsubscribe",
-                data_type: symbols
-            }
+            unsubscribe_msg = {"action": "unsubscribe", data_type: symbols}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
             except:
@@ -471,7 +460,12 @@ class AlpacaStreamProvider(BaseStreamProvider):
 
     def is_connected(self) -> bool:
         """Check if WebSocket is connected and authenticated."""
-        return self._connected and self._authenticated and self.websocket and not self.websocket.closed
+        return (
+            self._connected
+            and self._authenticated
+            and self.websocket
+            and not self.websocket.closed
+        )
 
     async def reconnect(self) -> bool:
         """Attempt to reconnect WebSocket."""

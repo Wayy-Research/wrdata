@@ -39,10 +39,7 @@ def test_connection():
 
     # Use paper trading port by default
     provider = IBKRProvider(
-        host="127.0.0.1",
-        port=7497,  # Paper trading
-        client_id=1,
-        readonly=True
+        host="127.0.0.1", port=7497, client_id=1, readonly=True  # Paper trading
     )
 
     success = provider.connect()
@@ -80,10 +77,7 @@ def test_historical_data():
         print(f"\nFetching {symbol} from {start_date} to {end_date}...")
 
         response = provider.fetch_timeseries(
-            symbol=symbol,
-            start_date=start_date,
-            end_date=end_date,
-            interval="1d"
+            symbol=symbol, start_date=start_date, end_date=end_date, interval="1d"
         )
 
         if response.success:
@@ -163,11 +157,11 @@ def test_account_info():
 
             # Show key metrics
             important_keys = [
-                'NetLiquidation',
-                'TotalCashValue',
-                'GrossPositionValue',
-                'BuyingPower',
-                'AvailableFunds'
+                "NetLiquidation",
+                "TotalCashValue",
+                "GrossPositionValue",
+                "BuyingPower",
+                "AvailableFunds",
             ]
 
             for key in important_keys:
@@ -202,7 +196,9 @@ def test_positions():
         if positions:
             print(f"✓ Found {len(positions)} open position(s):")
             for pos in positions:
-                print(f"  {pos['symbol']}: {pos['position']} shares @ ${pos['avg_cost']:.2f}")
+                print(
+                    f"  {pos['symbol']}: {pos['position']} shares @ ${pos['avg_cost']:.2f}"
+                )
                 print(f"    Market Value: ${pos['market_value']:.2f}")
         else:
             print("✓ No open positions (or account not logged in)")
@@ -232,15 +228,14 @@ def test_multi_symbol():
 
         for symbol in symbols:
             response = provider.fetch_timeseries(
-                symbol=symbol,
-                start_date=start_date,
-                end_date=end_date,
-                interval="1d"
+                symbol=symbol, start_date=start_date, end_date=end_date, interval="1d"
             )
 
             if response.success:
                 latest = response.data[-1] if response.data else {}
-                print(f"  ✓ {symbol}: {len(response.data)} records, Latest close: ${latest.get('close', 'N/A')}")
+                print(
+                    f"  ✓ {symbol}: {len(response.data)} records, Latest close: ${latest.get('close', 'N/A')}"
+                )
             else:
                 print(f"  ✗ {symbol}: {response.error}")
 
@@ -309,6 +304,7 @@ def run_all_tests():
         except Exception as e:
             print(f"\n✗ Test '{name}' crashed: {e}")
             import traceback
+
             traceback.print_exc()
             results[name] = False
 

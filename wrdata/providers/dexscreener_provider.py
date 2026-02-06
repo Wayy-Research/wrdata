@@ -15,21 +15,79 @@ import requests
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 # Supported chains on DEX Screener
 SUPPORTED_CHAINS = [
-    'ethereum', 'bsc', 'polygon', 'arbitrum', 'optimism', 'avalanche',
-    'fantom', 'solana', 'base', 'zksync', 'linea', 'mantle', 'scroll',
-    'blast', 'manta', 'mode', 'metis', 'celo', 'moonbeam', 'moonriver',
-    'harmony', 'cronos', 'aurora', 'gnosis', 'klaytn', 'kava', 'canto',
-    'evmos', 'oasis', 'telos', 'fuse', 'boba', 'velas', 'syscoin',
-    'milkomeda', 'astar', 'shiden', 'iotex', 'elastos', 'kardia',
-    'thundercore', 'palm', 'cube', 'findora', 'godwoken', 'wanchain',
-    'conflux', 'smartbch', 'dogechain', 'flare', 'songbird', 'redlight',
-    'core', 'pulsechain', 'sui', 'aptos', 'sei', 'injective', 'osmosis',
-    'ton', 'tron', 'near', 'starknet', 'hedera',
+    "ethereum",
+    "bsc",
+    "polygon",
+    "arbitrum",
+    "optimism",
+    "avalanche",
+    "fantom",
+    "solana",
+    "base",
+    "zksync",
+    "linea",
+    "mantle",
+    "scroll",
+    "blast",
+    "manta",
+    "mode",
+    "metis",
+    "celo",
+    "moonbeam",
+    "moonriver",
+    "harmony",
+    "cronos",
+    "aurora",
+    "gnosis",
+    "klaytn",
+    "kava",
+    "canto",
+    "evmos",
+    "oasis",
+    "telos",
+    "fuse",
+    "boba",
+    "velas",
+    "syscoin",
+    "milkomeda",
+    "astar",
+    "shiden",
+    "iotex",
+    "elastos",
+    "kardia",
+    "thundercore",
+    "palm",
+    "cube",
+    "findora",
+    "godwoken",
+    "wanchain",
+    "conflux",
+    "smartbch",
+    "dogechain",
+    "flare",
+    "songbird",
+    "redlight",
+    "core",
+    "pulsechain",
+    "sui",
+    "aptos",
+    "sei",
+    "injective",
+    "osmosis",
+    "ton",
+    "tron",
+    "near",
+    "starknet",
+    "hedera",
 ]
 
 
@@ -57,7 +115,7 @@ class DexScreenerProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         DEX Screener does not provide historical OHLCV data.
@@ -69,7 +127,7 @@ class DexScreenerProvider(BaseProvider):
             data=[],
             success=False,
             error="DEX Screener does not provide historical OHLCV data. "
-                  "Use GeckoTerminalProvider or CoinGecko onchain endpoints for historical DEX data."
+            "Use GeckoTerminalProvider or CoinGecko onchain endpoints for historical DEX data.",
         )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
@@ -78,7 +136,7 @@ class DexScreenerProvider(BaseProvider):
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="DEX Screener does not provide options data"
+            error="DEX Screener does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -88,8 +146,7 @@ class DexScreenerProvider(BaseProvider):
         """Validate connection to DEX Screener API."""
         try:
             response = requests.get(
-                f"{self.base_url}/latest/dex/search?q=ETH",
-                timeout=10
+                f"{self.base_url}/latest/dex/search?q=ETH", timeout=10
             )
             return response.status_code == 200
         except:
@@ -120,14 +177,10 @@ class DexScreenerProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pairs = data.get('pairs', [])
-            return {
-                'success': True,
-                'count': len(pairs),
-                'pairs': pairs
-            }
+            pairs = data.get("pairs", [])
+            return {"success": True, "count": len(pairs), "pairs": pairs}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_pair(self, chain_id: str, pair_address: str) -> Dict[str, Any]:
         """
@@ -148,11 +201,11 @@ class DexScreenerProvider(BaseProvider):
             data = response.json()
 
             return {
-                'success': True,
-                'pair': data.get('pair') or data.get('pairs', [{}])[0]
+                "success": True,
+                "pair": data.get("pair") or data.get("pairs", [{}])[0],
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_token_pairs(self, chain_id: str, token_address: str) -> Dict[str, Any]:
         """
@@ -172,14 +225,10 @@ class DexScreenerProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pairs = data if isinstance(data, list) else data.get('pairs', [])
-            return {
-                'success': True,
-                'count': len(pairs),
-                'pairs': pairs
-            }
+            pairs = data if isinstance(data, list) else data.get("pairs", [])
+            return {"success": True, "count": len(pairs), "pairs": pairs}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_tokens(self, chain_id: str, token_addresses: List[str]) -> Dict[str, Any]:
         """
@@ -203,12 +252,9 @@ class DexScreenerProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            return {
-                'success': True,
-                'data': data
-            }
+            return {"success": True, "data": data}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_latest_boosts(self) -> Dict[str, Any]:
         """Get latest boosted tokens."""
@@ -216,9 +262,9 @@ class DexScreenerProvider(BaseProvider):
             url = f"{self.base_url}/token-boosts/latest/v1"
             response = requests.get(url, timeout=30)
             response.raise_for_status()
-            return {'success': True, 'data': response.json()}
+            return {"success": True, "data": response.json()}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_top_boosts(self) -> Dict[str, Any]:
         """Get top boosted tokens."""
@@ -226,9 +272,9 @@ class DexScreenerProvider(BaseProvider):
             url = f"{self.base_url}/token-boosts/top/v1"
             response = requests.get(url, timeout=30)
             response.raise_for_status()
-            return {'success': True, 'data': response.json()}
+            return {"success": True, "data": response.json()}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_supported_chains(self) -> List[str]:
         """Get list of supported chain identifiers."""
@@ -246,19 +292,19 @@ class DexScreenerProvider(BaseProvider):
             Dict with current price data
         """
         result = self.get_pair(chain_id, pair_address)
-        if not result.get('success'):
+        if not result.get("success"):
             return result
 
-        pair = result.get('pair', {})
+        pair = result.get("pair", {})
         return {
-            'success': True,
-            'symbol': pair.get('baseToken', {}).get('symbol', ''),
-            'price_usd': float(pair.get('priceUsd', 0) or 0),
-            'price_native': float(pair.get('priceNative', 0) or 0),
-            'volume_24h': float(pair.get('volume', {}).get('h24', 0) or 0),
-            'liquidity_usd': float(pair.get('liquidity', {}).get('usd', 0) or 0),
-            'price_change_24h': float(pair.get('priceChange', {}).get('h24', 0) or 0),
-            'dex': pair.get('dexId', ''),
-            'chain': chain_id,
-            'pair_address': pair_address,
+            "success": True,
+            "symbol": pair.get("baseToken", {}).get("symbol", ""),
+            "price_usd": float(pair.get("priceUsd", 0) or 0),
+            "price_native": float(pair.get("priceNative", 0) or 0),
+            "volume_24h": float(pair.get("volume", {}).get("h24", 0) or 0),
+            "liquidity_usd": float(pair.get("liquidity", {}).get("usd", 0) or 0),
+            "price_change_24h": float(pair.get("priceChange", {}).get("h24", 0) or 0),
+            "dex": pair.get("dexId", ""),
+            "chain": chain_id,
+            "pair_address": pair_address,
         }

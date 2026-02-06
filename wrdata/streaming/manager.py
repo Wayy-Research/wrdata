@@ -30,7 +30,7 @@ class StreamManager:
         self,
         symbol: str,
         provider: Optional[str] = None,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time ticker/trade stream.
@@ -64,7 +64,7 @@ class StreamManager:
         symbol: str,
         interval: str = "1m",
         provider: Optional[str] = None,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to real-time kline/candlestick stream.
@@ -91,7 +91,9 @@ class StreamManager:
             await stream_provider.connect()
 
         # Subscribe
-        async for message in stream_provider.subscribe_kline(symbol, interval, callback):
+        async for message in stream_provider.subscribe_kline(
+            symbol, interval, callback
+        ):
             yield message
 
     async def subscribe_many(
@@ -99,7 +101,7 @@ class StreamManager:
         symbols: List[str],
         stream_type: str = "ticker",
         provider: Optional[str] = None,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Subscribe to multiple symbols simultaneously.
@@ -137,9 +139,7 @@ class StreamManager:
                 task.cancel()
 
     async def _consume_stream(
-        self,
-        stream: AsyncIterator[StreamMessage],
-        callback: Optional[Callable]
+        self, stream: AsyncIterator[StreamMessage], callback: Optional[Callable]
     ):
         """Helper to consume an async stream."""
         async for message in stream:
@@ -160,9 +160,9 @@ class StreamManager:
         symbol_upper = symbol.upper()
 
         # Crypto detection
-        if any(pair in symbol_upper for pair in ['USDT', 'BUSD', 'BTC', 'ETH', 'BNB']):
-            if 'binance_stream' in self.providers:
-                return 'binance_stream'
+        if any(pair in symbol_upper for pair in ["USDT", "BUSD", "BTC", "ETH", "BNB"]):
+            if "binance_stream" in self.providers:
+                return "binance_stream"
 
         # Fallback to first available
         if self.providers:

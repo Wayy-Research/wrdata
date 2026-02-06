@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class IEXCloudProvider(BaseProvider):
@@ -53,7 +57,7 @@ class IEXCloudProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical stock data from IEX Cloud."""
         try:
@@ -77,8 +81,11 @@ class IEXCloudProvider(BaseProvider):
 
                 if not data:
                     return DataResponse(
-                        symbol=symbol, provider=self.name, data=[], success=False,
-                        error=f"No data for {symbol}"
+                        symbol=symbol,
+                        provider=self.name,
+                        data=[],
+                        success=False,
+                        error=f"No data for {symbol}",
                     )
 
                 # Filter by date range
@@ -87,21 +94,29 @@ class IEXCloudProvider(BaseProvider):
 
                 records = []
                 for bar in data:
-                    bar_date = datetime.strptime(bar['date'], "%Y-%m-%d").date()
+                    bar_date = datetime.strptime(bar["date"], "%Y-%m-%d").date()
                     if start_dt <= bar_date <= end_dt:
-                        records.append({
-                            'Date': bar['date'],
-                            'open': float(bar.get('open', 0) or 0),
-                            'high': float(bar.get('high', 0) or 0),
-                            'low': float(bar.get('low', 0) or 0),
-                            'close': float(bar.get('close', 0) or 0),
-                            'volume': int(bar.get('volume', 0) or 0),
-                        })
+                        records.append(
+                            {
+                                "Date": bar["date"],
+                                "open": float(bar.get("open", 0) or 0),
+                                "high": float(bar.get("high", 0) or 0),
+                                "low": float(bar.get("low", 0) or 0),
+                                "close": float(bar.get("close", 0) or 0),
+                                "volume": int(bar.get("volume", 0) or 0),
+                            }
+                        )
 
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=records,
-                    metadata={'interval': interval, 'records': len(records), 'source': 'IEX Cloud'},
-                    success=True
+                    symbol=symbol,
+                    provider=self.name,
+                    data=records,
+                    metadata={
+                        "interval": interval,
+                        "records": len(records),
+                        "source": "IEX Cloud",
+                    },
+                    success=True,
                 )
 
             else:
@@ -115,41 +130,57 @@ class IEXCloudProvider(BaseProvider):
 
                 if not data:
                     return DataResponse(
-                        symbol=symbol, provider=self.name, data=[], success=False,
-                        error=f"No intraday data for {symbol}"
+                        symbol=symbol,
+                        provider=self.name,
+                        data=[],
+                        success=False,
+                        error=f"No intraday data for {symbol}",
                     )
 
                 records = []
                 for bar in data:
-                    if bar.get('date') and bar.get('minute'):
+                    if bar.get("date") and bar.get("minute"):
                         dt_str = f"{bar['date']} {bar['minute']}"
-                        records.append({
-                            'Date': dt_str,
-                            'open': float(bar.get('open', 0) or 0),
-                            'high': float(bar.get('high', 0) or 0),
-                            'low': float(bar.get('low', 0) or 0),
-                            'close': float(bar.get('close', 0) or 0),
-                            'volume': int(bar.get('volume', 0) or 0),
-                        })
+                        records.append(
+                            {
+                                "Date": dt_str,
+                                "open": float(bar.get("open", 0) or 0),
+                                "high": float(bar.get("high", 0) or 0),
+                                "low": float(bar.get("low", 0) or 0),
+                                "close": float(bar.get("close", 0) or 0),
+                                "volume": int(bar.get("volume", 0) or 0),
+                            }
+                        )
 
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=records,
-                    metadata={'interval': interval, 'records': len(records), 'source': 'IEX Cloud'},
-                    success=True
+                    symbol=symbol,
+                    provider=self.name,
+                    data=records,
+                    metadata={
+                        "interval": interval,
+                        "records": len(records),
+                        "source": "IEX Cloud",
+                    },
+                    success=True,
                 )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"IEX Cloud error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"IEX Cloud error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """IEX Cloud does not support options in free tier."""
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="IEX Cloud does not provide options data in free tier"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="IEX Cloud does not provide options data in free tier",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

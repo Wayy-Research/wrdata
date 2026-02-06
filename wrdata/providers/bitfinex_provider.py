@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class BitfinexProvider(BaseProvider):
@@ -41,13 +45,13 @@ class BitfinexProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Bitfinex."""
         try:
             # Bitfinex format: tBTCUSD (trading pairs start with 't')
-            symbol = symbol.upper().replace('-', '').replace('_', '')
-            if not symbol.startswith('t'):
+            symbol = symbol.upper().replace("-", "").replace("_", "")
+            if not symbol.startswith("t"):
                 symbol = f"t{symbol}"
 
             # Map intervals
@@ -75,7 +79,7 @@ class BitfinexProvider(BaseProvider):
                 "start": start_ts,
                 "end": end_ts,
                 "limit": 10000,
-                "sort": 1  # Sort ascending
+                "sort": 1,  # Sort ascending
             }
 
             response = requests.get(url, params=params, timeout=30)
@@ -84,8 +88,11 @@ class BitfinexProvider(BaseProvider):
 
             if not data or isinstance(data, dict):
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
@@ -94,32 +101,45 @@ class BitfinexProvider(BaseProvider):
                 timestamp = candle[0] / 1000
                 dt = datetime.fromtimestamp(timestamp)
 
-                records.append({
-                    'Date': dt.strftime('%Y-%m-%d'),
-                    'open': float(candle[1]),
-                    'high': float(candle[3]),
-                    'low': float(candle[4]),
-                    'close': float(candle[2]),
-                    'volume': float(candle[5]),
-                })
+                records.append(
+                    {
+                        "Date": dt.strftime("%Y-%m-%d"),
+                        "open": float(candle[1]),
+                        "high": float(candle[3]),
+                        "low": float(candle[4]),
+                        "close": float(candle[2]),
+                        "volume": float(candle[5]),
+                    }
+                )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Bitfinex'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Bitfinex",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Bitfinex error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Bitfinex error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Bitfinex does not provide traditional options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Bitfinex does not provide traditional options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

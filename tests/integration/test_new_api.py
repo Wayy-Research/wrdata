@@ -20,7 +20,7 @@ def test_datastream_initialization(stream):
 def test_available_providers(stream):
     """Test that providers are available."""
     providers = list(stream.providers.keys())
-    assert 'yfinance' in providers  # YFinance should always be available
+    assert "yfinance" in providers  # YFinance should always be available
 
 
 def test_get_basic_data(stream):
@@ -29,8 +29,8 @@ def test_get_basic_data(stream):
 
     assert df is not None
     assert len(df) > 0
-    assert 'close' in df.columns
-    assert 'timestamp' in df.columns or 'date' in df.columns
+    assert "close" in df.columns
+    assert "timestamp" in df.columns or "date" in df.columns
 
 
 def test_provider_status(stream):
@@ -41,5 +41,5 @@ def test_provider_status(stream):
     assert len(status) > 0
 
     for provider, info in status.items():
-        assert 'connected' in info
-        assert isinstance(info['connected'], bool)
+        assert "connected" in info
+        assert isinstance(info["connected"], bool)

@@ -16,7 +16,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class PolygonProvider(BaseProvider):
@@ -45,9 +49,7 @@ class PolygonProvider(BaseProvider):
             )
 
         self.base_url = "https://api.polygon.io"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}"
-        }
+        self.headers = {"Authorization": f"Bearer {self.api_key}"}
 
     def fetch_timeseries(
         self,
@@ -55,7 +57,7 @@ class PolygonProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical stock data from Polygon.io.
@@ -73,8 +75,8 @@ class PolygonProvider(BaseProvider):
         """
         try:
             symbol = symbol.upper()
-            adjusted = kwargs.get('adjusted', True)
-            sort = kwargs.get('sort', 'asc')
+            adjusted = kwargs.get("adjusted", True)
+            sort = kwargs.get("sort", "asc")
 
             # Map interval to Polygon timespan/multiplier
             interval_map = {
@@ -97,7 +99,7 @@ class PolygonProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Unsupported interval: {interval}. Use: {list(interval_map.keys())}"
+                    error=f"Unsupported interval: {interval}. Use: {list(interval_map.keys())}",
                 )
 
             timespan, multiplier = interval_map[interval]
@@ -113,47 +115,51 @@ class PolygonProvider(BaseProvider):
             }
 
             # Make request
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
 
             data = response.json()
 
             # Check for errors
-            if data.get('status') == 'ERROR':
-                error_msg = data.get('error', 'Unknown error')
+            if data.get("status") == "ERROR":
+                error_msg = data.get("error", "Unknown error")
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Polygon API error: {error_msg}"
+                    error=f"Polygon API error: {error_msg}",
                 )
 
             # Check for results
-            if 'results' not in data or not data['results']:
+            if "results" not in data or not data["results"]:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol} from {start_date} to {end_date}"
+                    error=f"No data found for {symbol} from {start_date} to {end_date}",
                 )
 
             # Convert to standard format
             records = []
-            for bar in data['results']:
+            for bar in data["results"]:
                 # Polygon uses millisecond timestamps
-                timestamp = bar.get('t', 0) / 1000
+                timestamp = bar.get("t", 0) / 1000
                 date_obj = datetime.fromtimestamp(timestamp)
 
-                records.append({
-                    'Date': date_obj.strftime('%Y-%m-%d'),
-                    'open': float(bar.get('o', 0)),
-                    'high': float(bar.get('h', 0)),
-                    'low': float(bar.get('l', 0)),
-                    'close': float(bar.get('c', 0)),
-                    'volume': int(bar.get('v', 0)),
-                })
+                records.append(
+                    {
+                        "Date": date_obj.strftime("%Y-%m-%d"),
+                        "open": float(bar.get("o", 0)),
+                        "high": float(bar.get("h", 0)),
+                        "low": float(bar.get("l", 0)),
+                        "close": float(bar.get("c", 0)),
+                        "volume": int(bar.get("v", 0)),
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -161,7 +167,7 @@ class PolygonProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data in results for {symbol}"
+                    error=f"No data in results for {symbol}",
                 )
 
             return DataResponse(
@@ -169,23 +175,25 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Polygon.io',
-                    'adjusted': adjusted,
-                    'query_count': data.get('queryCount', 0),
-                    'results_count': data.get('resultsCount', 0),
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Polygon.io",
+                    "adjusted": adjusted,
+                    "query_count": data.get("queryCount", 0),
+                    "results_count": data.get("resultsCount", 0),
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 401:
                 error_msg = "Invalid API key or unauthorized"
             elif e.response.status_code == 403:
-                error_msg = "API key doesn't have access to this endpoint (upgrade required)"
+                error_msg = (
+                    "API key doesn't have access to this endpoint (upgrade required)"
+                )
             elif e.response.status_code == 429:
                 error_msg = "Rate limit exceeded. Free tier: 5 calls/min, 100 calls/day"
             else:
@@ -196,7 +204,7 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -205,7 +213,7 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Polygon API error: {str(e)}"
+                error=f"Polygon API error: {str(e)}",
             )
 
     def get_last_quote(self, symbol: str) -> dict:
@@ -227,17 +235,17 @@ class PolygonProvider(BaseProvider):
 
             data = response.json()
 
-            if data.get('status') != 'OK':
+            if data.get("status") != "OK":
                 return {}
 
-            result = data.get('results', {})
+            result = data.get("results", {})
             return {
-                'symbol': symbol,
-                'bid': result.get('P'),  # Bid price
-                'ask': result.get('p'),  # Ask price
-                'bid_size': result.get('S'),  # Bid size
-                'ask_size': result.get('s'),  # Ask size
-                'timestamp': result.get('t'),
+                "symbol": symbol,
+                "bid": result.get("P"),  # Bid price
+                "ask": result.get("p"),  # Ask price
+                "bid_size": result.get("S"),  # Bid size
+                "ask_size": result.get("s"),  # Ask size
+                "timestamp": result.get("t"),
             }
 
         except Exception as e:
@@ -263,19 +271,19 @@ class PolygonProvider(BaseProvider):
 
             data = response.json()
 
-            if 'results' not in data or not data['results']:
+            if "results" not in data or not data["results"]:
                 return {}
 
-            result = data['results'][0]
+            result = data["results"][0]
             return {
-                'symbol': symbol,
-                'open': result.get('o'),
-                'high': result.get('h'),
-                'low': result.get('l'),
-                'close': result.get('c'),
-                'volume': result.get('v'),
-                'vwap': result.get('vw'),  # Volume weighted average price
-                'timestamp': result.get('t'),
+                "symbol": symbol,
+                "open": result.get("o"),
+                "high": result.get("h"),
+                "low": result.get("l"),
+                "close": result.get("c"),
+                "volume": result.get("v"),
+                "vwap": result.get("vw"),  # Volume weighted average price
+                "timestamp": result.get("t"),
             }
 
         except Exception as e:
@@ -301,26 +309,26 @@ class PolygonProvider(BaseProvider):
 
             data = response.json()
 
-            if data.get('status') != 'OK':
+            if data.get("status") != "OK":
                 return {}
 
-            result = data.get('results', {})
+            result = data.get("results", {})
             return {
-                'symbol': result.get('ticker'),
-                'name': result.get('name'),
-                'market': result.get('market'),
-                'locale': result.get('locale'),
-                'primary_exchange': result.get('primary_exchange'),
-                'type': result.get('type'),
-                'currency_name': result.get('currency_name'),
-                'cik': result.get('cik'),
-                'composite_figi': result.get('composite_figi'),
-                'share_class_figi': result.get('share_class_figi'),
-                'description': result.get('description'),
-                'homepage_url': result.get('homepage_url'),
-                'total_employees': result.get('total_employees'),
-                'list_date': result.get('list_date'),
-                'market_cap': result.get('market_cap'),
+                "symbol": result.get("ticker"),
+                "name": result.get("name"),
+                "market": result.get("market"),
+                "locale": result.get("locale"),
+                "primary_exchange": result.get("primary_exchange"),
+                "type": result.get("type"),
+                "currency_name": result.get("currency_name"),
+                "cik": result.get("cik"),
+                "composite_figi": result.get("composite_figi"),
+                "share_class_figi": result.get("share_class_figi"),
+                "description": result.get("description"),
+                "homepage_url": result.get("homepage_url"),
+                "total_employees": result.get("total_employees"),
+                "list_date": result.get("list_date"),
+                "market_cap": result.get("market_cap"),
             }
 
         except Exception as e:
@@ -347,10 +355,7 @@ class PolygonProvider(BaseProvider):
             print(f"Failed to get market status: {e}")
             return {}
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch options chain from Polygon.io.
 
@@ -363,28 +368,30 @@ class PolygonProvider(BaseProvider):
             # Get options contracts
             url = f"{self.base_url}/v3/reference/options/contracts"
             params = {
-                'underlying_ticker': symbol,
-                'limit': 1000,
+                "underlying_ticker": symbol,
+                "limit": 1000,
             }
 
             if request.expiry:
-                params['expiration_date'] = request.expiry.strftime('%Y-%m-%d')
+                params["expiration_date"] = request.expiry.strftime("%Y-%m-%d")
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
 
             data = response.json()
 
-            if data.get('status') != 'OK':
+            if data.get("status") != "OK":
                 return OptionsChainResponse(
                     symbol=symbol,
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error="Polygon API error"
+                    error="Polygon API error",
                 )
 
-            contracts = data.get('results', [])
+            contracts = data.get("results", [])
 
             if not contracts:
                 return OptionsChainResponse(
@@ -392,7 +399,7 @@ class PolygonProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options contracts found for {symbol}"
+                    error=f"No options contracts found for {symbol}",
                 )
 
             return OptionsChainResponse(
@@ -400,10 +407,7 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=True,
-                metadata={
-                    'contracts_found': len(contracts),
-                    'source': 'Polygon.io'
-                }
+                metadata={"contracts_found": len(contracts), "source": "Polygon.io"},
             )
 
         except requests.exceptions.HTTPError as e:
@@ -417,7 +421,7 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -426,7 +430,7 @@ class PolygonProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=f"Polygon options error: {str(e)}"
+                error=f"Polygon options error: {str(e)}",
             )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -447,7 +451,7 @@ class PolygonProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return data.get('market') is not None
+            return data.get("market") is not None
 
         except Exception:
             return False
@@ -459,20 +463,20 @@ class PolygonProvider(BaseProvider):
 
 # Polygon.io market types
 POLYGON_MARKETS = {
-    'stocks': 'US Stocks & ETFs',
-    'options': 'Options (paid plans)',
-    'crypto': 'Cryptocurrency',
-    'fx': 'Foreign Exchange (Forex)',
-    'indices': 'Market Indices',
+    "stocks": "US Stocks & ETFs",
+    "options": "Options (paid plans)",
+    "crypto": "Cryptocurrency",
+    "fx": "Foreign Exchange (Forex)",
+    "indices": "Market Indices",
 }
 
 # Polygon.io timespans
 POLYGON_TIMESPANS = {
-    'minute': 'Minute bars',
-    'hour': 'Hourly bars',
-    'day': 'Daily bars',
-    'week': 'Weekly bars',
-    'month': 'Monthly bars',
-    'quarter': 'Quarterly bars',
-    'year': 'Yearly bars',
+    "minute": "Minute bars",
+    "hour": "Hourly bars",
+    "day": "Daily bars",
+    "week": "Weekly bars",
+    "month": "Monthly bars",
+    "quarter": "Quarterly bars",
+    "year": "Yearly bars",
 }

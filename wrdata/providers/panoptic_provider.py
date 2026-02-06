@@ -41,9 +41,9 @@ SUBGRAPH_ENDPOINTS = {
 
 # Tick spacing by fee tier (basis points)
 TICK_SPACING = {
-    100: 1,      # 0.01%
-    500: 10,     # 0.05%
-    3000: 60,    # 0.3%
+    100: 1,  # 0.01%
+    500: 10,  # 0.05%
+    3000: 60,  # 0.3%
     10000: 200,  # 1%
 }
 
@@ -51,20 +51,21 @@ TICK_SPACING = {
 @dataclass
 class OptionLeg:
     """Decoded option leg from a Panoptic position."""
+
     leg_index: int
-    asset: int           # 0 = token0, 1 = token1
-    option_ratio: int    # Contracts per leg
-    is_long: bool        # True = bought (removed liquidity)
-    token_type: str      # "put" or "call"
-    strike_tick: int     # Tick at center of position
-    width_ticks: int     # Width in ticks
-    lower_tick: int      # Lower bound tick
-    upper_tick: int      # Upper bound tick
+    asset: int  # 0 = token0, 1 = token1
+    option_ratio: int  # Contracts per leg
+    is_long: bool  # True = bought (removed liquidity)
+    token_type: str  # "put" or "call"
+    strike_tick: int  # Tick at center of position
+    width_ticks: int  # Width in ticks
+    lower_tick: int  # Lower bound tick
+    upper_tick: int  # Upper bound tick
 
 
 def tick_to_price(tick: int, decimals0: int = 18, decimals1: int = 6) -> float:
     """Convert Uniswap V3 tick to price."""
-    return (1.0001 ** tick) * (10 ** (decimals0 - decimals1))
+    return (1.0001**tick) * (10 ** (decimals0 - decimals1))
 
 
 def calculate_utilization(total_assets: str, in_amm: str) -> float:
@@ -124,7 +125,9 @@ class PanopticProvider(BaseProvider):
 
     async def _async_query(self, query: str, variables: Dict[str, Any] = None) -> Dict:
         """Execute async GraphQL query."""
-        async with httpx.AsyncClient(timeout=self.timeout, headers=self.headers) as client:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, headers=self.headers
+        ) as client:
             response = await client.post(
                 self.endpoint,
                 json={"query": query, "variables": variables or {}},
@@ -157,7 +160,7 @@ class PanopticProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical pool data for a Panoptic pool.
@@ -225,10 +228,7 @@ class PanopticProvider(BaseProvider):
         return symbol.lower()
 
     def _fetch_pool_day_data(
-        self,
-        pool_address: str,
-        start_ts: int,
-        end_ts: int
+        self, pool_address: str, start_ts: int, end_ts: int
     ) -> List[Dict[str, Any]]:
         """Fetch daily pool metrics."""
         query = """
@@ -256,30 +256,32 @@ class PanopticProvider(BaseProvider):
         }
         """
 
-        result = self._sync_query(query, {
-            "pool": pool_address,
-            "start": start_ts,
-            "end": end_ts,
-        })
+        result = self._sync_query(
+            query,
+            {
+                "pool": pool_address,
+                "start": start_ts,
+                "end": end_ts,
+            },
+        )
 
         data = []
         for item in result.get("panopticPoolDayDatas", []):
-            data.append({
-                "timestamp": datetime.fromtimestamp(item["date"]).isoformat(),
-                "date": datetime.fromtimestamp(item["date"]).strftime("%Y-%m-%d"),
-                "tvl_usd": float(item.get("tvlUSD", 0)),
-                "volume_usd": float(item.get("volumeUSD", 0)),
-                "fees_usd": float(item.get("feesUSD", 0)),
-                "tx_count": int(item.get("txCount", 0)),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.fromtimestamp(item["date"]).isoformat(),
+                    "date": datetime.fromtimestamp(item["date"]).strftime("%Y-%m-%d"),
+                    "tvl_usd": float(item.get("tvlUSD", 0)),
+                    "volume_usd": float(item.get("volumeUSD", 0)),
+                    "fees_usd": float(item.get("feesUSD", 0)),
+                    "tx_count": int(item.get("txCount", 0)),
+                }
+            )
 
         return data
 
     def _fetch_pool_hour_data(
-        self,
-        pool_address: str,
-        start_ts: int,
-        end_ts: int
+        self, pool_address: str, start_ts: int, end_ts: int
     ) -> List[Dict[str, Any]]:
         """Fetch hourly pool metrics."""
         query = """
@@ -320,37 +322,41 @@ class PanopticProvider(BaseProvider):
         }
         """
 
-        result = self._sync_query(query, {
-            "pool": pool_address,
-            "start": start_ts,
-            "end": end_ts,
-        })
+        result = self._sync_query(
+            query,
+            {
+                "pool": pool_address,
+                "start": start_ts,
+                "end": end_ts,
+            },
+        )
 
         data = []
         for item in result.get("poolHourDatas", []):
-            data.append({
-                "timestamp": datetime.fromtimestamp(item["periodStartUnix"]).isoformat(),
-                "open": float(item.get("open", 0)),
-                "high": float(item.get("high", 0)),
-                "low": float(item.get("low", 0)),
-                "close": float(item.get("close", 0)),
-                "volume_usd": float(item.get("volumeUSD", 0)),
-                "volume_token0": float(item.get("volumeToken0", 0)),
-                "volume_token1": float(item.get("volumeToken1", 0)),
-                "fees_usd": float(item.get("feesUSD", 0)),
-                "tvl_usd": float(item.get("tvlUSD", 0)),
-                "liquidity": item.get("liquidity"),
-                "tick": int(item.get("tick", 0)),
-                "tx_count": int(item.get("txCount", 0)),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.fromtimestamp(
+                        item["periodStartUnix"]
+                    ).isoformat(),
+                    "open": float(item.get("open", 0)),
+                    "high": float(item.get("high", 0)),
+                    "low": float(item.get("low", 0)),
+                    "close": float(item.get("close", 0)),
+                    "volume_usd": float(item.get("volumeUSD", 0)),
+                    "volume_token0": float(item.get("volumeToken0", 0)),
+                    "volume_token1": float(item.get("volumeToken1", 0)),
+                    "fees_usd": float(item.get("feesUSD", 0)),
+                    "tvl_usd": float(item.get("tvlUSD", 0)),
+                    "liquidity": item.get("liquidity"),
+                    "tick": int(item.get("tick", 0)),
+                    "tx_count": int(item.get("txCount", 0)),
+                }
+            )
 
         return data
 
     def _fetch_position_events(
-        self,
-        pool_address: str,
-        start_ts: int,
-        end_ts: int
+        self, pool_address: str, start_ts: int, end_ts: int
     ) -> List[Dict[str, Any]]:
         """Fetch option mint/burn events for a pool."""
         query = """
@@ -403,38 +409,49 @@ class PanopticProvider(BaseProvider):
         }
         """
 
-        result = self._sync_query(query, {
-            "pool": pool_address,
-            "start": start_ts,
-            "end": end_ts,
-        })
+        result = self._sync_query(
+            query,
+            {
+                "pool": pool_address,
+                "start": start_ts,
+                "end": end_ts,
+            },
+        )
 
         data = []
 
         # Process mints
         for item in result.get("optionMints", []):
-            data.append({
-                "timestamp": datetime.fromtimestamp(int(item["blockTimestamp"])).isoformat(),
-                "event_type": "mint",
-                "tx_hash": item.get("transactionHash"),
-                "account": item.get("account", {}).get("id"),
-                "token_id": item.get("tokenId", {}).get("id"),
-                "position_size": item.get("positionSize"),
-                "pool_utilizations": item.get("poolUtilizations"),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.fromtimestamp(
+                        int(item["blockTimestamp"])
+                    ).isoformat(),
+                    "event_type": "mint",
+                    "tx_hash": item.get("transactionHash"),
+                    "account": item.get("account", {}).get("id"),
+                    "token_id": item.get("tokenId", {}).get("id"),
+                    "position_size": item.get("positionSize"),
+                    "pool_utilizations": item.get("poolUtilizations"),
+                }
+            )
 
         # Process burns
         for item in result.get("optionBurns", []):
-            data.append({
-                "timestamp": datetime.fromtimestamp(int(item["blockTimestamp"])).isoformat(),
-                "event_type": "burn",
-                "tx_hash": item.get("transactionHash"),
-                "account": item.get("account", {}).get("id"),
-                "token_id": item.get("tokenId", {}).get("id"),
-                "position_size": item.get("positionSize"),
-                "premium0": item.get("premium0"),
-                "premium1": item.get("premium1"),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.fromtimestamp(
+                        int(item["blockTimestamp"])
+                    ).isoformat(),
+                    "event_type": "burn",
+                    "tx_hash": item.get("transactionHash"),
+                    "account": item.get("account", {}).get("id"),
+                    "token_id": item.get("tokenId", {}).get("id"),
+                    "position_size": item.get("positionSize"),
+                    "premium0": item.get("premium0"),
+                    "premium1": item.get("premium1"),
+                }
+            )
 
         # Sort by timestamp
         data.sort(key=lambda x: x["timestamp"])
@@ -442,10 +459,7 @@ class PanopticProvider(BaseProvider):
         return data
 
     def _fetch_collateral_data(
-        self,
-        pool_address: str,
-        start_ts: int,
-        end_ts: int
+        self, pool_address: str, start_ts: int, end_ts: int
     ) -> List[Dict[str, Any]]:
         """Fetch collateral tracker day data."""
         query = """
@@ -477,34 +491,36 @@ class PanopticProvider(BaseProvider):
         }
         """
 
-        result = self._sync_query(query, {
-            "pool": pool_address,
-            "start": start_ts,
-            "end": end_ts,
-        })
+        result = self._sync_query(
+            query,
+            {
+                "pool": pool_address,
+                "start": start_ts,
+                "end": end_ts,
+            },
+        )
 
         data = []
         for item in result.get("collateralDayDatas", []):
             collateral = item.get("collateral", {})
             token = collateral.get("token", {})
-            data.append({
-                "timestamp": datetime.fromtimestamp(item["date"]).isoformat(),
-                "date": datetime.fromtimestamp(item["date"]).strftime("%Y-%m-%d"),
-                "collateral_address": collateral.get("id"),
-                "token_symbol": token.get("symbol"),
-                "token_decimals": token.get("decimals"),
-                "total_assets": item.get("totalAssets"),
-                "total_shares": item.get("totalShares"),
-                "in_amm": item.get("inAMM"),
-                "utilization_rate": float(item.get("utilizationRate", 0)),
-            })
+            data.append(
+                {
+                    "timestamp": datetime.fromtimestamp(item["date"]).isoformat(),
+                    "date": datetime.fromtimestamp(item["date"]).strftime("%Y-%m-%d"),
+                    "collateral_address": collateral.get("id"),
+                    "token_symbol": token.get("symbol"),
+                    "token_decimals": token.get("decimals"),
+                    "total_assets": item.get("totalAssets"),
+                    "total_shares": item.get("totalShares"),
+                    "in_amm": item.get("inAMM"),
+                    "utilization_rate": float(item.get("utilizationRate", 0)),
+                }
+            )
 
         return data
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Not applicable for Panoptic perpetual options.
 
@@ -588,25 +604,27 @@ class PanopticProvider(BaseProvider):
             token1 = underlying.get("token1", {})
             fee_tier = underlying.get("feeTier", 0)
 
-            pools.append({
-                "pool_address": item.get("id"),
-                "underlying_pool": underlying.get("id"),
-                "token0_symbol": token0.get("symbol"),
-                "token1_symbol": token1.get("symbol"),
-                "token0_decimals": token0.get("decimals"),
-                "token1_decimals": token1.get("decimals"),
-                "fee_tier": int(fee_tier) / 10000 if fee_tier else None,  # Convert to percentage
-                "tx_count": int(item.get("txCount", 0)),
-                "collateral0_address": item.get("collateral0", {}).get("id"),
-                "collateral1_address": item.get("collateral1", {}).get("id"),
-            })
+            pools.append(
+                {
+                    "pool_address": item.get("id"),
+                    "underlying_pool": underlying.get("id"),
+                    "token0_symbol": token0.get("symbol"),
+                    "token1_symbol": token1.get("symbol"),
+                    "token0_decimals": token0.get("decimals"),
+                    "token1_decimals": token1.get("decimals"),
+                    "fee_tier": (
+                        int(fee_tier) / 10000 if fee_tier else None
+                    ),  # Convert to percentage
+                    "tx_count": int(item.get("txCount", 0)),
+                    "collateral0_address": item.get("collateral0", {}).get("id"),
+                    "collateral1_address": item.get("collateral1", {}).get("id"),
+                }
+            )
 
         return pools
 
     def get_account_positions(
-        self,
-        account_address: str,
-        pool_address: Optional[str] = None
+        self, account_address: str, pool_address: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get open positions for an account.
@@ -646,16 +664,18 @@ class PanopticProvider(BaseProvider):
 
         positions = []
         for item in result.get("accountBalances", []):
-            positions.append({
-                "id": item.get("id"),
-                "token_id": item.get("tokenId", {}).get("id"),
-                "pool_address": item.get("panopticPool", {}).get("id"),
-                "position_size": item.get("positionSize"),
-                "created_timestamp": datetime.fromtimestamp(
-                    int(item.get("createdTimestamp", 0))
-                ).isoformat(),
-                "created_block": int(item.get("createdBlockNumber", 0)),
-            })
+            positions.append(
+                {
+                    "id": item.get("id"),
+                    "token_id": item.get("tokenId", {}).get("id"),
+                    "pool_address": item.get("panopticPool", {}).get("id"),
+                    "position_size": item.get("positionSize"),
+                    "created_timestamp": datetime.fromtimestamp(
+                        int(item.get("createdTimestamp", 0))
+                    ).isoformat(),
+                    "created_block": int(item.get("createdBlockNumber", 0)),
+                }
+            )
 
         return positions
 
@@ -664,9 +684,7 @@ class PanopticProvider(BaseProvider):
     # =========================================================================
 
     def get_options_chain(
-        self,
-        pool_address: str,
-        limit: int = 100
+        self, pool_address: str, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
         Get live options chain - all active positions for a pool.
@@ -735,10 +753,7 @@ class PanopticProvider(BaseProvider):
         }
         """
 
-        result = self._sync_query(query, {
-            "pool": pool_address.lower(),
-            "first": limit
-        })
+        result = self._sync_query(query, {"pool": pool_address.lower(), "first": limit})
 
         positions = []
         for item in result.get("accountBalances", []):
@@ -768,36 +783,40 @@ class PanopticProvider(BaseProvider):
                 else:
                     is_itm = current_tick > strike_tick
 
-                legs.append({
-                    "leg_index": leg.get("index"),
-                    "asset": int(leg.get("asset", 0)),
-                    "option_ratio": int(leg.get("optionRatio", 1)),
-                    "is_long": is_long,
-                    "position": "long" if is_long else "short",
-                    "token_type": token_type,
-                    "strike_tick": strike_tick,
-                    "width_ticks": width_ticks,
-                    "lower_tick": strike_tick - width_ticks,
-                    "upper_tick": strike_tick + width_ticks,
-                    "is_itm": is_itm,
-                })
+                legs.append(
+                    {
+                        "leg_index": leg.get("index"),
+                        "asset": int(leg.get("asset", 0)),
+                        "option_ratio": int(leg.get("optionRatio", 1)),
+                        "is_long": is_long,
+                        "position": "long" if is_long else "short",
+                        "token_type": token_type,
+                        "strike_tick": strike_tick,
+                        "width_ticks": width_ticks,
+                        "lower_tick": strike_tick - width_ticks,
+                        "upper_tick": strike_tick + width_ticks,
+                        "is_itm": is_itm,
+                    }
+                )
 
-            positions.append({
-                "id": item.get("id"),
-                "account": item.get("owner", {}).get("id"),
-                "token_id": token_id_data.get("id"),
-                "token_id_hex": token_id_data.get("idHexString"),
-                "pool_address": pool_data.get("id"),
-                "underlying_pool": underlying.get("id"),
-                "token0_symbol": underlying.get("token0", {}).get("symbol"),
-                "token1_symbol": underlying.get("token1", {}).get("symbol"),
-                "fee_tier": fee_tier / 10000,
-                "current_tick": current_tick,
-                "position_size": item.get("positionSize"),
-                "token_count": item.get("tokenCount"),
-                "legs": legs,
-                "num_legs": len(legs),
-            })
+            positions.append(
+                {
+                    "id": item.get("id"),
+                    "account": item.get("owner", {}).get("id"),
+                    "token_id": token_id_data.get("id"),
+                    "token_id_hex": token_id_data.get("idHexString"),
+                    "pool_address": pool_data.get("id"),
+                    "underlying_pool": underlying.get("id"),
+                    "token0_symbol": underlying.get("token0", {}).get("symbol"),
+                    "token1_symbol": underlying.get("token1", {}).get("symbol"),
+                    "fee_tier": fee_tier / 10000,
+                    "current_tick": current_tick,
+                    "position_size": item.get("positionSize"),
+                    "token_count": item.get("tokenCount"),
+                    "legs": legs,
+                    "num_legs": len(legs),
+                }
+            )
 
         return positions
 
@@ -806,10 +825,7 @@ class PanopticProvider(BaseProvider):
     # =========================================================================
 
     def get_live_trades(
-        self,
-        pool_address: Optional[str] = None,
-        limit: int = 50,
-        hours_back: int = 24
+        self, pool_address: Optional[str] = None, limit: int = 50, hours_back: int = 24
     ) -> List[Dict[str, Any]]:
         """
         Get recent trades (mints, burns, liquidations).
@@ -934,10 +950,7 @@ class PanopticProvider(BaseProvider):
         }}
         """
 
-        result = self._sync_query(query, {
-            "start": start_ts,
-            "first": limit
-        })
+        result = self._sync_query(query, {"start": start_ts, "first": limit})
 
         trades = []
 
@@ -953,33 +966,42 @@ class PanopticProvider(BaseProvider):
             # Determine if buying or selling (isLong is BigInt)
             is_buying = any(int(leg.get("isLong", 0)) == 1 for leg in legs)
 
-            trades.append({
-                "type": "MINT",
-                "action": "BUY" if is_buying else "SELL",
-                "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
-                "block": int(item.get("blockNumber", 0)),
-                "tx_hash": item.get("hash"),
-                "account": item.get("recipient", {}).get("id"),
-                "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
-                "pool_address": pool_data.get("id"),
-                "token_id": token_id_data.get("id"),
-                "position_size": item.get("positionSize"),
-                "num_legs": len(legs),
-                "legs": [{
-                    "type": "call" if int(leg.get("tokenType", 0)) == 1 else "put",
-                    "position": "long" if int(leg.get("isLong", 0)) == 1 else "short",
-                    "strike": int(leg.get("strike", 0)) * tick_spacing,
-                    "width": int(leg.get("width", 0)) * tick_spacing,
-                } for leg in legs],
-                "utilizations": {
-                    "token0": item.get("poolUtilization0"),
-                    "token1": item.get("poolUtilization1"),
-                },
-                "commissions": {
-                    "token0": item.get("commissions0"),
-                    "token1": item.get("commissions1"),
-                },
-            })
+            trades.append(
+                {
+                    "type": "MINT",
+                    "action": "BUY" if is_buying else "SELL",
+                    "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
+                    "block": int(item.get("blockNumber", 0)),
+                    "tx_hash": item.get("hash"),
+                    "account": item.get("recipient", {}).get("id"),
+                    "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
+                    "pool_address": pool_data.get("id"),
+                    "token_id": token_id_data.get("id"),
+                    "position_size": item.get("positionSize"),
+                    "num_legs": len(legs),
+                    "legs": [
+                        {
+                            "type": (
+                                "call" if int(leg.get("tokenType", 0)) == 1 else "put"
+                            ),
+                            "position": (
+                                "long" if int(leg.get("isLong", 0)) == 1 else "short"
+                            ),
+                            "strike": int(leg.get("strike", 0)) * tick_spacing,
+                            "width": int(leg.get("width", 0)) * tick_spacing,
+                        }
+                        for leg in legs
+                    ],
+                    "utilizations": {
+                        "token0": item.get("poolUtilization0"),
+                        "token1": item.get("poolUtilization1"),
+                    },
+                    "commissions": {
+                        "token0": item.get("commissions0"),
+                        "token1": item.get("commissions1"),
+                    },
+                }
+            )
 
         # Process burns
         for item in result.get("optionBurns", []):
@@ -990,48 +1012,59 @@ class PanopticProvider(BaseProvider):
             fee_tier = int(underlying.get("feeTier", 3000))
             tick_spacing = TICK_SPACING.get(fee_tier, 60)
 
-            trades.append({
-                "type": "BURN",
-                "action": "CLOSE",
-                "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
-                "block": int(item.get("blockNumber", 0)),
-                "tx_hash": item.get("hash"),
-                "account": item.get("recipient", {}).get("id"),
-                "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
-                "pool_address": pool_data.get("id"),
-                "token_id": token_id_data.get("id"),
-                "position_size": item.get("positionSize"),
-                "num_legs": len(legs),
-                "legs": [{
-                    "type": "call" if int(leg.get("tokenType", 0)) == 1 else "put",
-                    "position": "long" if int(leg.get("isLong", 0)) == 1 else "short",
-                    "strike": int(leg.get("strike", 0)) * tick_spacing,
-                    "width": int(leg.get("width", 0)) * tick_spacing,
-                } for leg in legs],
-                "premium": {
-                    "token0": item.get("premium0"),
-                    "token1": item.get("premium1"),
-                },
-            })
+            trades.append(
+                {
+                    "type": "BURN",
+                    "action": "CLOSE",
+                    "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
+                    "block": int(item.get("blockNumber", 0)),
+                    "tx_hash": item.get("hash"),
+                    "account": item.get("recipient", {}).get("id"),
+                    "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
+                    "pool_address": pool_data.get("id"),
+                    "token_id": token_id_data.get("id"),
+                    "position_size": item.get("positionSize"),
+                    "num_legs": len(legs),
+                    "legs": [
+                        {
+                            "type": (
+                                "call" if int(leg.get("tokenType", 0)) == 1 else "put"
+                            ),
+                            "position": (
+                                "long" if int(leg.get("isLong", 0)) == 1 else "short"
+                            ),
+                            "strike": int(leg.get("strike", 0)) * tick_spacing,
+                            "width": int(leg.get("width", 0)) * tick_spacing,
+                        }
+                        for leg in legs
+                    ],
+                    "premium": {
+                        "token0": item.get("premium0"),
+                        "token1": item.get("premium1"),
+                    },
+                }
+            )
 
         # Process liquidations
         for item in result.get("accountLiquidateds", []):
             pool_data = item.get("panopticPool", {})
             underlying = pool_data.get("underlyingPool", {})
 
-            trades.append({
-                "type": "LIQUIDATION",
-                "action": "LIQUIDATE",
-                "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
-                "block": int(item.get("blockNumber", 0)),
-                "tx_hash": item.get("hash"),
-                "account": item.get("liquidatee"),
-                "liquidator": item.get("liquidator"),
-                "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
-                "pool_address": pool_data.get("id"),
-                "bonus_amounts": item.get("bonusAmounts"),
-                "bonus_usd": item.get("liquidationBonusUSD"),
-            })
+            trades.append(
+                {
+                    "type": "LIQUIDATION",
+                    "action": "LIQUIDATE",
+                    "timestamp": datetime.fromtimestamp(int(item["timestamp"])),
+                    "block": int(item.get("blockNumber", 0)),
+                    "tx_hash": item.get("hash"),
+                    "account": item.get("liquidatee"),
+                    "liquidator": item.get("liquidator"),
+                    "pool": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
+                    "pool_address": pool_data.get("id"),
+                    "bonus_amounts": item.get("bonusAmounts"),
+                    "bonus_usd": item.get("liquidationBonusUSD"),
+                }
+            )
 
         # Sort by timestamp descending
         trades.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -1105,12 +1138,10 @@ class PanopticProvider(BaseProvider):
 
         # Calculate utilization from inAMM / totalAssets
         util0 = calculate_utilization(
-            collateral0.get("totalAssets"),
-            collateral0.get("inAMM")
+            collateral0.get("totalAssets"), collateral0.get("inAMM")
         )
         util1 = calculate_utilization(
-            collateral1.get("totalAssets"),
-            collateral1.get("inAMM")
+            collateral1.get("totalAssets"), collateral1.get("inAMM")
         )
 
         return {
@@ -1197,22 +1228,24 @@ class PanopticProvider(BaseProvider):
 
             util0 = calculate_utilization(
                 collateral0.get("totalAssets") if collateral0 else None,
-                collateral0.get("inAMM") if collateral0 else None
+                collateral0.get("inAMM") if collateral0 else None,
             )
             util1 = calculate_utilization(
                 collateral1.get("totalAssets") if collateral1 else None,
-                collateral1.get("inAMM") if collateral1 else None
+                collateral1.get("inAMM") if collateral1 else None,
             )
 
-            pools.append({
-                "pool_address": item.get("id"),
-                "pair": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
-                "fee_tier": int(underlying.get("feeTier", 0)) / 10000,
-                "tx_count": int(item.get("txCount", 0)),
-                "liquidity": underlying.get("liquidity"),
-                "current_tick": int(underlying.get("tick", 0)),
-                "util_token0": util0,
-                "util_token1": util1,
-            })
+            pools.append(
+                {
+                    "pool_address": item.get("id"),
+                    "pair": f"{underlying.get('token0', {}).get('symbol')}/{underlying.get('token1', {}).get('symbol')}",
+                    "fee_tier": int(underlying.get("feeTier", 0)) / 10000,
+                    "tx_count": int(item.get("txCount", 0)),
+                    "liquidity": underlying.get("liquidity"),
+                    "current_tick": int(underlying.get("tick", 0)),
+                    "util_token0": util0,
+                    "util_token1": util1,
+                }
+            )
 
         return pools

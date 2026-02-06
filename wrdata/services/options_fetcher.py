@@ -12,7 +12,7 @@ from wrdata.models.database import (
     Symbol,
     DataProvider,
     OptionsContract,
-    OptionsChainSnapshot
+    OptionsChainSnapshot,
 )
 from wrdata.models.schemas import (
     OptionsChainRequest,
@@ -32,17 +32,14 @@ class OptionsFetcher:
 
     def __init__(self, db: Session):
         self.db = db
-        self.providers = {
-            'yfinance': YFinanceProvider()
-        }
+        self.providers = {"yfinance": YFinanceProvider()}
 
     def add_provider(self, name: str, provider: BaseProvider):
         """Add a custom provider to the fetcher."""
         self.providers[name] = provider
 
     def fetch_and_store_options_chain(
-        self,
-        request: OptionsChainRequest
+        self, request: OptionsChainRequest
     ) -> OptionsChainResponse:
         """
         Fetch options chain data and store it in the database.
@@ -54,7 +51,7 @@ class OptionsFetcher:
             OptionsChainResponse with the fetched data
         """
         # Determine which provider to use
-        provider_name = request.provider or 'yfinance'
+        provider_name = request.provider or "yfinance"
         provider = self.providers.get(provider_name)
 
         if provider is None:
@@ -63,7 +60,7 @@ class OptionsFetcher:
                 provider=provider_name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=f"Provider '{provider_name}' not found"
+                error=f"Provider '{provider_name}' not found",
             )
 
         # Fetch the options chain
@@ -83,11 +80,7 @@ class OptionsFetcher:
 
         return response
 
-    def _store_options_chain(
-        self,
-        response: OptionsChainResponse,
-        provider_name: str
-    ):
+    def _store_options_chain(self, response: OptionsChainResponse, provider_name: str):
         """
         Store options chain data in the database.
         """
@@ -95,9 +88,11 @@ class OptionsFetcher:
         symbol = self._get_or_create_symbol(response.symbol, provider_name)
 
         # Get the data provider
-        provider = self.db.query(DataProvider).filter(
-            DataProvider.name == provider_name
-        ).first()
+        provider = (
+            self.db.query(DataProvider)
+            .filter(DataProvider.name == provider_name)
+            .first()
+        )
 
         if not provider:
             raise ValueError(f"Provider {provider_name} not found in database")
@@ -105,33 +100,31 @@ class OptionsFetcher:
         # Store all options contracts and snapshots
         for options_data in response.calls + response.puts:
             self._store_options_contract_and_snapshot(
-                options_data,
-                symbol,
-                provider,
-                response.snapshot_timestamp
+                options_data, symbol, provider, response.snapshot_timestamp
             )
 
     def _get_or_create_symbol(self, symbol_str: str, provider_name: str) -> Symbol:
         """Get or create a symbol in the database."""
-        provider = self.db.query(DataProvider).filter(
-            DataProvider.name == provider_name
-        ).first()
+        provider = (
+            self.db.query(DataProvider)
+            .filter(DataProvider.name == provider_name)
+            .first()
+        )
 
         if not provider:
             raise ValueError(f"Provider {provider_name} not found in database")
 
-        symbol = self.db.query(Symbol).filter(
-            and_(
-                Symbol.symbol == symbol_str,
-                Symbol.provider_id == provider.id
+        symbol = (
+            self.db.query(Symbol)
+            .filter(
+                and_(Symbol.symbol == symbol_str, Symbol.provider_id == provider.id)
             )
-        ).first()
+            .first()
+        )
 
         if not symbol:
             symbol = Symbol(
-                provider_id=provider.id,
-                symbol=symbol_str,
-                asset_type='equity'
+                provider_id=provider.id, symbol=symbol_str, asset_type="equity"
             )
             self.db.add(symbol)
             self.db.flush()
@@ -143,15 +136,17 @@ class OptionsFetcher:
         options_data: OptionsChainData,
         underlying_symbol: Symbol,
         provider: DataProvider,
-        snapshot_timestamp: datetime
+        snapshot_timestamp: datetime,
     ):
         """
         Store an options contract and its snapshot data.
         """
         # Get or create the options contract
-        contract = self.db.query(OptionsContract).filter(
-            OptionsContract.contract_symbol == options_data.contract_symbol
-        ).first()
+        contract = (
+            self.db.query(OptionsContract)
+            .filter(OptionsContract.contract_symbol == options_data.contract_symbol)
+            .first()
+        )
 
         if not contract:
             contract = OptionsContract(
@@ -159,7 +154,7 @@ class OptionsFetcher:
                 contract_symbol=options_data.contract_symbol,
                 option_type=options_data.option_type,
                 strike_price=options_data.strike_price,
-                expiration_date=options_data.expiration_date
+                expiration_date=options_data.expiration_date,
             )
             self.db.add(contract)
             self.db.flush()
@@ -184,14 +179,13 @@ class OptionsFetcher:
             intrinsic_value=options_data.intrinsic_value,
             extrinsic_value=options_data.extrinsic_value,
             in_the_money=options_data.in_the_money,
-            underlying_price=options_data.underlying_price
+            underlying_price=options_data.underlying_price,
         )
 
         self.db.add(snapshot)
 
     def get_options_timeseries(
-        self,
-        request: OptionsTimeseriesRequest
+        self, request: OptionsTimeseriesRequest
     ) -> OptionsTimeseriesResponse:
         """
         Retrieve historical timeseries of options data from the database.
@@ -208,26 +202,32 @@ class OptionsFetcher:
 
             # Filter by contract if specified
             if request.contract_symbol:
-                contract = self.db.query(OptionsContract).filter(
-                    OptionsContract.contract_symbol == request.contract_symbol
-                ).first()
+                contract = (
+                    self.db.query(OptionsContract)
+                    .filter(OptionsContract.contract_symbol == request.contract_symbol)
+                    .first()
+                )
 
                 if not contract:
                     return OptionsTimeseriesResponse(
-                        symbol=request.contract_symbol or request.underlying_symbol or "",
+                        symbol=request.contract_symbol
+                        or request.underlying_symbol
+                        or "",
                         provider=request.provider or "unknown",
                         data=[],
                         success=False,
-                        error="Contract not found"
+                        error="Contract not found",
                     )
 
                 query = query.filter(OptionsChainSnapshot.contract_id == contract.id)
 
             # Filter by underlying symbol if specified
             elif request.underlying_symbol:
-                symbol = self.db.query(Symbol).filter(
-                    Symbol.symbol == request.underlying_symbol
-                ).first()
+                symbol = (
+                    self.db.query(Symbol)
+                    .filter(Symbol.symbol == request.underlying_symbol)
+                    .first()
+                )
 
                 if not symbol:
                     return OptionsTimeseriesResponse(
@@ -235,15 +235,24 @@ class OptionsFetcher:
                         provider=request.provider or "unknown",
                         data=[],
                         success=False,
-                        error="Symbol not found"
+                        error="Symbol not found",
                     )
 
                 # Get all contracts for this symbol
                 contract_ids = [
-                    c.id for c in symbol.options_contracts
-                    if (not request.expiration_date or c.expiration_date == request.expiration_date)
-                    and (not request.option_type or c.option_type == request.option_type)
-                    and (not request.strike_price or c.strike_price == request.strike_price)
+                    c.id
+                    for c in symbol.options_contracts
+                    if (
+                        not request.expiration_date
+                        or c.expiration_date == request.expiration_date
+                    )
+                    and (
+                        not request.option_type or c.option_type == request.option_type
+                    )
+                    and (
+                        not request.strike_price
+                        or c.strike_price == request.strike_price
+                    )
                 ]
 
                 query = query.filter(OptionsChainSnapshot.contract_id.in_(contract_ids))
@@ -254,17 +263,21 @@ class OptionsFetcher:
             query = query.filter(
                 and_(
                     OptionsChainSnapshot.snapshot_timestamp >= start_dt,
-                    OptionsChainSnapshot.snapshot_timestamp <= end_dt
+                    OptionsChainSnapshot.snapshot_timestamp <= end_dt,
                 )
             )
 
             # Filter by provider if specified
             if request.provider:
-                provider = self.db.query(DataProvider).filter(
-                    DataProvider.name == request.provider
-                ).first()
+                provider = (
+                    self.db.query(DataProvider)
+                    .filter(DataProvider.name == request.provider)
+                    .first()
+                )
                 if provider:
-                    query = query.filter(OptionsChainSnapshot.provider_id == provider.id)
+                    query = query.filter(
+                        OptionsChainSnapshot.provider_id == provider.id
+                    )
 
             # Execute query and order by timestamp
             snapshots = query.order_by(OptionsChainSnapshot.snapshot_timestamp).all()
@@ -272,40 +285,58 @@ class OptionsFetcher:
             # Convert to list of dicts
             data = []
             for snapshot in snapshots:
-                data.append({
-                    'timestamp': snapshot.snapshot_timestamp.isoformat(),
-                    'contract_symbol': snapshot.contract.contract_symbol,
-                    'option_type': snapshot.contract.option_type,
-                    'strike_price': float(snapshot.contract.strike_price),
-                    'expiration_date': snapshot.contract.expiration_date.isoformat(),
-                    'bid': float(snapshot.bid) if snapshot.bid else None,
-                    'ask': float(snapshot.ask) if snapshot.ask else None,
-                    'last_price': float(snapshot.last_price) if snapshot.last_price else None,
-                    'mark_price': float(snapshot.mark_price) if snapshot.mark_price else None,
-                    'volume': snapshot.volume,
-                    'open_interest': snapshot.open_interest,
-                    'delta': snapshot.delta,
-                    'gamma': snapshot.gamma,
-                    'theta': snapshot.theta,
-                    'vega': snapshot.vega,
-                    'rho': snapshot.rho,
-                    'implied_volatility': snapshot.implied_volatility,
-                    'intrinsic_value': float(snapshot.intrinsic_value) if snapshot.intrinsic_value else None,
-                    'extrinsic_value': float(snapshot.extrinsic_value) if snapshot.extrinsic_value else None,
-                    'in_the_money': snapshot.in_the_money,
-                    'underlying_price': float(snapshot.underlying_price) if snapshot.underlying_price else None,
-                })
+                data.append(
+                    {
+                        "timestamp": snapshot.snapshot_timestamp.isoformat(),
+                        "contract_symbol": snapshot.contract.contract_symbol,
+                        "option_type": snapshot.contract.option_type,
+                        "strike_price": float(snapshot.contract.strike_price),
+                        "expiration_date": snapshot.contract.expiration_date.isoformat(),
+                        "bid": float(snapshot.bid) if snapshot.bid else None,
+                        "ask": float(snapshot.ask) if snapshot.ask else None,
+                        "last_price": (
+                            float(snapshot.last_price) if snapshot.last_price else None
+                        ),
+                        "mark_price": (
+                            float(snapshot.mark_price) if snapshot.mark_price else None
+                        ),
+                        "volume": snapshot.volume,
+                        "open_interest": snapshot.open_interest,
+                        "delta": snapshot.delta,
+                        "gamma": snapshot.gamma,
+                        "theta": snapshot.theta,
+                        "vega": snapshot.vega,
+                        "rho": snapshot.rho,
+                        "implied_volatility": snapshot.implied_volatility,
+                        "intrinsic_value": (
+                            float(snapshot.intrinsic_value)
+                            if snapshot.intrinsic_value
+                            else None
+                        ),
+                        "extrinsic_value": (
+                            float(snapshot.extrinsic_value)
+                            if snapshot.extrinsic_value
+                            else None
+                        ),
+                        "in_the_money": snapshot.in_the_money,
+                        "underlying_price": (
+                            float(snapshot.underlying_price)
+                            if snapshot.underlying_price
+                            else None
+                        ),
+                    }
+                )
 
             return OptionsTimeseriesResponse(
                 symbol=request.contract_symbol or request.underlying_symbol or "",
                 provider=request.provider or "database",
                 data=data,
                 metadata={
-                    'start_date': request.start_date,
-                    'end_date': request.end_date,
-                    'records': len(data)
+                    "start_date": request.start_date,
+                    "end_date": request.end_date,
+                    "records": len(data),
                 },
-                success=True
+                success=True,
             )
 
         except Exception as e:
@@ -314,13 +345,11 @@ class OptionsFetcher:
                 provider=request.provider or "unknown",
                 data=[],
                 success=False,
-                error=str(e)
+                error=str(e),
             )
 
     def get_available_expirations(
-        self,
-        symbol: str,
-        provider_name: Optional[str] = None
+        self, symbol: str, provider_name: Optional[str] = None
     ) -> List[date]:
         """
         Get available expiration dates for a symbol.
@@ -332,7 +361,7 @@ class OptionsFetcher:
         Returns:
             List of available expiration dates
         """
-        provider_name = provider_name or 'yfinance'
+        provider_name = provider_name or "yfinance"
         provider = self.providers.get(provider_name)
 
         if provider is None:

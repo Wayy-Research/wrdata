@@ -13,7 +13,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class KrakenProvider(BaseProvider):
@@ -39,9 +43,7 @@ class KrakenProvider(BaseProvider):
         self.base_url = "https://api.kraken.com/0"
 
         # Headers (API key optional for public endpoints)
-        self.headers = {
-            "User-Agent": "wrdata-kraken-client"
-        }
+        self.headers = {"User-Agent": "wrdata-kraken-client"}
 
         if api_key:
             self.headers["API-Key"] = api_key
@@ -52,7 +54,7 @@ class KrakenProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical cryptocurrency data from Kraken.
@@ -93,7 +95,7 @@ class KrakenProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Unsupported interval: {interval}. Use: {list(interval_map.keys())}"
+                    error=f"Unsupported interval: {interval}. Use: {list(interval_map.keys())}",
                 )
 
             kraken_interval = interval_map[interval]
@@ -119,32 +121,32 @@ class KrakenProvider(BaseProvider):
             data = response.json()
 
             # Check for errors
-            if 'error' in data and data['error']:
-                error_msg = ', '.join(data['error'])
+            if "error" in data and data["error"]:
+                error_msg = ", ".join(data["error"])
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"Kraken API error: {error_msg}"
+                    error=f"Kraken API error: {error_msg}",
                 )
 
             # Get result data
-            if 'result' not in data:
+            if "result" not in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="No result data from Kraken"
+                    error="No result data from Kraken",
                 )
 
-            result = data['result']
+            result = data["result"]
 
             # Find the pair key (Kraken returns dynamic keys)
             pair_key = None
             for key in result.keys():
-                if key != 'last':  # 'last' is metadata
+                if key != "last":  # 'last' is metadata
                     pair_key = key
                     break
 
@@ -154,7 +156,7 @@ class KrakenProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for pair {symbol}"
+                    error=f"No data found for pair {symbol}",
                 )
 
             ohlc_data = result[pair_key]
@@ -165,7 +167,7 @@ class KrakenProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No OHLC data for {symbol}"
+                    error=f"No OHLC data for {symbol}",
                 )
 
             # Convert to standard format
@@ -181,14 +183,16 @@ class KrakenProvider(BaseProvider):
                 if bar_dt > end_dt:
                     break
 
-                records.append({
-                    'Date': bar_dt.strftime('%Y-%m-%d'),
-                    'open': float(bar[1]),
-                    'high': float(bar[2]),
-                    'low': float(bar[3]),
-                    'close': float(bar[4]),
-                    'volume': float(bar[6]),
-                })
+                records.append(
+                    {
+                        "Date": bar_dt.strftime("%Y-%m-%d"),
+                        "open": float(bar[1]),
+                        "high": float(bar[2]),
+                        "low": float(bar[3]),
+                        "close": float(bar[4]),
+                        "volume": float(bar[6]),
+                    }
+                )
 
             if not records:
                 return DataResponse(
@@ -196,7 +200,7 @@ class KrakenProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data in date range for {symbol}"
+                    error=f"No data in date range for {symbol}",
                 )
 
             return DataResponse(
@@ -204,14 +208,14 @@ class KrakenProvider(BaseProvider):
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Kraken',
-                    'pair_key': pair_key,
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Kraken",
+                    "pair_key": pair_key,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -220,7 +224,7 @@ class KrakenProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"HTTP error: {e.response.status_code}"
+                error=f"HTTP error: {e.response.status_code}",
             )
 
         except Exception as e:
@@ -229,7 +233,7 @@ class KrakenProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Kraken API error: {str(e)}"
+                error=f"Kraken API error: {str(e)}",
             )
 
     def get_ticker(self, symbol: str) -> dict:
@@ -253,13 +257,13 @@ class KrakenProvider(BaseProvider):
 
             data = response.json()
 
-            if 'error' in data and data['error']:
+            if "error" in data and data["error"]:
                 return {}
 
-            if 'result' not in data:
+            if "result" not in data:
                 return {}
 
-            result = data['result']
+            result = data["result"]
 
             # Find pair key
             pair_key = None
@@ -273,16 +277,18 @@ class KrakenProvider(BaseProvider):
             ticker = result[pair_key]
 
             return {
-                'symbol': symbol,
-                'ask': float(ticker['a'][0]) if 'a' in ticker else None,
-                'bid': float(ticker['b'][0]) if 'b' in ticker else None,
-                'last': float(ticker['c'][0]) if 'c' in ticker else None,
-                'volume': float(ticker['v'][1]) if 'v' in ticker else None,  # 24h volume
-                'vwap': float(ticker['p'][1]) if 'p' in ticker else None,  # 24h vwap
-                'trades': int(ticker['t'][1]) if 't' in ticker else None,  # 24h trades
-                'low': float(ticker['l'][1]) if 'l' in ticker else None,  # 24h low
-                'high': float(ticker['h'][1]) if 'h' in ticker else None,  # 24h high
-                'open': float(ticker['o']) if 'o' in ticker else None,
+                "symbol": symbol,
+                "ask": float(ticker["a"][0]) if "a" in ticker else None,
+                "bid": float(ticker["b"][0]) if "b" in ticker else None,
+                "last": float(ticker["c"][0]) if "c" in ticker else None,
+                "volume": (
+                    float(ticker["v"][1]) if "v" in ticker else None
+                ),  # 24h volume
+                "vwap": float(ticker["p"][1]) if "p" in ticker else None,  # 24h vwap
+                "trades": int(ticker["t"][1]) if "t" in ticker else None,  # 24h trades
+                "low": float(ticker["l"][1]) if "l" in ticker else None,  # 24h low
+                "high": float(ticker["h"][1]) if "h" in ticker else None,  # 24h high
+                "open": float(ticker["o"]) if "o" in ticker else None,
             }
 
         except Exception as e:
@@ -304,10 +310,10 @@ class KrakenProvider(BaseProvider):
 
             data = response.json()
 
-            if 'error' in data and data['error']:
+            if "error" in data and data["error"]:
                 return {}
 
-            return data.get('result', {})
+            return data.get("result", {})
 
         except Exception as e:
             print(f"Failed to get asset pairs: {e}")
@@ -335,18 +341,18 @@ class KrakenProvider(BaseProvider):
 
             data = response.json()
 
-            if 'error' in data and data['error']:
+            if "error" in data and data["error"]:
                 return []
 
-            if 'result' not in data:
+            if "result" not in data:
                 return []
 
-            result = data['result']
+            result = data["result"]
 
             # Find pair key
             pair_key = None
             for key in result.keys():
-                if key != 'last':
+                if key != "last":
                     pair_key = key
                     break
 
@@ -358,11 +364,11 @@ class KrakenProvider(BaseProvider):
             # Format: [price, volume, time, buy/sell, market/limit, misc]
             return [
                 {
-                    'price': float(trade[0]),
-                    'volume': float(trade[1]),
-                    'time': datetime.fromtimestamp(trade[2]),
-                    'side': 'buy' if trade[3] == 'b' else 'sell',
-                    'type': 'market' if trade[4] == 'm' else 'limit',
+                    "price": float(trade[0]),
+                    "volume": float(trade[1]),
+                    "time": datetime.fromtimestamp(trade[2]),
+                    "side": "buy" if trade[3] == "b" else "sell",
+                    "type": "market" if trade[4] == "m" else "limit",
                 }
                 for trade in trades
             ]
@@ -383,24 +389,21 @@ class KrakenProvider(BaseProvider):
         """
         # Common conversions
         conversions = {
-            'BTCUSD': 'XBTUSD',
-            'BTCUSDT': 'XBTUSDT',
-            'BTCEUR': 'XBTEUR',
+            "BTCUSD": "XBTUSD",
+            "BTCUSDT": "XBTUSDT",
+            "BTCEUR": "XBTEUR",
         }
 
         return conversions.get(symbol, symbol)
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """Kraken does not support options."""
         return OptionsChainResponse(
             symbol=request.symbol,
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="Kraken does not provide options data"
+            error="Kraken does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -419,7 +422,7 @@ class KrakenProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return 'result' in data and 'unixtime' in data['result']
+            return "result" in data and "unixtime" in data["result"]
 
         except Exception:
             return False
@@ -431,12 +434,12 @@ class KrakenProvider(BaseProvider):
 
 # Kraken popular trading pairs
 KRAKEN_POPULAR_PAIRS = {
-    'XBTUSD': 'Bitcoin / US Dollar',
-    'ETHUSD': 'Ethereum / US Dollar',
-    'XBTEUR': 'Bitcoin / Euro',
-    'ETHEUR': 'Ethereum / Euro',
-    'USDTUSD': 'Tether / US Dollar',
-    'SOLUSD': 'Solana / US Dollar',
-    'ADAUSD': 'Cardano / US Dollar',
-    'DOTUSD': 'Polkadot / US Dollar',
+    "XBTUSD": "Bitcoin / US Dollar",
+    "ETHUSD": "Ethereum / US Dollar",
+    "XBTEUR": "Bitcoin / Euro",
+    "ETHEUR": "Ethereum / Euro",
+    "USDTUSD": "Tether / US Dollar",
+    "SOLUSD": "Solana / US Dollar",
+    "ADAUSD": "Cardano / US Dollar",
+    "DOTUSD": "Polkadot / US Dollar",
 }

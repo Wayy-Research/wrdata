@@ -35,16 +35,16 @@ class BinanceProvider(BaseProvider):
 
         # Initialize ccxt Binance exchange
         config = {
-            'enableRateLimit': True,  # Enable built-in rate limiting
-            'options': {
-                'defaultType': 'spot',  # Default to spot market
-            }
+            "enableRateLimit": True,  # Enable built-in rate limiting
+            "options": {
+                "defaultType": "spot",  # Default to spot market
+            },
         }
 
         # Add API credentials if provided
         if api_key and api_secret:
-            config['apiKey'] = api_key
-            config['secret'] = api_secret
+            config["apiKey"] = api_key
+            config["secret"] = api_secret
 
         self.exchange = ccxt.binance(config)
         self.api_secret = api_secret
@@ -55,7 +55,7 @@ class BinanceProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical OHLCV data from Binance.
@@ -72,30 +72,30 @@ class BinanceProvider(BaseProvider):
         """
         try:
             # Parse dates to timestamps (milliseconds)
-            start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').timestamp() * 1000)
-            end_ts = int(datetime.strptime(end_date, '%Y-%m-%d').timestamp() * 1000)
+            start_ts = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp() * 1000)
+            end_ts = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp() * 1000)
 
             # Map common intervals to ccxt/Binance format
             interval_map = {
-                '1m': '1m',
-                '5m': '5m',
-                '15m': '15m',
-                '30m': '30m',
-                '1h': '1h',
-                '4h': '4h',
-                '1d': '1d',
-                '1w': '1w',
-                '1M': '1M',
+                "1m": "1m",
+                "5m": "5m",
+                "15m": "15m",
+                "30m": "30m",
+                "1h": "1h",
+                "4h": "4h",
+                "1d": "1d",
+                "1w": "1w",
+                "1M": "1M",
             }
 
             timeframe = interval_map.get(interval, interval)
 
             # Switch market type if specified
-            market_type = kwargs.get('market_type', 'spot')
-            if market_type in ['future', 'futures']:
-                self.exchange.options['defaultType'] = 'future'
+            market_type = kwargs.get("market_type", "spot")
+            if market_type in ["future", "futures"]:
+                self.exchange.options["defaultType"] = "future"
             else:
-                self.exchange.options['defaultType'] = 'spot'
+                self.exchange.options["defaultType"] = "spot"
 
             # Fetch OHLCV data
             # ccxt returns: [timestamp, open, high, low, close, volume]
@@ -107,10 +107,7 @@ class BinanceProvider(BaseProvider):
 
             while current_start < end_ts:
                 ohlcv = self.exchange.fetch_ohlcv(
-                    symbol,
-                    timeframe=timeframe,
-                    since=current_start,
-                    limit=limit
+                    symbol, timeframe=timeframe, since=current_start, limit=limit
                 )
 
                 if not ohlcv:
@@ -129,8 +126,7 @@ class BinanceProvider(BaseProvider):
 
             # Filter data to exact date range
             all_ohlcv = [
-                candle for candle in all_ohlcv
-                if start_ts <= candle[0] <= end_ts
+                candle for candle in all_ohlcv if start_ts <= candle[0] <= end_ts
             ]
 
             if not all_ohlcv:
@@ -139,34 +135,38 @@ class BinanceProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol} in the specified date range"
+                    error=f"No data found for {symbol} in the specified date range",
                 )
 
             # Convert to list of dicts with proper column names
             data = []
             for candle in all_ohlcv:
-                data.append({
-                    'timestamp': datetime.fromtimestamp(candle[0] / 1000).isoformat(),
-                    'open': float(candle[1]),
-                    'high': float(candle[2]),
-                    'low': float(candle[3]),
-                    'close': float(candle[4]),
-                    'volume': float(candle[5]),
-                })
+                data.append(
+                    {
+                        "timestamp": datetime.fromtimestamp(
+                            candle[0] / 1000
+                        ).isoformat(),
+                        "open": float(candle[1]),
+                        "high": float(candle[2]),
+                        "low": float(candle[3]),
+                        "close": float(candle[4]),
+                        "volume": float(candle[5]),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=data,
                 metadata={
-                    'interval': interval,
-                    'timeframe': timeframe,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(data),
-                    'market_type': market_type,
+                    "interval": interval,
+                    "timeframe": timeframe,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(data),
+                    "market_type": market_type,
                 },
-                success=True
+                success=True,
             )
 
         except ccxt.NetworkError as e:
@@ -175,7 +175,7 @@ class BinanceProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Network error: {str(e)}"
+                error=f"Network error: {str(e)}",
             )
         except ccxt.ExchangeError as e:
             return DataResponse(
@@ -183,7 +183,7 @@ class BinanceProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Exchange error: {str(e)}"
+                error=f"Exchange error: {str(e)}",
             )
         except Exception as e:
             return DataResponse(
@@ -191,13 +191,10 @@ class BinanceProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Binance does not support options trading.
 
@@ -230,12 +227,12 @@ class BinanceProvider(BaseProvider):
             status = self.exchange.fetch_status()
 
             # Check if exchange is operational
-            if status and status.get('status') == 'ok':
+            if status and status.get("status") == "ok":
                 return True
 
             # Fallback: try fetching a known ticker
-            ticker = self.exchange.fetch_ticker('BTC/USDT')
-            return ticker is not None and 'last' in ticker
+            ticker = self.exchange.fetch_ticker("BTC/USDT")
+            return ticker is not None and "last" in ticker
 
         except Exception:
             return False

@@ -85,7 +85,7 @@ class WhaleAlertStreamProvider(BaseStreamProvider):
         min_value: int = 500000,
         blockchain: Optional[str] = None,
         currency: Optional[str] = None,
-        callback: Optional[Callable[[WhaleTransaction], None]] = None
+        callback: Optional[Callable[[WhaleTransaction], None]] = None,
     ) -> AsyncIterator[WhaleTransaction]:
         """
         Subscribe to real-time whale transaction alerts.
@@ -148,13 +148,12 @@ class WhaleAlertStreamProvider(BaseStreamProvider):
                     self._reconnect_attempts = 0
 
                     # Send subscription message with filters
-                    subscription = {
-                        "method": "subscribe",
-                        "params": filters
-                    }
+                    subscription = {"method": "subscribe", "params": filters}
                     await ws.send_json(subscription)
 
-                    print(f"Connected to Whale Alert stream (min value: ${filters['min_value']:,})")
+                    print(
+                        f"Connected to Whale Alert stream (min value: ${filters['min_value']:,})"
+                    )
 
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
@@ -188,7 +187,7 @@ class WhaleAlertStreamProvider(BaseStreamProvider):
 
                 # Exponential backoff for reconnection
                 if self._reconnect_attempts < self._max_reconnect_attempts:
-                    wait_time = min(2 ** self._reconnect_attempts, 60)
+                    wait_time = min(2**self._reconnect_attempts, 60)
                     print(f"Reconnecting in {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     self._reconnect_attempts += 1
@@ -263,13 +262,11 @@ class WhaleAlertStreamProvider(BaseStreamProvider):
             blockchain=blockchain,
             tx_hash=tx_hash,
             provider=self.name,
-            raw_data=tx_data
+            raw_data=tx_data,
         )
 
     async def subscribe_ticker(
-        self,
-        symbol: str,
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        self, symbol: str, callback: Optional[Callable[[StreamMessage], None]] = None
     ) -> AsyncIterator[StreamMessage]:
         """
         Not applicable for Whale Alert.
@@ -284,7 +281,7 @@ class WhaleAlertStreamProvider(BaseStreamProvider):
         self,
         symbol: str,
         interval: str = "1m",
-        callback: Optional[Callable[[StreamMessage], None]] = None
+        callback: Optional[Callable[[StreamMessage], None]] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Not applicable for Whale Alert.

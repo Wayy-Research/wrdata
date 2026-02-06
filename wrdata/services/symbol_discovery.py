@@ -29,17 +29,24 @@ class SymbolCoverage:
         self.names: Set[str] = set()
         self.exchanges: Set[str] = set()
 
-    def add_provider(self, provider_name: str, provider_id: int,
-                     name: str = None, exchange: str = None,
-                     metadata: Dict[str, Any] = None):
+    def add_provider(
+        self,
+        provider_name: str,
+        provider_id: int,
+        name: str = None,
+        exchange: str = None,
+        metadata: Dict[str, Any] = None,
+    ):
         """Add a provider that supports this symbol."""
-        self.providers.append({
-            'provider_name': provider_name,
-            'provider_id': provider_id,
-            'name': name,
-            'exchange': exchange,
-            'metadata': metadata or {}
-        })
+        self.providers.append(
+            {
+                "provider_name": provider_name,
+                "provider_id": provider_id,
+                "name": name,
+                "exchange": exchange,
+                "metadata": metadata or {},
+            }
+        )
         self.provider_count += 1
         if name:
             self.names.add(name)
@@ -49,13 +56,13 @@ class SymbolCoverage:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
         return {
-            'symbol': self.symbol,
-            'asset_type': self.asset_type,
-            'coverage_count': self.provider_count,
-            'providers': self.providers,
-            'common_names': list(self.names),
-            'exchanges': list(self.exchanges),
-            'best_name': self._get_best_name(),
+            "symbol": self.symbol,
+            "asset_type": self.asset_type,
+            "coverage_count": self.provider_count,
+            "providers": self.providers,
+            "common_names": list(self.names),
+            "exchanges": list(self.exchanges),
+            "best_name": self._get_best_name(),
         }
 
     def _get_best_name(self) -> str:
@@ -85,7 +92,7 @@ class SymbolDiscoveryService:
             import requests
             import os
 
-            api_key = os.getenv('POLYGON_API_KEY')
+            api_key = os.getenv("POLYGON_API_KEY")
             if not api_key:
                 return []
 
@@ -94,24 +101,26 @@ class SymbolDiscoveryService:
             # Fetch stocks
             url = "https://api.polygon.io/v3/reference/tickers"
             params = {
-                'apiKey': api_key,
-                'market': 'stocks',
-                'active': 'true',
-                'limit': 1000
+                "apiKey": api_key,
+                "market": "stocks",
+                "active": "true",
+                "limit": 1000,
             }
 
             response = requests.get(url, params=params, timeout=30)
             if response.status_code == 200:
                 data = response.json()
-                for ticker in data.get('results', []):
-                    symbols.append({
-                        'symbol': ticker['ticker'],
-                        'name': ticker.get('name', ''),
-                        'description': f"{ticker.get('name', '')} - {ticker.get('primary_exchange', '')}",
-                        'asset_type': 'stock',
-                        'exchange': ticker.get('primary_exchange'),
-                        'currency': ticker.get('currency_name', 'USD'),
-                    })
+                for ticker in data.get("results", []):
+                    symbols.append(
+                        {
+                            "symbol": ticker["ticker"],
+                            "name": ticker.get("name", ""),
+                            "description": f"{ticker.get('name', '')} - {ticker.get('primary_exchange', '')}",
+                            "asset_type": "stock",
+                            "exchange": ticker.get("primary_exchange"),
+                            "currency": ticker.get("currency_name", "USD"),
+                        }
+                    )
 
             return symbols
         except Exception as e:
@@ -124,25 +133,41 @@ class SymbolDiscoveryService:
             import requests
             import os
 
-            api_key = os.getenv('TRADIER_API_KEY')
+            api_key = os.getenv("TRADIER_API_KEY")
             if not api_key:
                 return []
 
             # Tradier doesn't have a symbols endpoint, return common optionable stocks
             optionable_stocks = [
-                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'AMD',
-                'NFLX', 'DIS', 'BA', 'SPY', 'QQQ', 'IWM', 'GLD', 'SLV'
+                "AAPL",
+                "MSFT",
+                "GOOGL",
+                "AMZN",
+                "TSLA",
+                "NVDA",
+                "META",
+                "AMD",
+                "NFLX",
+                "DIS",
+                "BA",
+                "SPY",
+                "QQQ",
+                "IWM",
+                "GLD",
+                "SLV",
             ]
 
             symbols = []
             for ticker in optionable_stocks:
-                symbols.append({
-                    'symbol': ticker,
-                    'name': f'{ticker} (Options Available)',
-                    'description': f'{ticker} with options trading',
-                    'asset_type': 'stock',
-                    'has_options': True,
-                })
+                symbols.append(
+                    {
+                        "symbol": ticker,
+                        "name": f"{ticker} (Options Available)",
+                        "description": f"{ticker} with options trading",
+                        "asset_type": "stock",
+                        "has_options": True,
+                    }
+                )
 
             return symbols
         except Exception as e:
@@ -155,12 +180,12 @@ class SymbolDiscoveryService:
             import requests
             import os
 
-            api_key = os.getenv('IEX_API_KEY')
+            api_key = os.getenv("IEX_API_KEY")
             if not api_key:
                 return []
 
             url = "https://cloud.iexapis.com/stable/ref-data/symbols"
-            params = {'token': api_key}
+            params = {"token": api_key}
 
             response = requests.get(url, params=params, timeout=30)
             if response.status_code != 200:
@@ -170,15 +195,17 @@ class SymbolDiscoveryService:
             symbols = []
 
             for item in data:
-                if item.get('isEnabled'):
-                    symbols.append({
-                        'symbol': item['symbol'],
-                        'name': item.get('name', ''),
-                        'description': f"{item.get('name', '')} - {item.get('exchange', '')}",
-                        'asset_type': item.get('type', 'stock').lower(),
-                        'exchange': item.get('exchange'),
-                        'currency': 'USD',
-                    })
+                if item.get("isEnabled"):
+                    symbols.append(
+                        {
+                            "symbol": item["symbol"],
+                            "name": item.get("name", ""),
+                            "description": f"{item.get('name', '')} - {item.get('exchange', '')}",
+                            "asset_type": item.get("type", "stock").lower(),
+                            "exchange": item.get("exchange"),
+                            "currency": "USD",
+                        }
+                    )
 
             return symbols
         except Exception as e:
@@ -198,19 +225,23 @@ class SymbolDiscoveryService:
             data = response.json()
             symbols = []
 
-            for item in data.get('data', []):
-                if item.get('enableTrading'):
-                    symbols.append({
-                        'symbol': item['symbol'],
-                        'name': f"{item['baseCurrency']}/{item['quoteCurrency']}",
-                        'description': f"KuCoin {item['baseCurrency']}/{item['quoteCurrency']}",
-                        'asset_type': 'crypto',
-                        'exchange': 'KuCoin',
-                        'extra_metadata': json.dumps({
-                            'baseCurrency': item['baseCurrency'],
-                            'quoteCurrency': item['quoteCurrency'],
-                        })
-                    })
+            for item in data.get("data", []):
+                if item.get("enableTrading"):
+                    symbols.append(
+                        {
+                            "symbol": item["symbol"],
+                            "name": f"{item['baseCurrency']}/{item['quoteCurrency']}",
+                            "description": f"KuCoin {item['baseCurrency']}/{item['quoteCurrency']}",
+                            "asset_type": "crypto",
+                            "exchange": "KuCoin",
+                            "extra_metadata": json.dumps(
+                                {
+                                    "baseCurrency": item["baseCurrency"],
+                                    "quoteCurrency": item["quoteCurrency"],
+                                }
+                            ),
+                        }
+                    )
 
             return symbols
         except Exception as e:
@@ -231,14 +262,16 @@ class SymbolDiscoveryService:
             symbols = []
 
             for item in data:
-                if item.get('trade_status') == 'tradable':
-                    symbols.append({
-                        'symbol': item['id'],
-                        'name': item['id'],
-                        'description': f"Gate.io {item['id']}",
-                        'asset_type': 'crypto',
-                        'exchange': 'Gate.io',
-                    })
+                if item.get("trade_status") == "tradable":
+                    symbols.append(
+                        {
+                            "symbol": item["id"],
+                            "name": item["id"],
+                            "description": f"Gate.io {item['id']}",
+                            "asset_type": "crypto",
+                            "exchange": "Gate.io",
+                        }
+                    )
 
             return symbols
         except Exception as e:
@@ -259,13 +292,15 @@ class SymbolDiscoveryService:
             symbols = []
 
             for symbol in symbols_list:
-                symbols.append({
-                    'symbol': symbol.upper(),
-                    'name': symbol.upper(),
-                    'description': f"Gemini {symbol}",
-                    'asset_type': 'crypto',
-                    'exchange': 'Gemini',
-                })
+                symbols.append(
+                    {
+                        "symbol": symbol.upper(),
+                        "name": symbol.upper(),
+                        "description": f"Gemini {symbol}",
+                        "asset_type": "crypto",
+                        "exchange": "Gemini",
+                    }
+                )
 
             return symbols
         except Exception as e:
@@ -280,26 +315,34 @@ class SymbolDiscoveryService:
             symbols = []
 
             # Fetch BTC instruments
-            for currency in ['BTC', 'ETH']:
+            for currency in ["BTC", "ETH"]:
                 url = "https://www.deribit.com/api/v2/public/get_instruments"
-                params = {'currency': currency}
+                params = {"currency": currency}
 
                 response = requests.get(url, params=params, timeout=10)
                 if response.status_code == 200:
                     data = response.json()
-                    for instrument in data.get('result', []):
-                        symbols.append({
-                            'symbol': instrument['instrument_name'],
-                            'name': instrument['instrument_name'],
-                            'description': f"Deribit {instrument['kind']} - {instrument['instrument_name']}",
-                            'asset_type': 'crypto_derivative',
-                            'exchange': 'Deribit',
-                            'extra_metadata': json.dumps({
-                                'kind': instrument['kind'],  # option, future, perpetual
-                                'strike': instrument.get('strike'),
-                                'expiration': instrument.get('expiration_timestamp'),
-                            })
-                        })
+                    for instrument in data.get("result", []):
+                        symbols.append(
+                            {
+                                "symbol": instrument["instrument_name"],
+                                "name": instrument["instrument_name"],
+                                "description": f"Deribit {instrument['kind']} - {instrument['instrument_name']}",
+                                "asset_type": "crypto_derivative",
+                                "exchange": "Deribit",
+                                "extra_metadata": json.dumps(
+                                    {
+                                        "kind": instrument[
+                                            "kind"
+                                        ],  # option, future, perpetual
+                                        "strike": instrument.get("strike"),
+                                        "expiration": instrument.get(
+                                            "expiration_timestamp"
+                                        ),
+                                    }
+                                ),
+                            }
+                        )
 
             return symbols
         except Exception as e:
@@ -308,9 +351,9 @@ class SymbolDiscoveryService:
 
     # ========== Coverage Analysis ==========
 
-    def analyze_symbol_coverage(self,
-                                asset_type: Optional[str] = None,
-                                min_providers: int = 1) -> List[Dict[str, Any]]:
+    def analyze_symbol_coverage(
+        self, asset_type: Optional[str] = None, min_providers: int = 1
+    ) -> List[Dict[str, Any]]:
         """
         Analyze symbol coverage across all providers.
 
@@ -322,12 +365,16 @@ class SymbolDiscoveryService:
             List of symbols with coverage information
         """
         # Build query
-        query = self.db.query(
-            Symbol.symbol,
-            Symbol.asset_type,
-            func.count(Symbol.provider_id).label('provider_count'),
-            func.group_concat(DataProvider.name).label('provider_names')
-        ).join(DataProvider).filter(Symbol.is_active == True)
+        query = (
+            self.db.query(
+                Symbol.symbol,
+                Symbol.asset_type,
+                func.count(Symbol.provider_id).label("provider_count"),
+                func.group_concat(DataProvider.name).label("provider_names"),
+            )
+            .join(DataProvider)
+            .filter(Symbol.is_active == True)
+        )
 
         if asset_type:
             query = query.filter(Symbol.asset_type == asset_type)
@@ -346,12 +393,18 @@ class SymbolDiscoveryService:
         # Format results
         coverage_list = []
         for result in results:
-            coverage_list.append({
-                'symbol': result.symbol,
-                'asset_type': result.asset_type,
-                'provider_count': result.provider_count,
-                'providers': result.provider_names.split(',') if result.provider_names else [],
-            })
+            coverage_list.append(
+                {
+                    "symbol": result.symbol,
+                    "asset_type": result.asset_type,
+                    "provider_count": result.provider_count,
+                    "providers": (
+                        result.provider_names.split(",")
+                        if result.provider_names
+                        else []
+                    ),
+                }
+            )
 
         return coverage_list
 
@@ -366,13 +419,15 @@ class SymbolDiscoveryService:
             Comprehensive symbol information with provider coverage
         """
         # Query all instances of this symbol across providers
-        symbol_instances = self.db.query(Symbol).join(DataProvider).filter(
-            Symbol.symbol == symbol,
-            Symbol.is_active == True
-        ).all()
+        symbol_instances = (
+            self.db.query(Symbol)
+            .join(DataProvider)
+            .filter(Symbol.symbol == symbol, Symbol.is_active == True)
+            .all()
+        )
 
         if not symbol_instances:
-            return {'error': 'Symbol not found', 'symbol': symbol}
+            return {"error": "Symbol not found", "symbol": symbol}
 
         # Build coverage object
         coverage = SymbolCoverage(symbol)
@@ -383,18 +438,24 @@ class SymbolDiscoveryService:
                 provider_id=instance.provider_id,
                 name=instance.name,
                 exchange=instance.exchange,
-                metadata=json.loads(instance.extra_metadata) if instance.extra_metadata else {}
+                metadata=(
+                    json.loads(instance.extra_metadata)
+                    if instance.extra_metadata
+                    else {}
+                ),
             )
             if not coverage.asset_type:
                 coverage.asset_type = instance.asset_type
 
         return coverage.to_dict()
 
-    def find_symbols_by_coverage(self,
-                                 min_providers: int = 2,
-                                 max_providers: Optional[int] = None,
-                                 asset_type: Optional[str] = None,
-                                 limit: int = 100) -> List[Dict[str, Any]]:
+    def find_symbols_by_coverage(
+        self,
+        min_providers: int = 2,
+        max_providers: Optional[int] = None,
+        asset_type: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """
         Find symbols based on provider coverage.
 
@@ -411,17 +472,21 @@ class SymbolDiscoveryService:
         coverage_query = self.db.query(
             Symbol.symbol,
             Symbol.asset_type,
-            func.count(Symbol.provider_id).label('provider_count')
+            func.count(Symbol.provider_id).label("provider_count"),
         ).filter(Symbol.is_active == True)
 
         if asset_type:
             coverage_query = coverage_query.filter(Symbol.asset_type == asset_type)
 
         coverage_query = coverage_query.group_by(Symbol.symbol, Symbol.asset_type)
-        coverage_query = coverage_query.having(func.count(Symbol.provider_id) >= min_providers)
+        coverage_query = coverage_query.having(
+            func.count(Symbol.provider_id) >= min_providers
+        )
 
         if max_providers:
-            coverage_query = coverage_query.having(func.count(Symbol.provider_id) <= max_providers)
+            coverage_query = coverage_query.having(
+                func.count(Symbol.provider_id) <= max_providers
+            )
 
         coverage_query = coverage_query.order_by(func.count(Symbol.provider_id).desc())
         coverage_query = coverage_query.limit(limit)
@@ -443,12 +508,15 @@ class SymbolDiscoveryService:
         Returns:
             Dictionary mapping provider name to symbol count
         """
-        results = self.db.query(
-            DataProvider.name,
-            func.count(Symbol.id).label('symbol_count')
-        ).join(Symbol).filter(
-            Symbol.is_active == True
-        ).group_by(DataProvider.name).all()
+        results = (
+            self.db.query(
+                DataProvider.name, func.count(Symbol.id).label("symbol_count")
+            )
+            .join(Symbol)
+            .filter(Symbol.is_active == True)
+            .group_by(DataProvider.name)
+            .all()
+        )
 
         return {result.name: result.symbol_count for result in results}
 
@@ -459,20 +527,22 @@ class SymbolDiscoveryService:
         Returns:
             Dictionary mapping asset type to count
         """
-        results = self.db.query(
-            Symbol.asset_type,
-            func.count(Symbol.id).label('count')
-        ).filter(
-            Symbol.is_active == True
-        ).group_by(Symbol.asset_type).all()
+        results = (
+            self.db.query(Symbol.asset_type, func.count(Symbol.id).label("count"))
+            .filter(Symbol.is_active == True)
+            .group_by(Symbol.asset_type)
+            .all()
+        )
 
         return {result.asset_type: result.count for result in results}
 
-    def search_with_coverage(self,
-                            query: str,
-                            asset_type: Optional[str] = None,
-                            min_providers: int = 1,
-                            limit: int = 50) -> List[Dict[str, Any]]:
+    def search_with_coverage(
+        self,
+        query: str,
+        asset_type: Optional[str] = None,
+        min_providers: int = 1,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
         """
         Search symbols with coverage information.
 
@@ -493,8 +563,8 @@ class SymbolDiscoveryService:
             or_(
                 Symbol.symbol.ilike(search_filter),
                 Symbol.name.ilike(search_filter),
-                Symbol.description.ilike(search_filter)
-            )
+                Symbol.description.ilike(search_filter),
+            ),
         )
 
         if asset_type:
@@ -509,17 +579,17 @@ class SymbolDiscoveryService:
             symbol = symbol_tuple[0]
             coverage = self.get_symbol_details_with_coverage(symbol)
 
-            if coverage.get('coverage_count', 0) >= min_providers:
+            if coverage.get("coverage_count", 0) >= min_providers:
                 results.append(coverage)
 
         # Sort by coverage
-        results.sort(key=lambda x: x.get('coverage_count', 0), reverse=True)
+        results.sort(key=lambda x: x.get("coverage_count", 0), reverse=True)
 
         return results
 
-    def get_popular_symbols(self,
-                           asset_type: Optional[str] = None,
-                           limit: int = 100) -> List[Dict[str, Any]]:
+    def get_popular_symbols(
+        self, asset_type: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """
         Get most widely supported symbols (highest coverage).
 
@@ -531,14 +601,12 @@ class SymbolDiscoveryService:
             List of popular symbols sorted by coverage
         """
         return self.find_symbols_by_coverage(
-            min_providers=2,
-            asset_type=asset_type,
-            limit=limit
+            min_providers=2, asset_type=asset_type, limit=limit
         )
 
-    def get_unique_symbols(self,
-                          asset_type: Optional[str] = None,
-                          limit: int = 100) -> List[Dict[str, Any]]:
+    def get_unique_symbols(
+        self, asset_type: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """
         Get symbols only available from one provider (unique offerings).
 
@@ -550,14 +618,10 @@ class SymbolDiscoveryService:
             List of unique symbols
         """
         return self.find_symbols_by_coverage(
-            min_providers=1,
-            max_providers=1,
-            asset_type=asset_type,
-            limit=limit
+            min_providers=1, max_providers=1, asset_type=asset_type, limit=limit
         )
 
-    def export_symbol_universe(self,
-                               output_format: str = 'json') -> Any:
+    def export_symbol_universe(self, output_format: str = "json") -> Any:
         """
         Export complete symbol universe with coverage data.
 
@@ -570,10 +634,10 @@ class SymbolDiscoveryService:
         # Get all symbols with coverage
         symbols = self.find_symbols_by_coverage(min_providers=1, limit=100000)
 
-        if output_format == 'json':
+        if output_format == "json":
             return symbols
 
-        elif output_format == 'csv':
+        elif output_format == "csv":
             import csv
             import io
 
@@ -585,12 +649,13 @@ class SymbolDiscoveryService:
 
             return output.getvalue()
 
-        elif output_format == 'parquet':
+        elif output_format == "parquet":
             try:
                 import pandas as pd
+
                 df = pd.DataFrame(symbols)
                 return df.to_parquet()
             except ImportError:
-                return {'error': 'pandas required for parquet export'}
+                return {"error": "pandas required for parquet export"}
 
-        return {'error': f'Unsupported format: {output_format}'}
+        return {"error": f"Unsupported format: {output_format}"}

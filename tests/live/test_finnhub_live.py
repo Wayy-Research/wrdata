@@ -20,7 +20,7 @@ def test_finnhub_provider():
     print("=" * 60)
 
     # Get API key from environment
-    api_key = os.getenv('FINNHUB_API_KEY')
+    api_key = os.getenv("FINNHUB_API_KEY")
     if not api_key:
         print("\n❌ FINNHUB_API_KEY not set!")
         print("Get a free API key at: https://finnhub.io/register")
@@ -54,10 +54,7 @@ def test_finnhub_provider():
     # Test historical data
     print("\n✓ Fetching historical data for AAPL...")
     response = provider.fetch_timeseries(
-        symbol="AAPL",
-        start_date="2024-10-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="AAPL", start_date="2024-10-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -86,7 +83,9 @@ def test_finnhub_provider():
     if results:
         print(f"  ✓ Found {len(results)} results")
         for i, result in enumerate(results[:3]):
-            print(f"    {i+1}. {result.get('description', 'N/A')} ({result.get('symbol', 'N/A')})")
+            print(
+                f"    {i+1}. {result.get('description', 'N/A')} ({result.get('symbol', 'N/A')})"
+            )
     else:
         print("  ⚠️ No results found")
 
@@ -112,7 +111,7 @@ def test_datastream_with_finnhub():
     print("=" * 60)
 
     # Get API key
-    api_key = os.getenv('FINNHUB_API_KEY')
+    api_key = os.getenv("FINNHUB_API_KEY")
     if not api_key:
         print("\n❌ Skipping DataStream test - no API key")
         return
@@ -123,17 +122,12 @@ def test_datastream_with_finnhub():
     # Check provider status
     status = stream.status()
     print(f"\n✓ Available providers: {list(stream.providers.keys())}")
-    if 'finnhub' in status:
+    if "finnhub" in status:
         print(f"  Finnhub connected: {status['finnhub'].get('connected', False)}")
 
     # Fetch Apple stock data
     print("\n✓ Fetching Apple (AAPL) stock data...")
-    df = stream.get(
-        "AAPL",
-        start="2024-10-01",
-        end="2024-11-07",
-        asset_type="stock"
-    )
+    df = stream.get("AAPL", start="2024-10-01", end="2024-11-07", asset_type="stock")
 
     print(f"  ✓ Got {len(df)} rows of AAPL data")
     if len(df) > 0:
@@ -142,12 +136,7 @@ def test_datastream_with_finnhub():
 
     # Fetch Microsoft data
     print("\n✓ Fetching Microsoft (MSFT)...")
-    df = stream.get(
-        "MSFT",
-        start="2024-11-01",
-        end="2024-11-07",
-        asset_type="stock"
-    )
+    df = stream.get("MSFT", start="2024-11-01", end="2024-11-07", asset_type="stock")
 
     print(f"  ✓ Got {len(df)} rows")
     if len(df) > 0:
@@ -170,7 +159,7 @@ async def test_finnhub_streaming():
     print("=" * 60)
 
     # Get API key
-    api_key = os.getenv('FINNHUB_API_KEY')
+    api_key = os.getenv("FINNHUB_API_KEY")
     if not api_key:
         print("\n❌ Skipping streaming test - no API key")
         return
@@ -190,8 +179,10 @@ async def test_finnhub_streaming():
         count = 0
         max_messages = 20  # Just show first 20 messages
 
-        async for msg in stream.subscribe_multiple(['AAPL', 'MSFT']):
-            print(f"  {msg.symbol}: ${msg.price:.2f} @ {msg.timestamp.strftime('%H:%M:%S')} (vol: {msg.volume:.0f})")
+        async for msg in stream.subscribe_multiple(["AAPL", "MSFT"]):
+            print(
+                f"  {msg.symbol}: ${msg.price:.2f} @ {msg.timestamp.strftime('%H:%M:%S')} (vol: {msg.volume:.0f})"
+            )
 
             count += 1
             if count >= max_messages:
@@ -232,10 +223,10 @@ if __name__ == "__main__":
 
     # Test WebSocket streaming
     print("\n✅ REST API tests completed!")
-    print("\nReady to test WebSocket streaming? (y/n): ", end='')
+    print("\nReady to test WebSocket streaming? (y/n): ", end="")
     try:
         response = input()
-        if response.lower() == 'y':
+        if response.lower() == "y":
             asyncio.run(test_finnhub_streaming())
     except:
         print("\nSkipping streaming test")

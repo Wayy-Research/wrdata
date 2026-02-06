@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class TwelveDataProvider(BaseProvider):
@@ -47,7 +51,7 @@ class TwelveDataProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical data from TwelveData.
@@ -96,10 +100,10 @@ class TwelveDataProvider(BaseProvider):
             }
 
             # Optional parameters
-            if 'exchange' in kwargs:
-                params['exchange'] = kwargs['exchange']
-            if 'timezone' in kwargs:
-                params['timezone'] = kwargs['timezone']
+            if "exchange" in kwargs:
+                params["exchange"] = kwargs["exchange"]
+            if "timezone" in kwargs:
+                params["timezone"] = kwargs["timezone"]
 
             # Make request
             response = requests.get(url, params=params, timeout=30)
@@ -108,51 +112,57 @@ class TwelveDataProvider(BaseProvider):
             data = response.json()
 
             # Check for errors
-            if 'status' in data and data['status'] == 'error':
+            if "status" in data and data["status"] == "error":
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"TwelveData error: {data.get('message', 'Unknown error')}"
+                    error=f"TwelveData error: {data.get('message', 'Unknown error')}",
                 )
 
             # Check for values
-            if 'values' not in data or not data['values']:
+            if "values" not in data or not data["values"]:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
             # Convert to standard format
             records = []
-            for bar in reversed(data['values']):  # Reverse to chronological order
-                records.append({
-                    'Date': bar.get('datetime', '')[:10],  # Extract date
-                    'open': float(bar.get('open', 0)),
-                    'high': float(bar.get('high', 0)),
-                    'low': float(bar.get('low', 0)),
-                    'close': float(bar.get('close', 0)),
-                    'volume': int(float(bar.get('volume', 0))),
-                })
+            for bar in reversed(data["values"]):  # Reverse to chronological order
+                records.append(
+                    {
+                        "Date": bar.get("datetime", "")[:10],  # Extract date
+                        "open": float(bar.get("open", 0)),
+                        "high": float(bar.get("high", 0)),
+                        "low": float(bar.get("low", 0)),
+                        "close": float(bar.get("close", 0)),
+                        "volume": int(float(bar.get("volume", 0))),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'TwelveData',
-                    'currency': data['meta'].get('currency') if 'meta' in data else None,
-                    'exchange': data['meta'].get('exchange') if 'meta' in data else None,
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "TwelveData",
+                    "currency": (
+                        data["meta"].get("currency") if "meta" in data else None
+                    ),
+                    "exchange": (
+                        data["meta"].get("exchange") if "meta" in data else None
+                    ),
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -168,7 +178,7 @@ class TwelveDataProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -177,7 +187,7 @@ class TwelveDataProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"TwelveData error: {str(e)}"
+                error=f"TwelveData error: {str(e)}",
             )
 
     def get_quote(self, symbol: str, **kwargs) -> dict:
@@ -186,8 +196,8 @@ class TwelveDataProvider(BaseProvider):
             url = f"{self.base_url}/quote"
             params = {"symbol": symbol.upper(), "apikey": self.api_key}
 
-            if 'exchange' in kwargs:
-                params['exchange'] = kwargs['exchange']
+            if "exchange" in kwargs:
+                params["exchange"] = kwargs["exchange"]
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -204,8 +214,8 @@ class TwelveDataProvider(BaseProvider):
             url = f"{self.base_url}/price"
             params = {"symbol": symbol.upper(), "apikey": self.api_key}
 
-            if 'exchange' in kwargs:
-                params['exchange'] = kwargs['exchange']
+            if "exchange" in kwargs:
+                params["exchange"] = kwargs["exchange"]
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -223,7 +233,7 @@ class TwelveDataProvider(BaseProvider):
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="TwelveData does not provide options data"
+            error="TwelveData does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -238,14 +248,14 @@ class TwelveDataProvider(BaseProvider):
                 "symbol": "AAPL",
                 "interval": "1day",
                 "outputsize": 1,
-                "apikey": self.api_key
+                "apikey": self.api_key,
             }
 
             response = requests.get(url, params=params, timeout=5)
             response.raise_for_status()
 
             data = response.json()
-            return 'values' in data or 'status' in data
+            return "values" in data or "status" in data
 
         except Exception:
             return False

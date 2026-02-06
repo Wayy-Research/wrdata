@@ -33,10 +33,9 @@ class KalshiProvider(BaseProvider):
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(name="kalshi", api_key=api_key)
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "wrdata-kalshi-client/1.0",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"User-Agent": "wrdata-kalshi-client/1.0", "Accept": "application/json"}
+        )
 
     def fetch_markets(
         self,
@@ -44,7 +43,7 @@ class KalshiProvider(BaseProvider):
         status: str = "open",
         category: Optional[str] = None,
         limit: int = 100,
-        cursor: Optional[str] = None
+        cursor: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Fetch list of prediction markets from Kalshi.
@@ -59,10 +58,7 @@ class KalshiProvider(BaseProvider):
         Returns:
             List of market dictionaries with ticker, title, price, volume
         """
-        params = {
-            "status": status,
-            "limit": limit
-        }
+        params = {"status": status, "limit": limit}
 
         if series_ticker:
             params["series_ticker"] = series_ticker
@@ -71,9 +67,7 @@ class KalshiProvider(BaseProvider):
 
         try:
             response = self.session.get(
-                f"{self.BASE_URL}/markets",
-                params=params,
-                timeout=10
+                f"{self.BASE_URL}/markets", params=params, timeout=10
             )
             response.raise_for_status()
             data = response.json()
@@ -94,7 +88,9 @@ class KalshiProvider(BaseProvider):
                     "close_date": market.get("close_date"),
                     "expiration_date": market.get("expiration_date"),
                     "strike_price": self._extract_strike_price(market.get("title", "")),
-                    "underlying_symbol": self._extract_underlying_symbol(market.get("title", ""))
+                    "underlying_symbol": self._extract_underlying_symbol(
+                        market.get("title", "")
+                    ),
                 }
 
                 # Filter by category if specified
@@ -120,8 +116,7 @@ class KalshiProvider(BaseProvider):
         """
         try:
             response = self.session.get(
-                f"{self.BASE_URL}/markets/{market_ticker}",
-                timeout=10
+                f"{self.BASE_URL}/markets/{market_ticker}", timeout=10
             )
             response.raise_for_status()
             data = response.json()
@@ -142,15 +137,19 @@ class KalshiProvider(BaseProvider):
                 "expiration_date": market.get("expiration_date"),
                 "result": market.get("result"),
                 "strike_price": self._extract_strike_price(market.get("title", "")),
-                "underlying_symbol": self._extract_underlying_symbol(market.get("title", "")),
+                "underlying_symbol": self._extract_underlying_symbol(
+                    market.get("title", "")
+                ),
                 "can_close_early": market.get("can_close_early"),
                 "expiration_value": market.get("expiration_value"),
                 "last_price": market.get("last_price"),
-                "previous_yes_price": market.get("previous_yes_price")
+                "previous_yes_price": market.get("previous_yes_price"),
             }
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to fetch market details for {market_ticker}: {str(e)}")
+            raise Exception(
+                f"Failed to fetch market details for {market_ticker}: {str(e)}"
+            )
 
     def fetch_orderbook(self, market_ticker: str) -> Dict[str, List[List]]:
         """
@@ -165,8 +164,7 @@ class KalshiProvider(BaseProvider):
         """
         try:
             response = self.session.get(
-                f"{self.BASE_URL}/markets/{market_ticker}/orderbook",
-                timeout=10
+                f"{self.BASE_URL}/markets/{market_ticker}/orderbook", timeout=10
             )
             response.raise_for_status()
             data = response.json()
@@ -175,7 +173,7 @@ class KalshiProvider(BaseProvider):
 
             return {
                 "yes_bids": orderbook.get("yes", []),
-                "no_bids": orderbook.get("no", [])
+                "no_bids": orderbook.get("no", []),
             }
 
         except requests.exceptions.RequestException as e:
@@ -185,7 +183,7 @@ class KalshiProvider(BaseProvider):
         self,
         market_ticker: str,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
     ) -> pl.DataFrame:
         """
         Fetch historical probability data for a market.
@@ -204,12 +202,9 @@ class KalshiProvider(BaseProvider):
         # TODO: Implement when Kalshi provides historical endpoint
         # For now, return empty DataFrame with schema
 
-        return pl.DataFrame({
-            "timestamp": [],
-            "yes_price": [],
-            "no_price": [],
-            "volume": []
-        })
+        return pl.DataFrame(
+            {"timestamp": [], "yes_price": [], "no_price": [], "volume": []}
+        )
 
     def search_markets(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
@@ -251,16 +246,18 @@ class KalshiProvider(BaseProvider):
         """
         # Try to find numbers with common patterns
         patterns = [
-            r'\$[\d,]+\.?\d*',  # $100,000 or $5000.50
-            r'[\d,]+\.?\d*%',   # 3.5%
-            r'\b[\d,]+\.?\d*\b' # Plain numbers
+            r"\$[\d,]+\.?\d*",  # $100,000 or $5000.50
+            r"[\d,]+\.?\d*%",  # 3.5%
+            r"\b[\d,]+\.?\d*\b",  # Plain numbers
         ]
 
         for pattern in patterns:
             matches = re.findall(pattern, title)
             if matches:
                 # Take the first match and clean it
-                strike_str = matches[0].replace('$', '').replace(',', '').replace('%', '')
+                strike_str = (
+                    matches[0].replace("$", "").replace(",", "").replace("%", "")
+                )
                 try:
                     return float(strike_str)
                 except ValueError:
@@ -283,22 +280,22 @@ class KalshiProvider(BaseProvider):
 
         # Known mappings for crypto
         crypto_map = {
-            'BTC': 'BTCUSD',
-            'BITCOIN': 'BTCUSD',
-            'ETH': 'ETHUSD',
-            'ETHEREUM': 'ETHUSD',
-            'SOL': 'SOLUSD',
-            'SOLANA': 'SOLUSD'
+            "BTC": "BTCUSD",
+            "BITCOIN": "BTCUSD",
+            "ETH": "ETHUSD",
+            "ETHEREUM": "ETHUSD",
+            "SOL": "SOLUSD",
+            "SOLANA": "SOLUSD",
         }
 
         # Known mappings for economic indicators
         econ_map = {
-            'CPI': 'CPIAUCSL',
-            'INFLATION': 'CPIAUCSL',
-            'UNEMPLOYMENT': 'UNRATE',
-            'GDP': 'GDP',
-            'FED FUNDS': 'FEDFUNDS',
-            'INTEREST RATE': 'FEDFUNDS'
+            "CPI": "CPIAUCSL",
+            "INFLATION": "CPIAUCSL",
+            "UNEMPLOYMENT": "UNRATE",
+            "GDP": "GDP",
+            "FED FUNDS": "FEDFUNDS",
+            "INTEREST RATE": "FEDFUNDS",
         }
 
         # Check crypto
@@ -312,19 +309,25 @@ class KalshiProvider(BaseProvider):
                 return symbol
 
         # Check for stock tickers (2-5 uppercase letters)
-        ticker_match = re.search(r'\b([A-Z]{2,5})\b', title_upper)
+        ticker_match = re.search(r"\b([A-Z]{2,5})\b", title_upper)
         if ticker_match:
             ticker = ticker_match.group(1)
             # Exclude common words
-            if ticker not in ['WILL', 'CLOSE', 'ABOVE', 'BELOW', 'THE', 'AND', 'OR']:
+            if ticker not in ["WILL", "CLOSE", "ABOVE", "BELOW", "THE", "AND", "OR"]:
                 return ticker
 
         return None
 
     # BaseProvider abstract methods (not applicable for Kalshi)
 
-    def fetch_timeseries(self, symbol: str, start_date: str, end_date: str,
-                        interval: str = "1d", **kwargs) -> DataResponse:
+    def fetch_timeseries(
+        self,
+        symbol: str,
+        start_date: str,
+        end_date: str,
+        interval: str = "1d",
+        **kwargs,
+    ) -> DataResponse:
         """
         Kalshi doesn't provide traditional timeseries data.
         Use fetch_market_history() for probability history instead.
@@ -345,9 +348,7 @@ class KalshiProvider(BaseProvider):
         """
         try:
             response = self.session.get(
-                f"{self.BASE_URL}/markets",
-                params={"limit": 1},
-                timeout=5
+                f"{self.BASE_URL}/markets", params={"limit": 1}, timeout=5
             )
             return response.status_code == 200
         except Exception:
@@ -366,13 +367,13 @@ if __name__ == "__main__":
 
     if markets:
         print(f"\n2. Fetching details for {markets[0]['ticker']}:")
-        details = provider.fetch_market_details(markets[0]['ticker'])
+        details = provider.fetch_market_details(markets[0]["ticker"])
         print(f"  Volume: {details['volume']}")
         print(f"  Strike: {details['strike_price']}")
         print(f"  Underlying: {details['underlying_symbol']}")
 
         print(f"\n3. Fetching orderbook:")
-        orderbook = provider.fetch_orderbook(markets[0]['ticker'])
+        orderbook = provider.fetch_orderbook(markets[0]["ticker"])
         print(f"  YES bids: {orderbook['yes_bids'][:3]}")
         print(f"  NO bids: {orderbook['no_bids'][:3]}")
 

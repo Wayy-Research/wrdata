@@ -14,7 +14,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class MessariProvider(BaseProvider):
@@ -37,7 +41,7 @@ class MessariProvider(BaseProvider):
         self.headers = {}
 
         if api_key:
-            self.headers['x-messari-api-key'] = api_key
+            self.headers["x-messari-api-key"] = api_key
 
     def fetch_timeseries(
         self,
@@ -45,20 +49,20 @@ class MessariProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Messari."""
         try:
             # Messari uses asset slugs or symbols
             # Common format: bitcoin, ethereum, etc.
             symbol_map = {
-                'BTC': 'bitcoin',
-                'ETH': 'ethereum',
-                'BNB': 'bnb',
-                'SOL': 'solana',
-                'ADA': 'cardano',
-                'XRP': 'xrp',
-                'DOGE': 'dogecoin'
+                "BTC": "bitcoin",
+                "ETH": "ethereum",
+                "BNB": "bnb",
+                "SOL": "solana",
+                "ADA": "cardano",
+                "XRP": "xrp",
+                "DOGE": "dogecoin",
             }
 
             asset_key = symbol_map.get(symbol.upper(), symbol.lower())
@@ -83,25 +87,33 @@ class MessariProvider(BaseProvider):
                 "start": start_date,
                 "end": end_date,
                 "interval": messari_interval,
-                "format": "json"
+                "format": "json",
             }
 
-            response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            response = requests.get(
+                url, headers=self.headers, params=params, timeout=30
+            )
             response.raise_for_status()
             data = response.json()
 
-            if 'status' in data and data['status'].get('error_code'):
+            if "status" in data and data["status"].get("error_code"):
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"Messari error: {data['status'].get('error_message', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"Messari error: {data['status'].get('error_message', 'Unknown error')}",
                 )
 
-            values = data.get('data', {}).get('values', [])
+            values = data.get("data", {}).get("values", [])
 
             if not values:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
@@ -112,43 +124,58 @@ class MessariProvider(BaseProvider):
 
                 # Check if we have OHLCV or just close price
                 if len(value) >= 6:
-                    records.append({
-                        'Date': dt.strftime('%Y-%m-%d'),
-                        'open': float(value[1]) if value[1] else 0,
-                        'high': float(value[2]) if value[2] else 0,
-                        'low': float(value[3]) if value[3] else 0,
-                        'close': float(value[4]) if value[4] else 0,
-                        'volume': float(value[5]) if value[5] else 0,
-                    })
+                    records.append(
+                        {
+                            "Date": dt.strftime("%Y-%m-%d"),
+                            "open": float(value[1]) if value[1] else 0,
+                            "high": float(value[2]) if value[2] else 0,
+                            "low": float(value[3]) if value[3] else 0,
+                            "close": float(value[4]) if value[4] else 0,
+                            "volume": float(value[5]) if value[5] else 0,
+                        }
+                    )
                 else:
                     # Just price data
                     price = float(value[1]) if len(value) > 1 and value[1] else 0
-                    records.append({
-                        'Date': dt.strftime('%Y-%m-%d'),
-                        'open': price,
-                        'high': price,
-                        'low': price,
-                        'close': price,
-                        'volume': 0,
-                    })
+                    records.append(
+                        {
+                            "Date": dt.strftime("%Y-%m-%d"),
+                            "open": price,
+                            "high": price,
+                            "low": price,
+                            "close": price,
+                            "volume": 0,
+                        }
+                    )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Messari'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Messari",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Messari error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Messari error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Messari does not provide options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Messari does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:

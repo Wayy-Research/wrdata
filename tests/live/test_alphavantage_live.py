@@ -19,7 +19,7 @@ def test_alphavantage_provider():
     print("=" * 60)
 
     # Get API key from environment
-    api_key = os.getenv('ALPHAVANTAGE_API_KEY')
+    api_key = os.getenv("ALPHAVANTAGE_API_KEY")
     if not api_key:
         print("\n❌ ALPHAVANTAGE_API_KEY not set!")
         print("Get a free API key at: https://www.alphavantage.co/support/#api-key")
@@ -42,10 +42,7 @@ def test_alphavantage_provider():
     print("\n✓ Fetching Apple (AAPL) stock data...")
     print("  (Rate limited: 12 seconds between calls)")
     response = provider.fetch_timeseries(
-        symbol="AAPL",
-        start_date="2024-10-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="AAPL", start_date="2024-10-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -60,10 +57,7 @@ def test_alphavantage_provider():
     print("\n✓ Fetching EUR/USD forex data...")
     print("  (Rate limited: 12 seconds between calls)")
     response = provider.fetch_timeseries(
-        symbol="EUR/USD",
-        start_date="2024-11-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="EUR/USD", start_date="2024-11-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -86,7 +80,7 @@ def test_datastream_with_alphavantage():
     print("=" * 60)
 
     # Get API key
-    api_key = os.getenv('ALPHAVANTAGE_API_KEY')
+    api_key = os.getenv("ALPHAVANTAGE_API_KEY")
     if not api_key:
         print("\n❌ Skipping DataStream test - no API key")
         return
@@ -97,17 +91,14 @@ def test_datastream_with_alphavantage():
     # Check provider status
     status = stream.status()
     print(f"\n✓ Available providers: {list(stream.providers.keys())}")
-    if 'alphavantage' in status:
-        print(f"  Alpha Vantage connected: {status['alphavantage'].get('connected', False)}")
+    if "alphavantage" in status:
+        print(
+            f"  Alpha Vantage connected: {status['alphavantage'].get('connected', False)}"
+        )
 
     # Fetch Microsoft stock data
     print("\n✓ Fetching Microsoft (MSFT) stock data...")
-    df = stream.get(
-        "MSFT",
-        start="2024-10-01",
-        end="2024-11-07",
-        asset_type="stock"
-    )
+    df = stream.get("MSFT", start="2024-10-01", end="2024-11-07", asset_type="stock")
 
     print(f"  ✓ Got {len(df)} rows of MSFT data")
     if len(df) > 0:
@@ -117,12 +108,7 @@ def test_datastream_with_alphavantage():
     # Fetch forex data
     print("\n✓ Fetching GBP/USD forex data...")
     print("  (Rate limited: 12 seconds between calls)")
-    df = stream.get(
-        "GBP/USD",
-        start="2024-11-01",
-        end="2024-11-07",
-        asset_type="forex"
-    )
+    df = stream.get("GBP/USD", start="2024-11-01", end="2024-11-07", asset_type="forex")
 
     print(f"  ✓ Got {len(df)} rows")
     if len(df) > 0:

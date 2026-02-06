@@ -19,7 +19,11 @@ import time
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class GeckoTerminalProvider(BaseProvider):
@@ -56,7 +60,9 @@ class GeckoTerminalProvider(BaseProvider):
             time.sleep(self._min_request_interval - elapsed)
         self._last_request_time = time.time()
 
-    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> requests.Response:
+    def _make_request(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> requests.Response:
         """Make a rate-limited request."""
         self._rate_limit()
 
@@ -74,7 +80,7 @@ class GeckoTerminalProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical OHLCV data for a DEX pool.
@@ -91,17 +97,17 @@ class GeckoTerminalProvider(BaseProvider):
         """
         try:
             # Parse network:pool_address format
-            if ':' not in symbol:
+            if ":" not in symbol:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
                     error="Symbol must be in format 'network:pool_address' "
-                          "(e.g., 'eth:0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640')"
+                    "(e.g., 'eth:0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640')",
                 )
 
-            network, pool_address = symbol.split(':', 1)
+            network, pool_address = symbol.split(":", 1)
 
             # Map interval to GeckoTerminal timeframe
             interval_map = {
@@ -132,14 +138,16 @@ class GeckoTerminalProvider(BaseProvider):
             }
 
             # Add currency parameter if provided
-            if kwargs.get('currency'):
-                params['currency'] = kwargs['currency']
+            if kwargs.get("currency"):
+                params["currency"] = kwargs["currency"]
 
             response = self._make_request(endpoint, params)
             response.raise_for_status()
             data = response.json()
 
-            ohlcv_list = data.get('data', {}).get('attributes', {}).get('ohlcv_list', [])
+            ohlcv_list = (
+                data.get("data", {}).get("attributes", {}).get("ohlcv_list", [])
+            )
 
             if not ohlcv_list:
                 return DataResponse(
@@ -147,7 +155,7 @@ class GeckoTerminalProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No OHLCV data found for pool {pool_address} on {network}"
+                    error=f"No OHLCV data found for pool {pool_address} on {network}",
                 )
 
             records = []
@@ -158,35 +166,37 @@ class GeckoTerminalProvider(BaseProvider):
 
                 # Filter by date range
                 if start_dt <= dt <= end_dt + timedelta(days=1):
-                    if interval in ['1m', '5m', '15m', '1h', '4h']:
-                        date_str = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    if interval in ["1m", "5m", "15m", "1h", "4h"]:
+                        date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
                     else:
-                        date_str = dt.strftime('%Y-%m-%d')
+                        date_str = dt.strftime("%Y-%m-%d")
 
-                    records.append({
-                        'Date': date_str,
-                        'open': float(candle[1]),
-                        'high': float(candle[2]),
-                        'low': float(candle[3]),
-                        'close': float(candle[4]),
-                        'volume': float(candle[5]),
-                    })
+                    records.append(
+                        {
+                            "Date": date_str,
+                            "open": float(candle[1]),
+                            "high": float(candle[2]),
+                            "low": float(candle[3]),
+                            "close": float(candle[4]),
+                            "volume": float(candle[5]),
+                        }
+                    )
 
             # Sort by date (oldest first)
-            records.sort(key=lambda x: x['Date'])
+            records.sort(key=lambda x: x["Date"])
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'records': len(records),
-                    'network': network,
-                    'pool_address': pool_address,
-                    'source': 'GeckoTerminal'
+                    "interval": interval,
+                    "records": len(records),
+                    "network": network,
+                    "pool_address": pool_address,
+                    "source": "GeckoTerminal",
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -195,7 +205,7 @@ class GeckoTerminalProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"GeckoTerminal API error: {e.response.status_code} - {e.response.text}"
+                error=f"GeckoTerminal API error: {e.response.status_code} - {e.response.text}",
             )
         except Exception as e:
             return DataResponse(
@@ -203,7 +213,7 @@ class GeckoTerminalProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"GeckoTerminal error: {str(e)}"
+                error=f"GeckoTerminal error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
@@ -212,7 +222,7 @@ class GeckoTerminalProvider(BaseProvider):
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="GeckoTerminal does not provide options data"
+            error="GeckoTerminal does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -246,21 +256,21 @@ class GeckoTerminalProvider(BaseProvider):
             data = response.json()
 
             networks = []
-            for item in data.get('data', []):
-                attrs = item.get('attributes', {})
-                networks.append({
-                    'id': item.get('id', ''),
-                    'name': attrs.get('name', ''),
-                    'coingecko_asset_platform_id': attrs.get('coingecko_asset_platform_id', ''),
-                })
+            for item in data.get("data", []):
+                attrs = item.get("attributes", {})
+                networks.append(
+                    {
+                        "id": item.get("id", ""),
+                        "name": attrs.get("name", ""),
+                        "coingecko_asset_platform_id": attrs.get(
+                            "coingecko_asset_platform_id", ""
+                        ),
+                    }
+                )
 
-            return {
-                'success': True,
-                'count': len(networks),
-                'networks': networks
-            }
+            return {"success": True, "count": len(networks), "networks": networks}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_dexes(self, network: str) -> Dict[str, Any]:
         """
@@ -278,20 +288,18 @@ class GeckoTerminalProvider(BaseProvider):
             data = response.json()
 
             dexes = []
-            for item in data.get('data', []):
-                attrs = item.get('attributes', {})
-                dexes.append({
-                    'id': item.get('id', ''),
-                    'name': attrs.get('name', ''),
-                })
+            for item in data.get("data", []):
+                attrs = item.get("attributes", {})
+                dexes.append(
+                    {
+                        "id": item.get("id", ""),
+                        "name": attrs.get("name", ""),
+                    }
+                )
 
-            return {
-                'success': True,
-                'count': len(dexes),
-                'dexes': dexes
-            }
+            return {"success": True, "count": len(dexes), "dexes": dexes}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # Pool Discovery
@@ -317,14 +325,10 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pools = self._parse_pools(data.get('data', []))
-            return {
-                'success': True,
-                'count': len(pools),
-                'pools': pools
-            }
+            pools = self._parse_pools(data.get("data", []))
+            return {"success": True, "count": len(pools), "pools": pools}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_new_pools(self, network: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -346,14 +350,10 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pools = self._parse_pools(data.get('data', []))
-            return {
-                'success': True,
-                'count': len(pools),
-                'pools': pools
-            }
+            pools = self._parse_pools(data.get("data", []))
+            return {"success": True, "count": len(pools), "pools": pools}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_pool(self, network: str, pool_address: str) -> Dict[str, Any]:
         """
@@ -371,26 +371,32 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pool_data = data.get('data', {})
-            attrs = pool_data.get('attributes', {})
+            pool_data = data.get("data", {})
+            attrs = pool_data.get("attributes", {})
 
             return {
-                'success': True,
-                'pool': {
-                    'address': pool_data.get('id', '').split('_')[-1] if '_' in pool_data.get('id', '') else pool_address,
-                    'name': attrs.get('name', ''),
-                    'base_token': attrs.get('base_token_price_usd', ''),
-                    'quote_token': attrs.get('quote_token_price_usd', ''),
-                    'price_usd': attrs.get('base_token_price_usd', ''),
-                    'volume_24h': attrs.get('volume_usd', {}).get('h24', 0),
-                    'reserve_usd': attrs.get('reserve_in_usd', 0),
-                    'fdv_usd': attrs.get('fdv_usd', 0),
-                    'market_cap_usd': attrs.get('market_cap_usd', 0),
-                    'price_change_24h': attrs.get('price_change_percentage', {}).get('h24', 0),
-                }
+                "success": True,
+                "pool": {
+                    "address": (
+                        pool_data.get("id", "").split("_")[-1]
+                        if "_" in pool_data.get("id", "")
+                        else pool_address
+                    ),
+                    "name": attrs.get("name", ""),
+                    "base_token": attrs.get("base_token_price_usd", ""),
+                    "quote_token": attrs.get("quote_token_price_usd", ""),
+                    "price_usd": attrs.get("base_token_price_usd", ""),
+                    "volume_24h": attrs.get("volume_usd", {}).get("h24", 0),
+                    "reserve_usd": attrs.get("reserve_in_usd", 0),
+                    "fdv_usd": attrs.get("fdv_usd", 0),
+                    "market_cap_usd": attrs.get("market_cap_usd", 0),
+                    "price_change_24h": attrs.get("price_change_percentage", {}).get(
+                        "h24", 0
+                    ),
+                },
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_top_pools(self, network: str, page: int = 1) -> Dict[str, Any]:
         """
@@ -405,20 +411,15 @@ class GeckoTerminalProvider(BaseProvider):
         """
         try:
             response = self._make_request(
-                f"networks/{network}/pools",
-                params={"page": page}
+                f"networks/{network}/pools", params={"page": page}
             )
             response.raise_for_status()
             data = response.json()
 
-            pools = self._parse_pools(data.get('data', []))
-            return {
-                'success': True,
-                'count': len(pools),
-                'pools': pools
-            }
+            pools = self._parse_pools(data.get("data", []))
+            return {"success": True, "count": len(pools), "pools": pools}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def search_pools(self, query: str, network: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -440,14 +441,10 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pools = self._parse_pools(data.get('data', []))
-            return {
-                'success': True,
-                'count': len(pools),
-                'pools': pools
-            }
+            pools = self._parse_pools(data.get("data", []))
+            return {"success": True, "count": len(pools), "pools": pools}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_token_pools(self, network: str, token_address: str) -> Dict[str, Any]:
         """
@@ -467,14 +464,10 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            pools = self._parse_pools(data.get('data', []))
-            return {
-                'success': True,
-                'count': len(pools),
-                'pools': pools
-            }
+            pools = self._parse_pools(data.get("data", []))
+            return {"success": True, "count": len(pools), "pools": pools}
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # Token Data
@@ -492,30 +485,30 @@ class GeckoTerminalProvider(BaseProvider):
             Dict with token price data
         """
         try:
-            response = self._make_request(
-                f"networks/{network}/tokens/{token_address}"
-            )
+            response = self._make_request(f"networks/{network}/tokens/{token_address}")
             response.raise_for_status()
             data = response.json()
 
-            attrs = data.get('data', {}).get('attributes', {})
+            attrs = data.get("data", {}).get("attributes", {})
 
             return {
-                'success': True,
-                'token': {
-                    'address': token_address,
-                    'name': attrs.get('name', ''),
-                    'symbol': attrs.get('symbol', ''),
-                    'price_usd': float(attrs.get('price_usd', 0) or 0),
-                    'volume_24h': float(attrs.get('volume_usd', {}).get('h24', 0) or 0),
-                    'market_cap_usd': float(attrs.get('market_cap_usd', 0) or 0),
-                    'fdv_usd': float(attrs.get('fdv_usd', 0) or 0),
-                    'total_supply': attrs.get('total_supply', ''),
-                    'price_change_24h': float(attrs.get('price_change_percentage', {}).get('h24', 0) or 0),
-                }
+                "success": True,
+                "token": {
+                    "address": token_address,
+                    "name": attrs.get("name", ""),
+                    "symbol": attrs.get("symbol", ""),
+                    "price_usd": float(attrs.get("price_usd", 0) or 0),
+                    "volume_24h": float(attrs.get("volume_usd", {}).get("h24", 0) or 0),
+                    "market_cap_usd": float(attrs.get("market_cap_usd", 0) or 0),
+                    "fdv_usd": float(attrs.get("fdv_usd", 0) or 0),
+                    "total_supply": attrs.get("total_supply", ""),
+                    "price_change_24h": float(
+                        attrs.get("price_change_percentage", {}).get("h24", 0) or 0
+                    ),
+                },
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_token_info(self, network: str, token_address: str) -> Dict[str, Any]:
         """
@@ -535,24 +528,24 @@ class GeckoTerminalProvider(BaseProvider):
             response.raise_for_status()
             data = response.json()
 
-            attrs = data.get('data', {}).get('attributes', {})
+            attrs = data.get("data", {}).get("attributes", {})
 
             return {
-                'success': True,
-                'info': {
-                    'address': token_address,
-                    'name': attrs.get('name', ''),
-                    'symbol': attrs.get('symbol', ''),
-                    'description': attrs.get('description', ''),
-                    'website': attrs.get('websites', []),
-                    'discord': attrs.get('discord_url', ''),
-                    'telegram': attrs.get('telegram_handle', ''),
-                    'twitter': attrs.get('twitter_handle', ''),
-                    'coingecko_id': attrs.get('coingecko_coin_id', ''),
-                }
+                "success": True,
+                "info": {
+                    "address": token_address,
+                    "name": attrs.get("name", ""),
+                    "symbol": attrs.get("symbol", ""),
+                    "description": attrs.get("description", ""),
+                    "website": attrs.get("websites", []),
+                    "discord": attrs.get("discord_url", ""),
+                    "telegram": attrs.get("telegram_handle", ""),
+                    "twitter": attrs.get("twitter_handle", ""),
+                    "coingecko_id": attrs.get("coingecko_coin_id", ""),
+                },
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # Helper Methods
@@ -562,24 +555,34 @@ class GeckoTerminalProvider(BaseProvider):
         """Parse pool data from API response."""
         pools = []
         for item in pools_data:
-            attrs = item.get('attributes', {})
-            pool_id = item.get('id', '')
+            attrs = item.get("attributes", {})
+            pool_id = item.get("id", "")
 
             # Extract network and address from ID (format: network_address)
-            parts = pool_id.split('_', 1)
-            network = parts[0] if len(parts) > 1 else ''
+            parts = pool_id.split("_", 1)
+            network = parts[0] if len(parts) > 1 else ""
             address = parts[1] if len(parts) > 1 else pool_id
 
-            pools.append({
-                'id': pool_id,
-                'network': network,
-                'address': address,
-                'name': attrs.get('name', ''),
-                'dex': attrs.get('dex_id', ''),
-                'price_usd': attrs.get('base_token_price_usd', ''),
-                'volume_24h': attrs.get('volume_usd', {}).get('h24', 0) if isinstance(attrs.get('volume_usd'), dict) else 0,
-                'reserve_usd': attrs.get('reserve_in_usd', 0),
-                'price_change_24h': attrs.get('price_change_percentage', {}).get('h24', 0) if isinstance(attrs.get('price_change_percentage'), dict) else 0,
-            })
+            pools.append(
+                {
+                    "id": pool_id,
+                    "network": network,
+                    "address": address,
+                    "name": attrs.get("name", ""),
+                    "dex": attrs.get("dex_id", ""),
+                    "price_usd": attrs.get("base_token_price_usd", ""),
+                    "volume_24h": (
+                        attrs.get("volume_usd", {}).get("h24", 0)
+                        if isinstance(attrs.get("volume_usd"), dict)
+                        else 0
+                    ),
+                    "reserve_usd": attrs.get("reserve_in_usd", 0),
+                    "price_change_24h": (
+                        attrs.get("price_change_percentage", {}).get("h24", 0)
+                        if isinstance(attrs.get("price_change_percentage"), dict)
+                        else 0
+                    ),
+                }
+            )
 
         return pools

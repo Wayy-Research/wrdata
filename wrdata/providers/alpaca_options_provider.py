@@ -69,9 +69,7 @@ class AlpacaOptionsProvider(BaseProvider):
     # OCC option symbol regex pattern
     # Format: SYMBOL + YYMMDD + C/P + strike (8 digits, no decimal)
     # Example: SPY240119C00500000 = SPY Jan 19 2024 $500 Call
-    OCC_PATTERN = re.compile(
-        r'^([A-Z]{1,6})(\d{6})([CP])(\d{8})$'
-    )
+    OCC_PATTERN = re.compile(r"^([A-Z]{1,6})(\d{6})([CP])(\d{8})$")
 
     def __init__(
         self,
@@ -124,7 +122,7 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            return 'account_number' in data or 'id' in data
+            return "account_number" in data or "id" in data
 
         except Exception:
             return False
@@ -144,7 +142,7 @@ class AlpacaOptionsProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical price data for underlying equity.
@@ -193,7 +191,7 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            bars = data.get('bars', [])
+            bars = data.get("bars", [])
 
             if not bars:
                 return DataResponse(
@@ -201,37 +199,39 @@ class AlpacaOptionsProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
             # Convert to standard format (use `or 0` for None safety)
             records = []
             for bar in bars:
-                records.append({
-                    'Date': bar.get('t', ''),
-                    'open': float(bar.get('o') or 0),
-                    'high': float(bar.get('h') or 0),
-                    'low': float(bar.get('l') or 0),
-                    'close': float(bar.get('c') or 0),
-                    'volume': int(bar.get('v') or 0),
-                    'vwap': float(bar.get('vw') or 0),
-                    'trade_count': int(bar.get('n') or 0),
-                })
+                records.append(
+                    {
+                        "Date": bar.get("t", ""),
+                        "open": float(bar.get("o") or 0),
+                        "high": float(bar.get("h") or 0),
+                        "low": float(bar.get("l") or 0),
+                        "close": float(bar.get("c") or 0),
+                        "volume": int(bar.get("v") or 0),
+                        "vwap": float(bar.get("vw") or 0),
+                        "trade_count": int(bar.get("n") or 0),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'timeframe': timeframe,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Alpaca',
-                    'paper': self.paper,
+                    "interval": interval,
+                    "timeframe": timeframe,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Alpaca",
+                    "paper": self.paper,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -241,7 +241,7 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -250,13 +250,10 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Alpaca API error: {str(e)}"
+                error=f"Alpaca API error: {str(e)}",
             )
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch current options chain snapshot with Greeks.
 
@@ -279,7 +276,7 @@ class AlpacaOptionsProvider(BaseProvider):
 
             # Add expiration filter if specified
             if request.expiration_date:
-                params["expiration_date"] = request.expiration_date.strftime('%Y-%m-%d')
+                params["expiration_date"] = request.expiration_date.strftime("%Y-%m-%d")
 
             # Add strike filters if specified
             if request.min_strike:
@@ -297,7 +294,7 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            snapshots = data.get('snapshots', {})
+            snapshots = data.get("snapshots", {})
 
             if not snapshots:
                 return OptionsChainResponse(
@@ -305,7 +302,7 @@ class AlpacaOptionsProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.now(timezone.utc),
                     success=False,
-                    error=f"No options chain data for {symbol}"
+                    error=f"No options chain data for {symbol}",
                 )
 
             # Parse snapshots into calls and puts
@@ -324,28 +321,28 @@ class AlpacaOptionsProvider(BaseProvider):
                 expirations_set.add(exp_date)
 
                 # Extract quote data
-                quote = snapshot.get('latestQuote', {})
-                trade = snapshot.get('latestTrade', {})
-                greeks_data = snapshot.get('greeks', {})
+                quote = snapshot.get("latestQuote", {})
+                trade = snapshot.get("latestTrade", {})
+                greeks_data = snapshot.get("greeks", {})
 
                 # Get implied volatility
-                iv = snapshot.get('impliedVolatility')
+                iv = snapshot.get("impliedVolatility")
 
                 # Build Greeks object
                 greeks = None
                 if greeks_data:
                     greeks = OptionsGreeks(
-                        delta=greeks_data.get('delta'),
-                        gamma=greeks_data.get('gamma'),
-                        theta=greeks_data.get('theta'),
-                        vega=greeks_data.get('vega'),
-                        rho=greeks_data.get('rho'),
+                        delta=greeks_data.get("delta"),
+                        gamma=greeks_data.get("gamma"),
+                        theta=greeks_data.get("theta"),
+                        vega=greeks_data.get("vega"),
+                        rho=greeks_data.get("rho"),
                     )
 
                 # Calculate mid price
-                bid = Decimal(str(quote.get('bp', 0))) if quote.get('bp') else None
-                ask = Decimal(str(quote.get('ap', 0))) if quote.get('ap') else None
-                last_price = Decimal(str(trade.get('p', 0))) if trade.get('p') else None
+                bid = Decimal(str(quote.get("bp", 0))) if quote.get("bp") else None
+                ask = Decimal(str(quote.get("ap", 0))) if quote.get("ap") else None
+                last_price = Decimal(str(trade.get("p", 0))) if trade.get("p") else None
 
                 mark_price = None
                 if bid and ask:
@@ -361,11 +358,15 @@ class AlpacaOptionsProvider(BaseProvider):
                     ask=ask,
                     last_price=last_price,
                     mark_price=mark_price,
-                    volume=trade.get('s'),  # trade size
-                    open_interest=snapshot.get('openInterest'),
+                    volume=trade.get("s"),  # trade size
+                    open_interest=snapshot.get("openInterest"),
                     greeks=greeks,
                     implied_volatility=iv,
-                    underlying_price=Decimal(str(snapshot.get('underlyingPrice', 0))) if snapshot.get('underlyingPrice') else None,
+                    underlying_price=(
+                        Decimal(str(snapshot.get("underlyingPrice", 0)))
+                        if snapshot.get("underlyingPrice")
+                        else None
+                    ),
                 )
 
                 # Track underlying price
@@ -394,15 +395,15 @@ class AlpacaOptionsProvider(BaseProvider):
                 puts=puts,
                 available_expirations=available_expirations,
                 metadata={
-                    'total_contracts': len(calls) + len(puts),
-                    'call_count': len(calls),
-                    'put_count': len(puts),
-                    'expiration_count': len(available_expirations),
-                    'source': 'Alpaca',
-                    'feed': params.get('feed', 'indicative'),
-                    'paper': self.paper,
+                    "total_contracts": len(calls) + len(puts),
+                    "call_count": len(calls),
+                    "put_count": len(puts),
+                    "expiration_count": len(available_expirations),
+                    "source": "Alpaca",
+                    "feed": params.get("feed", "indicative"),
+                    "paper": self.paper,
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.HTTPError as e:
@@ -412,7 +413,7 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.now(timezone.utc),
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -422,12 +423,11 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.now(timezone.utc),
                 success=False,
-                error=f"Alpaca options error: {str(e)}"
+                error=f"Alpaca options error: {str(e)}",
             )
 
     def fetch_options_timeseries(
-        self,
-        request: OptionsTimeseriesRequest
+        self, request: OptionsTimeseriesRequest
     ) -> OptionsTimeseriesResponse:
         """
         Fetch historical options data (bars, trades, or quotes).
@@ -454,7 +454,7 @@ class AlpacaOptionsProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="Must specify contract_symbol or underlying_symbol"
+                    error="Must specify contract_symbol or underlying_symbol",
                 )
 
         except Exception as e:
@@ -463,12 +463,11 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Alpaca options timeseries error: {str(e)}"
+                error=f"Alpaca options timeseries error: {str(e)}",
             )
 
     def _fetch_contract_bars(
-        self,
-        request: OptionsTimeseriesRequest
+        self, request: OptionsTimeseriesRequest
     ) -> OptionsTimeseriesResponse:
         """Fetch historical bars for a specific option contract."""
         contract = request.contract_symbol.upper()
@@ -494,13 +493,11 @@ class AlpacaOptionsProvider(BaseProvider):
             "limit": 10000,
         }
 
-        response = requests.get(
-            url, headers=self.headers, params=params, timeout=30
-        )
+        response = requests.get(url, headers=self.headers, params=params, timeout=30)
         response.raise_for_status()
 
         data = response.json()
-        bars = data.get('bars', {}).get(contract, [])
+        bars = data.get("bars", {}).get(contract, [])
 
         if not bars:
             return OptionsTimeseriesResponse(
@@ -508,41 +505,42 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"No historical data for {contract}"
+                error=f"No historical data for {contract}",
             )
 
         # Convert to records
         records = []
         for bar in bars:
-            records.append({
-                'timestamp': bar.get('t'),
-                'open': float(bar.get('o', 0)),
-                'high': float(bar.get('h', 0)),
-                'low': float(bar.get('l', 0)),
-                'close': float(bar.get('c', 0)),
-                'volume': int(bar.get('v', 0)),
-                'trade_count': int(bar.get('n', 0)),
-                'vwap': float(bar.get('vw', 0)) if bar.get('vw') else None,
-            })
+            records.append(
+                {
+                    "timestamp": bar.get("t"),
+                    "open": float(bar.get("o", 0)),
+                    "high": float(bar.get("h", 0)),
+                    "low": float(bar.get("l", 0)),
+                    "close": float(bar.get("c", 0)),
+                    "volume": int(bar.get("v", 0)),
+                    "trade_count": int(bar.get("n", 0)),
+                    "vwap": float(bar.get("vw", 0)) if bar.get("vw") else None,
+                }
+            )
 
         return OptionsTimeseriesResponse(
             symbol=contract,
             provider=self.name,
             data=records,
             metadata={
-                'interval': request.interval,
-                'timeframe': timeframe,
-                'start_date': request.start_date,
-                'end_date': request.end_date,
-                'records': len(records),
-                'source': 'Alpaca',
+                "interval": request.interval,
+                "timeframe": timeframe,
+                "start_date": request.start_date,
+                "end_date": request.end_date,
+                "records": len(records),
+                "source": "Alpaca",
             },
-            success=True
+            success=True,
         )
 
     def _fetch_underlying_options_bars(
-        self,
-        request: OptionsTimeseriesRequest
+        self, request: OptionsTimeseriesRequest
     ) -> OptionsTimeseriesResponse:
         """Fetch historical bars for multiple contracts of an underlying."""
         underlying = request.underlying_symbol.upper()
@@ -562,7 +560,7 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Could not get options chain: {chain.error}"
+                error=f"Could not get options chain: {chain.error}",
             )
 
         # Get all contract symbols
@@ -574,7 +572,7 @@ class AlpacaOptionsProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"No contracts found for {underlying}"
+                error=f"No contracts found for {underlying}",
             )
 
         # Limit to avoid huge requests (fetch first 50 contracts)
@@ -601,13 +599,11 @@ class AlpacaOptionsProvider(BaseProvider):
             "limit": 10000,
         }
 
-        response = requests.get(
-            url, headers=self.headers, params=params, timeout=60
-        )
+        response = requests.get(url, headers=self.headers, params=params, timeout=60)
         response.raise_for_status()
 
         data = response.json()
-        all_bars = data.get('bars', {})
+        all_bars = data.get("bars", {})
 
         # Flatten into records with contract info
         records = []
@@ -619,40 +615,42 @@ class AlpacaOptionsProvider(BaseProvider):
             exp_date, option_type, strike = parsed
 
             for bar in bars:
-                records.append({
-                    'contract_symbol': contract,
-                    'underlying': underlying,
-                    'expiration': exp_date.isoformat(),
-                    'option_type': option_type,
-                    'strike': strike,
-                    'timestamp': bar.get('t'),
-                    'open': float(bar.get('o', 0)),
-                    'high': float(bar.get('h', 0)),
-                    'low': float(bar.get('l', 0)),
-                    'close': float(bar.get('c', 0)),
-                    'volume': int(bar.get('v', 0)),
-                    'trade_count': int(bar.get('n', 0)),
-                    'vwap': float(bar.get('vw', 0)) if bar.get('vw') else None,
-                })
+                records.append(
+                    {
+                        "contract_symbol": contract,
+                        "underlying": underlying,
+                        "expiration": exp_date.isoformat(),
+                        "option_type": option_type,
+                        "strike": strike,
+                        "timestamp": bar.get("t"),
+                        "open": float(bar.get("o", 0)),
+                        "high": float(bar.get("h", 0)),
+                        "low": float(bar.get("l", 0)),
+                        "close": float(bar.get("c", 0)),
+                        "volume": int(bar.get("v", 0)),
+                        "trade_count": int(bar.get("n", 0)),
+                        "vwap": float(bar.get("vw", 0)) if bar.get("vw") else None,
+                    }
+                )
 
         # Sort by timestamp, then contract
-        records.sort(key=lambda x: (x['timestamp'], x['contract_symbol']))
+        records.sort(key=lambda x: (x["timestamp"], x["contract_symbol"]))
 
         return OptionsTimeseriesResponse(
             symbol=underlying,
             provider=self.name,
             data=records,
             metadata={
-                'interval': request.interval,
-                'timeframe': timeframe,
-                'start_date': request.start_date,
-                'end_date': request.end_date,
-                'records': len(records),
-                'contracts_fetched': len(contracts_to_fetch),
-                'contracts_with_data': len(all_bars),
-                'source': 'Alpaca',
+                "interval": request.interval,
+                "timeframe": timeframe,
+                "start_date": request.start_date,
+                "end_date": request.end_date,
+                "records": len(records),
+                "contracts_fetched": len(contracts_to_fetch),
+                "contracts_with_data": len(all_bars),
+                "source": "Alpaca",
             },
-            success=True
+            success=True,
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -667,9 +665,7 @@ class AlpacaOptionsProvider(BaseProvider):
         """
         try:
             # Use options chain endpoint to get expirations
-            chain = self.fetch_options_chain(
-                OptionsChainRequest(symbol=symbol)
-            )
+            chain = self.fetch_options_chain(OptionsChainRequest(symbol=symbol))
 
             if chain.success:
                 return chain.available_expirations
@@ -714,21 +710,23 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            all_quotes = data.get('quotes', {})
+            all_quotes = data.get("quotes", {})
 
             records = []
             for symbol, quotes in all_quotes.items():
                 for q in quotes:
-                    records.append({
-                        'symbol': symbol,
-                        'timestamp': q.get('t'),
-                        'bid_price': float(q.get('bp', 0)),
-                        'ask_price': float(q.get('ap', 0)),
-                        'bid_size': int(q.get('bs', 0)),
-                        'ask_size': int(q.get('as', 0)),
-                        'bid_exchange': q.get('bx'),
-                        'ask_exchange': q.get('ax'),
-                    })
+                    records.append(
+                        {
+                            "symbol": symbol,
+                            "timestamp": q.get("t"),
+                            "bid_price": float(q.get("bp", 0)),
+                            "ask_price": float(q.get("ap", 0)),
+                            "bid_size": int(q.get("bs", 0)),
+                            "ask_size": int(q.get("as", 0)),
+                            "bid_exchange": q.get("bx"),
+                            "ask_exchange": q.get("ax"),
+                        }
+                    )
 
             return records
 
@@ -771,19 +769,21 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            all_trades = data.get('trades', {})
+            all_trades = data.get("trades", {})
 
             records = []
             for symbol, trades in all_trades.items():
                 for t in trades:
-                    records.append({
-                        'symbol': symbol,
-                        'timestamp': t.get('t'),
-                        'price': float(t.get('p', 0)),
-                        'size': int(t.get('s', 0)),
-                        'exchange': t.get('x'),
-                        'conditions': t.get('c', []),
-                    })
+                    records.append(
+                        {
+                            "symbol": symbol,
+                            "timestamp": t.get("t"),
+                            "price": float(t.get("p", 0)),
+                            "size": int(t.get("s", 0)),
+                            "exchange": t.get("x"),
+                            "conditions": t.get("c", []),
+                        }
+                    )
 
             return records
 
@@ -812,17 +812,17 @@ class AlpacaOptionsProvider(BaseProvider):
             response.raise_for_status()
 
             data = response.json()
-            quotes = data.get('quotes', {})
+            quotes = data.get("quotes", {})
 
             if symbol in quotes:
                 q = quotes[symbol]
                 return {
-                    'symbol': symbol,
-                    'timestamp': q.get('t'),
-                    'bid_price': float(q.get('bp', 0)),
-                    'ask_price': float(q.get('ap', 0)),
-                    'bid_size': int(q.get('bs', 0)),
-                    'ask_size': int(q.get('as', 0)),
+                    "symbol": symbol,
+                    "timestamp": q.get("t"),
+                    "bid_price": float(q.get("bp", 0)),
+                    "ask_price": float(q.get("ap", 0)),
+                    "bid_size": int(q.get("bs", 0)),
+                    "ask_size": int(q.get("as", 0)),
                 }
 
             return None
@@ -851,12 +851,12 @@ class AlpacaOptionsProvider(BaseProvider):
 
         # Parse expiration date (YYMMDD)
         try:
-            exp_date = datetime.strptime(date_str, '%y%m%d').date()
+            exp_date = datetime.strptime(date_str, "%y%m%d").date()
         except ValueError:
             return None
 
         # Parse option type
-        option_type = "call" if cp == 'C' else "put"
+        option_type = "call" if cp == "C" else "put"
 
         # Parse strike (last 8 digits, divide by 1000 for actual price)
         strike = float(strike_str) / 1000.0
@@ -864,11 +864,7 @@ class AlpacaOptionsProvider(BaseProvider):
         return (exp_date, option_type, strike)
 
     def build_occ_symbol(
-        self,
-        underlying: str,
-        expiration: date,
-        option_type: str,
-        strike: float
+        self, underlying: str, expiration: date, option_type: str, strike: float
     ) -> str:
         """
         Build OCC option symbol from components.
@@ -883,8 +879,8 @@ class AlpacaOptionsProvider(BaseProvider):
             OCC symbol string
         """
         # Format: SYMBOL + YYMMDD + C/P + STRIKE (8 digits, strike * 1000)
-        date_str = expiration.strftime('%y%m%d')
-        cp = 'C' if option_type.lower() == 'call' else 'P'
+        date_str = expiration.strftime("%y%m%d")
+        cp = "C" if option_type.lower() == "call" else "P"
         strike_int = int(strike * 1000)
         strike_str = f"{strike_int:08d}"
 

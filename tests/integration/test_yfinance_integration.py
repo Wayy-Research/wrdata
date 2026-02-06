@@ -25,16 +25,16 @@ class TestYFinanceIntegration:
         start_date = end_date - timedelta(days=7)
 
         response = provider.fetch_timeseries(
-            symbol='AAPL',
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            interval='1d'
+            symbol="AAPL",
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d"),
+            interval="1d",
         )
 
         assert response.success is True
         assert len(response.data) > 0
-        assert 'Open' in response.data[0]
-        assert 'Close' in response.data[0]
+        assert "Open" in response.data[0]
+        assert "Close" in response.data[0]
 
     def test_validate_connection(self, skip_if_no_network):
         """Test validating connection to YFinance."""
@@ -46,11 +46,11 @@ class TestYFinanceIntegration:
     def test_get_available_expirations(self, skip_if_no_network):
         """Test getting available option expirations."""
         provider = YFinanceProvider()
-        expirations = provider.get_available_expirations('AAPL')
+        expirations = provider.get_available_expirations("AAPL")
 
         # AAPL should have options available
         assert len(expirations) > 0
-        assert all(hasattr(exp, 'year') for exp in expirations)
+        assert all(hasattr(exp, "year") for exp in expirations)
 
     @pytest.mark.slow
     def test_fetch_options_chain(self, skip_if_no_network):
@@ -58,8 +58,7 @@ class TestYFinanceIntegration:
         provider = YFinanceProvider()
 
         request = OptionsChainRequest(
-            symbol='AAPL',
-            expiration_date=None  # Use nearest expiration
+            symbol="AAPL", expiration_date=None  # Use nearest expiration
         )
 
         response = provider.fetch_options_chain(request)
@@ -71,6 +70,6 @@ class TestYFinanceIntegration:
             # Check data structure
             if response.calls:
                 call = response.calls[0]
-                assert call.option_type == 'call'
+                assert call.option_type == "call"
                 assert call.strike_price is not None
                 assert call.expiration_date is not None

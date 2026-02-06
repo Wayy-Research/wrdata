@@ -35,7 +35,7 @@ class YFinanceProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical timeseries data using yfinance.
@@ -43,10 +43,7 @@ class YFinanceProvider(BaseProvider):
         try:
             ticker = yf.Ticker(symbol)
             df = ticker.history(
-                start=start_date,
-                end=end_date,
-                interval=interval,
-                **kwargs
+                start=start_date, end=end_date, interval=interval, **kwargs
             )
 
             if df.empty:
@@ -55,46 +52,39 @@ class YFinanceProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for {symbol}"
+                    error=f"No data found for {symbol}",
                 )
 
             # Convert DataFrame to list of dicts
             df.reset_index(inplace=True)
-            data = df.to_dict('records')
+            data = df.to_dict("records")
 
             # Convert timestamps to strings
             for record in data:
-                if 'Date' in record:
-                    record['Date'] = record['Date'].isoformat()
-                if 'Datetime' in record:
-                    record['Datetime'] = record['Datetime'].isoformat()
+                if "Date" in record:
+                    record["Date"] = record["Date"].isoformat()
+                if "Datetime" in record:
+                    record["Datetime"] = record["Datetime"].isoformat()
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=data,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(data)
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(data),
                 },
-                success=True
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol,
-                provider=self.name,
-                data=[],
-                success=False,
-                error=str(e)
+                symbol=symbol, provider=self.name, data=[], success=False, error=str(e)
             )
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch current options chain data using yfinance.
         """
@@ -106,8 +96,7 @@ class YFinanceProvider(BaseProvider):
             try:
                 exp_dates = ticker.options
                 available_expirations = [
-                    datetime.strptime(exp, '%Y-%m-%d').date()
-                    for exp in exp_dates
+                    datetime.strptime(exp, "%Y-%m-%d").date() for exp in exp_dates
                 ]
             except Exception as e:
                 return OptionsChainResponse(
@@ -115,7 +104,7 @@ class YFinanceProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"Failed to get expiration dates: {str(e)}"
+                    error=f"Failed to get expiration dates: {str(e)}",
                 )
 
             # If no expiration specified, use the nearest one
@@ -126,20 +115,20 @@ class YFinanceProvider(BaseProvider):
                         provider=self.name,
                         snapshot_timestamp=datetime.utcnow(),
                         success=False,
-                        error="No options available for this symbol"
+                        error="No options available for this symbol",
                     )
                 expiration_date = available_expirations[0]
             else:
                 expiration_date = request.expiration_date
 
             # Fetch options chain for the expiration date
-            exp_str = expiration_date.strftime('%Y-%m-%d')
+            exp_str = expiration_date.strftime("%Y-%m-%d")
             opt_chain = ticker.option_chain(exp_str)
 
             # Get current underlying price
             try:
                 info = ticker.info
-                underlying_price = Decimal(str(info.get('currentPrice', 0)))
+                underlying_price = Decimal(str(info.get("currentPrice", 0)))
             except:
                 underlying_price = None
 
@@ -147,22 +136,14 @@ class YFinanceProvider(BaseProvider):
             calls = []
             if opt_chain.calls is not None and not opt_chain.calls.empty:
                 calls = self._parse_options_dataframe(
-                    opt_chain.calls,
-                    "call",
-                    expiration_date,
-                    underlying_price,
-                    request
+                    opt_chain.calls, "call", expiration_date, underlying_price, request
                 )
 
             # Parse puts
             puts = []
             if opt_chain.puts is not None and not opt_chain.puts.empty:
                 puts = self._parse_options_dataframe(
-                    opt_chain.puts,
-                    "put",
-                    expiration_date,
-                    underlying_price,
-                    request
+                    opt_chain.puts, "put", expiration_date, underlying_price, request
                 )
 
             return OptionsChainResponse(
@@ -173,7 +154,7 @@ class YFinanceProvider(BaseProvider):
                 calls=calls,
                 puts=puts,
                 available_expirations=available_expirations,
-                success=True
+                success=True,
             )
 
         except Exception as e:
@@ -182,7 +163,7 @@ class YFinanceProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=str(e)
+                error=str(e),
             )
 
     def _parse_options_dataframe(
@@ -191,7 +172,7 @@ class YFinanceProvider(BaseProvider):
         option_type: str,
         expiration_date: date,
         underlying_price: Optional[Decimal],
-        request: OptionsChainRequest
+        request: OptionsChainRequest,
     ) -> List[OptionsChainData]:
         """
         Parse yfinance options DataFrame into OptionsChainData objects.
@@ -199,7 +180,7 @@ class YFinanceProvider(BaseProvider):
         options_list = []
 
         for _, row in df.iterrows():
-            strike = Decimal(str(row.get('strike', 0)))
+            strike = Decimal(str(row.get("strike", 0)))
 
             # Apply strike filters if specified
             if request.min_strike is not None and strike < request.min_strike:
@@ -243,19 +224,23 @@ class YFinanceProvider(BaseProvider):
 
             # Parse greeks
             greeks = OptionsGreeks(
-                delta=safe_float(row.get('delta')),
-                gamma=safe_float(row.get('gamma')),
-                theta=safe_float(row.get('theta')),
-                vega=safe_float(row.get('vega')),
-                rho=safe_float(row.get('rho')),
+                delta=safe_float(row.get("delta")),
+                gamma=safe_float(row.get("gamma")),
+                theta=safe_float(row.get("theta")),
+                vega=safe_float(row.get("vega")),
+                rho=safe_float(row.get("rho")),
             )
 
             # Calculate intrinsic and extrinsic value
-            last_price = safe_decimal(row.get('lastPrice'))
+            last_price = safe_decimal(row.get("lastPrice"))
             intrinsic_value = None
             in_the_money = None
 
-            if underlying_price is not None and last_price is not None and last_price > 0:
+            if (
+                underlying_price is not None
+                and last_price is not None
+                and last_price > 0
+            ):
                 if option_type == "call":
                     intrinsic_value = max(Decimal(0), underlying_price - strike)
                     in_the_money = underlying_price > strike
@@ -264,26 +249,42 @@ class YFinanceProvider(BaseProvider):
                     in_the_money = strike > underlying_price
 
             extrinsic_value = None
-            if intrinsic_value is not None and last_price is not None and last_price > 0:
+            if (
+                intrinsic_value is not None
+                and last_price is not None
+                and last_price > 0
+            ):
                 extrinsic_value = last_price - intrinsic_value
 
             options_data = OptionsChainData(
-                contract_symbol=str(row.get('contractSymbol', '')),
+                contract_symbol=str(row.get("contractSymbol", "")),
                 option_type=option_type,
                 strike_price=strike,
                 expiration_date=expiration_date,
-                bid=safe_decimal(row.get('bid')),
-                ask=safe_decimal(row.get('ask')),
+                bid=safe_decimal(row.get("bid")),
+                ask=safe_decimal(row.get("ask")),
                 last_price=last_price,
                 mark_price=None,  # YFinance doesn't provide mark price directly
-                volume=safe_int(row.get('volume')),
-                open_interest=safe_int(row.get('openInterest')),
-                greeks=greeks if any([greeks.delta, greeks.gamma, greeks.theta, greeks.vega, greeks.rho]) else None,
-                implied_volatility=safe_float(row.get('impliedVolatility')),
+                volume=safe_int(row.get("volume")),
+                open_interest=safe_int(row.get("openInterest")),
+                greeks=(
+                    greeks
+                    if any(
+                        [
+                            greeks.delta,
+                            greeks.gamma,
+                            greeks.theta,
+                            greeks.vega,
+                            greeks.rho,
+                        ]
+                    )
+                    else None
+                ),
+                implied_volatility=safe_float(row.get("impliedVolatility")),
                 intrinsic_value=intrinsic_value,
                 extrinsic_value=extrinsic_value,
                 in_the_money=in_the_money,
-                underlying_price=underlying_price
+                underlying_price=underlying_price,
             )
 
             options_list.append(options_data)
@@ -297,10 +298,7 @@ class YFinanceProvider(BaseProvider):
         try:
             ticker = yf.Ticker(symbol)
             exp_dates = ticker.options
-            return [
-                datetime.strptime(exp, '%Y-%m-%d').date()
-                for exp in exp_dates
-            ]
+            return [datetime.strptime(exp, "%Y-%m-%d").date() for exp in exp_dates]
         except Exception:
             return []
 

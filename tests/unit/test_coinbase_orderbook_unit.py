@@ -10,7 +10,7 @@ def test_provider_init():
     provider = CoinbaseStreamProvider()
 
     assert provider is not None
-    assert hasattr(provider, '_orderbooks')
+    assert hasattr(provider, "_orderbooks")
     assert isinstance(provider._orderbooks, dict)
     assert len(provider._orderbooks) == 0
 
@@ -19,7 +19,7 @@ def test_provider_has_depth_method():
     """Test that subscribe_depth method exists."""
     provider = CoinbaseStreamProvider()
 
-    assert hasattr(provider, 'subscribe_depth')
+    assert hasattr(provider, "subscribe_depth")
     assert callable(provider.subscribe_depth)
 
 
@@ -27,7 +27,7 @@ def test_provider_has_snapshot_method():
     """Test that get_orderbook_snapshot method exists."""
     provider = CoinbaseStreamProvider()
 
-    assert hasattr(provider, 'get_orderbook_snapshot')
+    assert hasattr(provider, "get_orderbook_snapshot")
     assert callable(provider.get_orderbook_snapshot)
 
 
@@ -37,24 +37,24 @@ def test_orderbook_snapshot_processing():
 
     # Simulate snapshot message
     snapshot_msg = {
-        'type': 'snapshot',
-        'product_id': 'BTC-USD',
-        'bids': [['50000.00', '0.5'], ['49999.00', '1.0']],
-        'asks': [['50001.00', '0.3'], ['50002.00', '0.8']]
+        "type": "snapshot",
+        "product_id": "BTC-USD",
+        "bids": [["50000.00", "0.5"], ["49999.00", "1.0"]],
+        "asks": [["50001.00", "0.3"], ["50002.00", "0.8"]],
     }
 
-    provider._orderbooks['BTC-USD'] = {'bids': {}, 'asks': {}}
-    provider._process_snapshot('BTC-USD', snapshot_msg)
+    provider._orderbooks["BTC-USD"] = {"bids": {}, "asks": {}}
+    provider._process_snapshot("BTC-USD", snapshot_msg)
 
-    orderbook = provider._orderbooks['BTC-USD']
+    orderbook = provider._orderbooks["BTC-USD"]
 
-    assert 50000.0 in orderbook['bids']
-    assert orderbook['bids'][50000.0] == 0.5
-    assert 49999.0 in orderbook['bids']
+    assert 50000.0 in orderbook["bids"]
+    assert orderbook["bids"][50000.0] == 0.5
+    assert 49999.0 in orderbook["bids"]
 
-    assert 50001.0 in orderbook['asks']
-    assert orderbook['asks'][50001.0] == 0.3
-    assert 50002.0 in orderbook['asks']
+    assert 50001.0 in orderbook["asks"]
+    assert orderbook["asks"][50001.0] == 0.3
+    assert 50002.0 in orderbook["asks"]
 
 
 def test_orderbook_update_processing():
@@ -62,31 +62,28 @@ def test_orderbook_update_processing():
     provider = CoinbaseStreamProvider()
 
     # Initialize with some data
-    provider._orderbooks['BTC-USD'] = {
-        'bids': {50000.0: 0.5},
-        'asks': {50001.0: 0.3}
-    }
+    provider._orderbooks["BTC-USD"] = {"bids": {50000.0: 0.5}, "asks": {50001.0: 0.3}}
 
     # Simulate update message
     update_msg = {
-        'type': 'l2update',
-        'changes': [
-            ['buy', '50000.00', '1.0'],  # Update existing bid
-            ['sell', '50002.00', '0.5'],  # Add new ask
-            ['buy', '49999.00', '0.0'],  # Remove bid (doesn't exist, should be safe)
-        ]
+        "type": "l2update",
+        "changes": [
+            ["buy", "50000.00", "1.0"],  # Update existing bid
+            ["sell", "50002.00", "0.5"],  # Add new ask
+            ["buy", "49999.00", "0.0"],  # Remove bid (doesn't exist, should be safe)
+        ],
     }
 
-    provider._process_l2update('BTC-USD', update_msg)
+    provider._process_l2update("BTC-USD", update_msg)
 
-    orderbook = provider._orderbooks['BTC-USD']
+    orderbook = provider._orderbooks["BTC-USD"]
 
     # Check bid was updated
-    assert orderbook['bids'][50000.0] == 1.0
+    assert orderbook["bids"][50000.0] == 1.0
 
     # Check new ask was added
-    assert 50002.0 in orderbook['asks']
-    assert orderbook['asks'][50002.0] == 0.5
+    assert 50002.0 in orderbook["asks"]
+    assert orderbook["asks"][50002.0] == 0.5
 
 
 def test_orderbook_message_creation():
@@ -94,15 +91,15 @@ def test_orderbook_message_creation():
     provider = CoinbaseStreamProvider()
 
     # Set up orderbook
-    provider._orderbooks['ETH-USD'] = {
-        'bids': {3000.0: 1.0, 2999.0: 2.0, 2998.0: 1.5},
-        'asks': {3001.0: 0.8, 3002.0: 1.2, 3003.0: 0.5}
+    provider._orderbooks["ETH-USD"] = {
+        "bids": {3000.0: 1.0, 2999.0: 2.0, 2998.0: 1.5},
+        "asks": {3001.0: 0.8, 3002.0: 1.2, 3003.0: 0.5},
     }
 
-    msg = provider._create_orderbook_message('ETH-USD')
+    msg = provider._create_orderbook_message("ETH-USD")
 
-    assert msg.symbol == 'ETH-USD'
-    assert msg.stream_type == 'depth'
+    assert msg.symbol == "ETH-USD"
+    assert msg.stream_type == "depth"
     assert msg.bid == 3000.0  # Highest bid
     assert msg.ask == 3001.0  # Lowest ask
     assert msg.price == 3000.5  # Mid price
@@ -121,22 +118,20 @@ def test_get_orderbook_snapshot():
     provider = CoinbaseStreamProvider()
 
     # No orderbook yet
-    snapshot = provider.get_orderbook_snapshot('BTC-USD')
+    snapshot = provider.get_orderbook_snapshot("BTC-USD")
     assert snapshot is None
 
     # Add orderbook
-    provider._orderbooks['BTC-USD'] = {
-        'bids': {50000.0: 0.5},
-        'asks': {50001.0: 0.3}
-    }
+    provider._orderbooks["BTC-USD"] = {"bids": {50000.0: 0.5}, "asks": {50001.0: 0.3}}
 
-    snapshot = provider.get_orderbook_snapshot('BTC-USD')
+    snapshot = provider.get_orderbook_snapshot("BTC-USD")
     assert snapshot is not None
-    assert 'bids' in snapshot
-    assert 'asks' in snapshot
-    assert 50000.0 in snapshot['bids']
+    assert "bids" in snapshot
+    assert "asks" in snapshot
+    assert 50000.0 in snapshot["bids"]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pytest
-    pytest.main([__file__, '-v'])
+
+    pytest.main([__file__, "-v"])

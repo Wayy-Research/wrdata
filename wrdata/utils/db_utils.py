@@ -7,7 +7,13 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import Optional
 import os
 
-from wrdata.models.database import Base, DataProvider, Symbol, OptionsContract, OptionsChainSnapshot
+from wrdata.models.database import (
+    Base,
+    DataProvider,
+    Symbol,
+    OptionsContract,
+    OptionsChainSnapshot,
+)
 
 
 def get_engine(database_url: Optional[str] = None):
@@ -22,10 +28,7 @@ def get_engine(database_url: Optional[str] = None):
         SQLAlchemy engine
     """
     if database_url is None:
-        database_url = os.getenv(
-            'WRDATA_DATABASE_URL',
-            'sqlite:///wrdata.db'
-        )
+        database_url = os.getenv("WRDATA_DATABASE_URL", "sqlite:///wrdata.db")
 
     return create_engine(database_url, echo=False)
 
@@ -91,10 +94,10 @@ def verify_database_schema(database_url: Optional[str] = None) -> bool:
     existing_tables = set(inspector.get_table_names())
 
     required_tables = {
-        'data_providers',
-        'symbols',
-        'options_contracts',
-        'options_chain_snapshots'
+        "data_providers",
+        "symbols",
+        "options_contracts",
+        "options_chain_snapshots",
     }
 
     missing_tables = required_tables - existing_tables
@@ -127,11 +130,11 @@ def migrate_add_options_tables(database_url: Optional[str] = None):
     # Only create options tables if they don't exist
     tables_to_create = []
 
-    if 'options_contracts' not in existing_tables:
-        tables_to_create.append('options_contracts')
+    if "options_contracts" not in existing_tables:
+        tables_to_create.append("options_contracts")
 
-    if 'options_chain_snapshots' not in existing_tables:
-        tables_to_create.append('options_chain_snapshots')
+    if "options_chain_snapshots" not in existing_tables:
+        tables_to_create.append("options_chain_snapshots")
 
     if not tables_to_create:
         print("Options tables already exist, skipping migration")

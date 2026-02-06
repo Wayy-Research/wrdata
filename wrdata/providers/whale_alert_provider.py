@@ -19,7 +19,7 @@ from wrdata.models.schemas import (
     OptionsChainRequest,
     OptionsChainResponse,
     WhaleTransaction,
-    WhaleTransactionBatch
+    WhaleTransactionBatch,
 )
 
 
@@ -57,7 +57,7 @@ class WhaleAlertProvider(BaseProvider):
         min_value: int = 500000,
         blockchain: Optional[str] = None,
         currency: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> WhaleTransactionBatch:
         """
         Fetch historical whale transactions from Whale Alert.
@@ -83,7 +83,9 @@ class WhaleAlertProvider(BaseProvider):
 
             # Convert dates to Unix timestamps
             start_ts = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
-            end_ts = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp()) + 86399  # End of day
+            end_ts = (
+                int(datetime.strptime(end_date, "%Y-%m-%d").timestamp()) + 86399
+            )  # End of day
 
             # Whale Alert API endpoint
             url = f"{self.base_url}/transactions"
@@ -93,7 +95,7 @@ class WhaleAlertProvider(BaseProvider):
                 "start": start_ts,
                 "end": end_ts,
                 "min_value": min_value,
-                "limit": min(limit, 100)  # API max is 100
+                "limit": min(limit, 100),  # API max is 100
             }
 
             # Add optional filters
@@ -107,7 +109,9 @@ class WhaleAlertProvider(BaseProvider):
             data = response.json()
 
             if data.get("result") != "success":
-                raise Exception(f"Whale Alert API error: {data.get('message', 'Unknown error')}")
+                raise Exception(
+                    f"Whale Alert API error: {data.get('message', 'Unknown error')}"
+                )
 
             transactions_data = data.get("transactions", [])
             count = data.get("count", 0)
@@ -126,14 +130,16 @@ class WhaleAlertProvider(BaseProvider):
                 filters_applied={
                     "min_value": min_value,
                     "blockchain": blockchain,
-                    "currency": currency
+                    "currency": currency,
                 },
-                provider=self.name
+                provider=self.name,
             )
 
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 429:
-                raise Exception("Whale Alert API rate limit exceeded. Please wait before retrying.")
+                raise Exception(
+                    "Whale Alert API rate limit exceeded. Please wait before retrying."
+                )
             elif e.response.status_code == 401:
                 raise Exception("Invalid Whale Alert API key")
             else:
@@ -141,7 +147,9 @@ class WhaleAlertProvider(BaseProvider):
         except Exception as e:
             raise Exception(f"Error fetching whale transactions: {e}")
 
-    def _parse_whale_alert_transaction(self, tx_data: Dict[str, Any]) -> WhaleTransaction:
+    def _parse_whale_alert_transaction(
+        self, tx_data: Dict[str, Any]
+    ) -> WhaleTransaction:
         """
         Parse Whale Alert transaction data into WhaleTransaction model.
 
@@ -208,7 +216,7 @@ class WhaleAlertProvider(BaseProvider):
             blockchain=blockchain,
             tx_hash=tx_hash,
             provider=self.name,
-            raw_data=tx_data
+            raw_data=tx_data,
         )
 
     def get_status(self) -> Dict[str, Any]:
@@ -229,14 +237,11 @@ class WhaleAlertProvider(BaseProvider):
             return {
                 "success": data.get("result") == "success",
                 "usage": data.get("usage", {}),
-                "limits": data.get("limits", {})
+                "limits": data.get("limits", {}),
             }
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     # BaseProvider abstract methods (not applicable for whale data)
 
@@ -246,7 +251,7 @@ class WhaleAlertProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Not applicable for Whale Alert.

@@ -19,7 +19,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class FREDProvider(BaseProvider):
@@ -45,7 +49,7 @@ class FREDProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch economic data series from FRED.
@@ -66,11 +70,11 @@ class FREDProvider(BaseProvider):
             # Build request URL
             url = f"{self.base_url}/series/observations"
             params = {
-                'series_id': series_id,
-                'api_key': self.api_key,
-                'file_type': 'json',
-                'observation_start': start_date,
-                'observation_end': end_date,
+                "series_id": series_id,
+                "api_key": self.api_key,
+                "file_type": "json",
+                "observation_start": start_date,
+                "observation_end": end_date,
             }
 
             # Make request
@@ -80,17 +84,17 @@ class FREDProvider(BaseProvider):
             data = response.json()
 
             # Check for API errors
-            if 'error_message' in data:
+            if "error_message" in data:
                 return DataResponse(
                     symbol=symbol,
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=data['error_message']
+                    error=data["error_message"],
                 )
 
             # Parse observations
-            observations = data.get('observations', [])
+            observations = data.get("observations", [])
 
             if not observations:
                 return DataResponse(
@@ -98,26 +102,30 @@ class FREDProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found for series {series_id}"
+                    error=f"No data found for series {series_id}",
                 )
 
             # Convert to standard format
             records = []
             for obs in observations:
                 # Skip missing values (FRED uses "." for missing)
-                if obs['value'] == '.':
+                if obs["value"] == ".":
                     continue
 
                 try:
-                    records.append({
-                        'Date': obs['date'],
-                        'close': float(obs['value']),  # Economic data as "close" price
-                        'value': float(obs['value']),  # Also keep as "value"
-                        'open': float(obs['value']),   # For compatibility
-                        'high': float(obs['value']),
-                        'low': float(obs['value']),
-                        'volume': 0,  # No volume for economic data
-                    })
+                    records.append(
+                        {
+                            "Date": obs["date"],
+                            "close": float(
+                                obs["value"]
+                            ),  # Economic data as "close" price
+                            "value": float(obs["value"]),  # Also keep as "value"
+                            "open": float(obs["value"]),  # For compatibility
+                            "high": float(obs["value"]),
+                            "low": float(obs["value"]),
+                            "volume": 0,  # No volume for economic data
+                        }
+                    )
                 except (ValueError, KeyError):
                     continue
 
@@ -127,7 +135,7 @@ class FREDProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No valid data points for series {series_id}"
+                    error=f"No valid data points for series {series_id}",
                 )
 
             return DataResponse(
@@ -135,13 +143,13 @@ class FREDProvider(BaseProvider):
                 provider=self.name,
                 data=records,
                 metadata={
-                    'series_id': series_id,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Federal Reserve Economic Data (FRED)'
+                    "series_id": series_id,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Federal Reserve Economic Data (FRED)",
                 },
-                success=True
+                success=True,
             )
 
         except requests.exceptions.RequestException as e:
@@ -150,7 +158,7 @@ class FREDProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"FRED API request failed: {str(e)}"
+                error=f"FRED API request failed: {str(e)}",
             )
         except Exception as e:
             return DataResponse(
@@ -158,20 +166,17 @@ class FREDProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=f"Unexpected error: {str(e)}",
             )
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """FRED does not support options data."""
         return OptionsChainResponse(
             symbol=request.symbol,
             provider=self.name,
             snapshot_timestamp=datetime.utcnow(),
             success=False,
-            error="FRED does not provide options data"
+            error="FRED does not provide options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -186,17 +191,13 @@ class FREDProvider(BaseProvider):
         """
         try:
             url = f"{self.base_url}/series"
-            params = {
-                'series_id': 'GDP',
-                'api_key': self.api_key,
-                'file_type': 'json'
-            }
+            params = {"series_id": "GDP", "api_key": self.api_key, "file_type": "json"}
 
             response = requests.get(url, params=params, timeout=5)
             response.raise_for_status()
 
             data = response.json()
-            return 'seriess' in data or 'series' in data
+            return "seriess" in data or "series" in data
 
         except Exception:
             return False
@@ -221,29 +222,31 @@ class FREDProvider(BaseProvider):
         try:
             url = f"{self.base_url}/series/search"
             params = {
-                'search_text': search_text,
-                'api_key': self.api_key,
-                'file_type': 'json',
-                'limit': limit
+                "search_text": search_text,
+                "api_key": self.api_key,
+                "file_type": "json",
+                "limit": limit,
             }
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
-            series_list = data.get('seriess', [])
+            series_list = data.get("seriess", [])
 
             results = []
             for series in series_list:
-                results.append({
-                    'id': series.get('id'),
-                    'title': series.get('title'),
-                    'units': series.get('units'),
-                    'frequency': series.get('frequency'),
-                    'seasonal_adjustment': series.get('seasonal_adjustment'),
-                    'last_updated': series.get('last_updated'),
-                    'popularity': series.get('popularity'),
-                })
+                results.append(
+                    {
+                        "id": series.get("id"),
+                        "title": series.get("title"),
+                        "units": series.get("units"),
+                        "frequency": series.get("frequency"),
+                        "seasonal_adjustment": series.get("seasonal_adjustment"),
+                        "last_updated": series.get("last_updated"),
+                        "popularity": series.get("popularity"),
+                    }
+                )
 
             return results
 
@@ -264,16 +267,16 @@ class FREDProvider(BaseProvider):
         try:
             url = f"{self.base_url}/series"
             params = {
-                'series_id': series_id,
-                'api_key': self.api_key,
-                'file_type': 'json'
+                "series_id": series_id,
+                "api_key": self.api_key,
+                "file_type": "json",
             }
 
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
-            series_list = data.get('seriess', [])
+            series_list = data.get("seriess", [])
 
             if series_list:
                 return series_list[0]
@@ -292,54 +295,45 @@ class FREDProvider(BaseProvider):
 # Popular FRED series IDs for easy reference
 POPULAR_SERIES = {
     # GDP & Growth
-    'GDP': 'Gross Domestic Product',
-    'GDPC1': 'Real Gross Domestic Product',
-    'A191RL1Q225SBEA': 'Real GDP Growth Rate',
-
+    "GDP": "Gross Domestic Product",
+    "GDPC1": "Real Gross Domestic Product",
+    "A191RL1Q225SBEA": "Real GDP Growth Rate",
     # Unemployment & Jobs
-    'UNRATE': 'Unemployment Rate',
-    'PAYEMS': 'Nonfarm Payrolls',
-    'CIVPART': 'Labor Force Participation Rate',
-    'U6RATE': 'Total Unemployed (U-6)',
-
+    "UNRATE": "Unemployment Rate",
+    "PAYEMS": "Nonfarm Payrolls",
+    "CIVPART": "Labor Force Participation Rate",
+    "U6RATE": "Total Unemployed (U-6)",
     # Inflation & Prices
-    'CPIAUCSL': 'Consumer Price Index (CPI)',
-    'PCEPI': 'Personal Consumption Expenditures Price Index',
-    'CORESTICKM159SFRBATL': 'Core CPI (Sticky Price)',
-
+    "CPIAUCSL": "Consumer Price Index (CPI)",
+    "PCEPI": "Personal Consumption Expenditures Price Index",
+    "CORESTICKM159SFRBATL": "Core CPI (Sticky Price)",
     # Interest Rates
-    'DGS10': '10-Year Treasury Constant Maturity Rate',
-    'DGS2': '2-Year Treasury Constant Maturity Rate',
-    'DFF': 'Federal Funds Effective Rate',
-    'MORTGAGE30US': '30-Year Fixed Rate Mortgage Average',
-
+    "DGS10": "10-Year Treasury Constant Maturity Rate",
+    "DGS2": "2-Year Treasury Constant Maturity Rate",
+    "DFF": "Federal Funds Effective Rate",
+    "MORTGAGE30US": "30-Year Fixed Rate Mortgage Average",
     # Money & Credit
-    'M1SL': 'M1 Money Stock',
-    'M2SL': 'M2 Money Stock',
-    'TOTCI': 'Commercial and Industrial Loans',
-
+    "M1SL": "M1 Money Stock",
+    "M2SL": "M2 Money Stock",
+    "TOTCI": "Commercial and Industrial Loans",
     # Housing
-    'CSUSHPISA': 'Case-Shiller U.S. Home Price Index',
-    'HOUST': 'Housing Starts',
-    'PERMIT': 'New Private Housing Units Authorized by Building Permits',
-
+    "CSUSHPISA": "Case-Shiller U.S. Home Price Index",
+    "HOUST": "Housing Starts",
+    "PERMIT": "New Private Housing Units Authorized by Building Permits",
     # Consumer & Retail
-    'RSXFS': 'Retail Sales',
-    'UMCSENT': 'University of Michigan Consumer Sentiment',
-    'PCE': 'Personal Consumption Expenditures',
-
+    "RSXFS": "Retail Sales",
+    "UMCSENT": "University of Michigan Consumer Sentiment",
+    "PCE": "Personal Consumption Expenditures",
     # Manufacturing & Production
-    'INDPRO': 'Industrial Production Index',
-    'IPMAN': 'Industrial Production: Manufacturing',
-    'NAPM': 'ISM Manufacturing PMI',
-
+    "INDPRO": "Industrial Production Index",
+    "IPMAN": "Industrial Production: Manufacturing",
+    "NAPM": "ISM Manufacturing PMI",
     # Trade & Exchange
-    'DEXUSEU': 'USD/EUR Exchange Rate',
-    'DEXCHUS': 'China/USD Exchange Rate',
-    'BOPGSTB': 'Trade Balance: Goods and Services',
-
+    "DEXUSEU": "USD/EUR Exchange Rate",
+    "DEXCHUS": "China/USD Exchange Rate",
+    "BOPGSTB": "Trade Balance: Goods and Services",
     # Commodities
-    'DCOILWTICO': 'Crude Oil Prices: WTI',
-    'DCOILBRENTEU': 'Crude Oil Prices: Brent',
-    'GOLDAMGBD228NLBM': 'Gold Fixing Price',
+    "DCOILWTICO": "Crude Oil Prices: WTI",
+    "DCOILBRENTEU": "Crude Oil Prices: Brent",
+    "GOLDAMGBD228NLBM": "Gold Fixing Price",
 }

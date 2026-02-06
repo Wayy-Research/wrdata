@@ -18,7 +18,11 @@ from datetime import datetime, date, timedelta
 import asyncio
 from ib_insync import IB, Stock, Option, Future, Forex, util
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class IBKRProvider(BaseProvider):
@@ -39,7 +43,7 @@ class IBKRProvider(BaseProvider):
         host: str = "127.0.0.1",
         port: int = 7497,  # 7497 = paper, 7496 = live
         client_id: int = 1,
-        readonly: bool = False
+        readonly: bool = False,
     ):
         super().__init__(name="ibkr")
 
@@ -65,7 +69,7 @@ class IBKRProvider(BaseProvider):
                     self.host,
                     self.port,
                     clientId=self.client_id,
-                    readonly=self.readonly
+                    readonly=self.readonly,
                 )
                 self._connected = True
                 print(f"✓ Connected to IBKR on {self.host}:{self.port}")
@@ -90,7 +94,7 @@ class IBKRProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """
         Fetch historical stock data from Interactive Brokers.
@@ -113,13 +117,13 @@ class IBKRProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error="Not connected to IBKR"
+                    error="Not connected to IBKR",
                 )
 
         try:
             symbol = symbol.upper()
-            exchange = kwargs.get('exchange', 'SMART')
-            currency = kwargs.get('currency', 'USD')
+            exchange = kwargs.get("exchange", "SMART")
+            currency = kwargs.get("currency", "USD")
 
             # Create contract
             contract = Stock(symbol, exchange, currency)
@@ -164,9 +168,9 @@ class IBKRProvider(BaseProvider):
                 endDateTime=end_date,
                 durationStr=duration_str,
                 barSizeSetting=bar_size,
-                whatToShow='TRADES',
+                whatToShow="TRADES",
                 useRTH=True,  # Regular trading hours only
-                formatDate=1
+                formatDate=1,
             )
 
             if not bars:
@@ -175,35 +179,41 @@ class IBKRProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data returned for {symbol}"
+                    error=f"No data returned for {symbol}",
                 )
 
             # Convert to standard format
             records = []
             for bar in bars:
-                records.append({
-                    'Date': bar.date.strftime('%Y-%m-%d') if hasattr(bar.date, 'strftime') else str(bar.date)[:10],
-                    'open': float(bar.open),
-                    'high': float(bar.high),
-                    'low': float(bar.low),
-                    'close': float(bar.close),
-                    'volume': int(bar.volume),
-                })
+                records.append(
+                    {
+                        "Date": (
+                            bar.date.strftime("%Y-%m-%d")
+                            if hasattr(bar.date, "strftime")
+                            else str(bar.date)[:10]
+                        ),
+                        "open": float(bar.open),
+                        "high": float(bar.high),
+                        "low": float(bar.low),
+                        "close": float(bar.close),
+                        "volume": int(bar.volume),
+                    }
+                )
 
             return DataResponse(
                 symbol=symbol,
                 provider=self.name,
                 data=records,
                 metadata={
-                    'interval': interval,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'records': len(records),
-                    'source': 'Interactive Brokers',
-                    'exchange': contract.exchange,
-                    'currency': contract.currency
+                    "interval": interval,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "records": len(records),
+                    "source": "Interactive Brokers",
+                    "exchange": contract.exchange,
+                    "currency": contract.currency,
                 },
-                success=True
+                success=True,
             )
 
         except Exception as e:
@@ -212,7 +222,7 @@ class IBKRProvider(BaseProvider):
                 provider=self.name,
                 data=[],
                 success=False,
-                error=f"IBKR API error: {str(e)}"
+                error=f"IBKR API error: {str(e)}",
             )
 
     def get_market_data(self, symbol: str, **kwargs) -> dict:
@@ -233,8 +243,8 @@ class IBKRProvider(BaseProvider):
 
         try:
             symbol = symbol.upper()
-            exchange = kwargs.get('exchange', 'SMART')
-            currency = kwargs.get('currency', 'USD')
+            exchange = kwargs.get("exchange", "SMART")
+            currency = kwargs.get("currency", "USD")
 
             contract = Stock(symbol, exchange, currency)
             self.ib.qualifyContracts(contract)
@@ -246,16 +256,16 @@ class IBKRProvider(BaseProvider):
             self.ib.sleep(2)
 
             return {
-                'symbol': symbol,
-                'last': ticker.last,
-                'bid': ticker.bid,
-                'ask': ticker.ask,
-                'bid_size': ticker.bidSize,
-                'ask_size': ticker.askSize,
-                'volume': ticker.volume,
-                'high': ticker.high,
-                'low': ticker.low,
-                'close': ticker.close,
+                "symbol": symbol,
+                "last": ticker.last,
+                "bid": ticker.bid,
+                "ask": ticker.ask,
+                "bid_size": ticker.bidSize,
+                "ask_size": ticker.askSize,
+                "volume": ticker.volume,
+                "high": ticker.high,
+                "low": ticker.low,
+                "close": ticker.close,
             }
 
         except Exception as e:
@@ -279,9 +289,9 @@ class IBKRProvider(BaseProvider):
             summary = {}
             for item in account_values:
                 summary[item.tag] = {
-                    'value': item.value,
-                    'currency': item.currency,
-                    'account': item.account
+                    "value": item.value,
+                    "currency": item.currency,
+                    "account": item.account,
                 }
 
             return summary
@@ -306,15 +316,17 @@ class IBKRProvider(BaseProvider):
 
             result = []
             for pos in positions:
-                result.append({
-                    'symbol': pos.contract.symbol,
-                    'position': pos.position,
-                    'avg_cost': pos.avgCost,
-                    'market_value': pos.position * pos.avgCost,
-                    'account': pos.account,
-                    'exchange': pos.contract.exchange,
-                    'currency': pos.contract.currency,
-                })
+                result.append(
+                    {
+                        "symbol": pos.contract.symbol,
+                        "position": pos.position,
+                        "avg_cost": pos.avgCost,
+                        "market_value": pos.position * pos.avgCost,
+                        "account": pos.account,
+                        "exchange": pos.contract.exchange,
+                        "currency": pos.contract.currency,
+                    }
+                )
 
             return result
 
@@ -338,16 +350,18 @@ class IBKRProvider(BaseProvider):
 
             result = []
             for trade in trades:
-                result.append({
-                    'symbol': trade.contract.symbol,
-                    'action': trade.order.action,
-                    'quantity': trade.order.totalQuantity,
-                    'order_type': trade.order.orderType,
-                    'status': trade.orderStatus.status,
-                    'filled': trade.orderStatus.filled,
-                    'remaining': trade.orderStatus.remaining,
-                    'avg_fill_price': trade.orderStatus.avgFillPrice,
-                })
+                result.append(
+                    {
+                        "symbol": trade.contract.symbol,
+                        "action": trade.order.action,
+                        "quantity": trade.order.totalQuantity,
+                        "order_type": trade.order.orderType,
+                        "status": trade.orderStatus.status,
+                        "filled": trade.orderStatus.filled,
+                        "remaining": trade.orderStatus.remaining,
+                        "avg_fill_price": trade.orderStatus.avgFillPrice,
+                    }
+                )
 
             return result
 
@@ -355,10 +369,7 @@ class IBKRProvider(BaseProvider):
             print(f"Failed to get orders: {e}")
             return []
 
-    def fetch_options_chain(
-        self,
-        request: OptionsChainRequest
-    ) -> OptionsChainResponse:
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         """
         Fetch options chain from Interactive Brokers.
 
@@ -371,23 +382,20 @@ class IBKRProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error="Not connected to IBKR"
+                    error="Not connected to IBKR",
                 )
 
         try:
             symbol = request.symbol.upper()
-            exchange = 'SMART'
+            exchange = "SMART"
 
             # Create underlying contract
-            stock = Stock(symbol, exchange, 'USD')
+            stock = Stock(symbol, exchange, "USD")
             self.ib.qualifyContracts(stock)
 
             # Get option chains
             chains = self.ib.reqSecDefOptParams(
-                stock.symbol,
-                '',
-                stock.secType,
-                stock.conId
+                stock.symbol, "", stock.secType, stock.conId
             )
 
             if not chains:
@@ -396,7 +404,7 @@ class IBKRProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options chain found for {symbol}"
+                    error=f"No options chain found for {symbol}",
                 )
 
             # Use first chain (usually the primary exchange)
@@ -406,7 +414,7 @@ class IBKRProvider(BaseProvider):
             expirations = sorted(chain.expirations)
             if request.expiry:
                 # Find matching expiration
-                target = request.expiry.strftime('%Y%m%d')
+                target = request.expiry.strftime("%Y%m%d")
                 expirations = [exp for exp in expirations if exp == target]
 
             if not expirations:
@@ -415,7 +423,7 @@ class IBKRProvider(BaseProvider):
                     provider=self.name,
                     snapshot_timestamp=datetime.utcnow(),
                     success=False,
-                    error=f"No options found for expiry {request.expiry}"
+                    error=f"No options found for expiry {request.expiry}",
                 )
 
             # Get first expiration
@@ -428,11 +436,11 @@ class IBKRProvider(BaseProvider):
             contracts = []
             for strike in strikes:
                 # Call option
-                call = Option(symbol, expiry, strike, 'C', exchange)
+                call = Option(symbol, expiry, strike, "C", exchange)
                 contracts.append(call)
 
                 # Put option
-                put = Option(symbol, expiry, strike, 'P', exchange)
+                put = Option(symbol, expiry, strike, "P", exchange)
                 contracts.append(put)
 
             # Qualify contracts
@@ -458,10 +466,10 @@ class IBKRProvider(BaseProvider):
                 underlying_price=None,  # Would get from market data
                 success=True,
                 metadata={
-                    'exchange': exchange,
-                    'expirations_available': len(expirations),
-                    'strikes_available': len(strikes),
-                }
+                    "exchange": exchange,
+                    "expirations_available": len(expirations),
+                    "strikes_available": len(strikes),
+                },
             )
 
         except Exception as e:
@@ -470,7 +478,7 @@ class IBKRProvider(BaseProvider):
                 provider=self.name,
                 snapshot_timestamp=datetime.utcnow(),
                 success=False,
-                error=f"IBKR options error: {str(e)}"
+                error=f"IBKR options error: {str(e)}",
             )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -481,21 +489,18 @@ class IBKRProvider(BaseProvider):
 
         try:
             symbol = symbol.upper()
-            stock = Stock(symbol, 'SMART', 'USD')
+            stock = Stock(symbol, "SMART", "USD")
             self.ib.qualifyContracts(stock)
 
             chains = self.ib.reqSecDefOptParams(
-                stock.symbol,
-                '',
-                stock.secType,
-                stock.conId
+                stock.symbol, "", stock.secType, stock.conId
             )
 
             if chains:
                 # Parse expiration strings (format: YYYYMMDD)
                 expirations = []
                 for exp_str in chains[0].expirations:
-                    exp_date = datetime.strptime(exp_str, '%Y%m%d').date()
+                    exp_date = datetime.strptime(exp_str, "%Y%m%d").date()
                     expirations.append(exp_date)
                 return sorted(expirations)
 
@@ -531,27 +536,27 @@ class IBKRProvider(BaseProvider):
 
 # IBKR exchanges
 IBKR_EXCHANGES = {
-    'SMART': 'Smart routing (best execution)',
-    'NYSE': 'New York Stock Exchange',
-    'NASDAQ': 'NASDAQ',
-    'ARCA': 'NYSE Arca',
-    'CBOE': 'Chicago Board Options Exchange',
-    'CME': 'Chicago Mercantile Exchange',
-    'NYMEX': 'New York Mercantile Exchange',
-    'LSE': 'London Stock Exchange',
-    'TSE': 'Tokyo Stock Exchange',
-    'HKEX': 'Hong Kong Exchange',
-    'ASX': 'Australian Securities Exchange',
+    "SMART": "Smart routing (best execution)",
+    "NYSE": "New York Stock Exchange",
+    "NASDAQ": "NASDAQ",
+    "ARCA": "NYSE Arca",
+    "CBOE": "Chicago Board Options Exchange",
+    "CME": "Chicago Mercantile Exchange",
+    "NYMEX": "New York Mercantile Exchange",
+    "LSE": "London Stock Exchange",
+    "TSE": "Tokyo Stock Exchange",
+    "HKEX": "Hong Kong Exchange",
+    "ASX": "Australian Securities Exchange",
 }
 
 # IBKR asset types
 IBKR_ASSET_TYPES = {
-    'STK': 'Stock',
-    'OPT': 'Option',
-    'FUT': 'Future',
-    'CASH': 'Forex',
-    'CFD': 'Contract for Difference',
-    'IND': 'Index',
-    'BOND': 'Bond',
-    'FUND': 'Mutual Fund',
+    "STK": "Stock",
+    "OPT": "Option",
+    "FUT": "Future",
+    "CASH": "Forex",
+    "CFD": "Contract for Difference",
+    "IND": "Index",
+    "BOND": "Bond",
+    "FUND": "Mutual Fund",
 }

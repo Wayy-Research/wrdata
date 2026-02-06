@@ -15,10 +15,22 @@ from wrdata.providers.binance_provider import BinanceProvider
 # etc.
 
 # Options providers
-from wrdata.providers.alpaca_options_provider import AlpacaOptionsProvider
+try:
+    from wrdata.providers.alpaca_options_provider import AlpacaOptionsProvider
+except ImportError:
+    AlpacaOptionsProvider = None  # type: ignore[assignment, misc]
 
 # DeFi providers
-from wrdata.providers.panoptic_provider import PanopticProvider
+try:
+    from wrdata.providers.panoptic_provider import PanopticProvider
+except ImportError:
+    PanopticProvider = None  # type: ignore[assignment, misc]
+
+# Prediction market providers
+try:
+    from wrdata.providers.polymarket_provider import PolymarketProvider
+except ImportError:
+    PolymarketProvider = None  # type: ignore[assignment, misc]
 
 __all__ = [
     "BaseProvider",
@@ -26,4 +38,5 @@ __all__ = [
     "BinanceProvider",
     "AlpacaOptionsProvider",
     "PanopticProvider",
+    "PolymarketProvider",
 ]

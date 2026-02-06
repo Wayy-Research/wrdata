@@ -37,12 +37,14 @@ def test_crypto_data():
             symbol=symbol,
             start_date=start_date.strftime("%Y-%m-%d"),
             end_date=end_date.strftime("%Y-%m-%d"),
-            interval="1d"
+            interval="1d",
         )
 
         if response.success:
             print(f"✅ Got {len(response.data)} records")
-            print(f"Latest: O=${response.data[-1]['open']:.2f} C=${response.data[-1]['close']:.2f}")
+            print(
+                f"Latest: O=${response.data[-1]['open']:.2f} C=${response.data[-1]['close']:.2f}"
+            )
         else:
             print(f"❌ Error: {response.error}")
 

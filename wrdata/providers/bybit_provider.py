@@ -11,7 +11,11 @@ import requests
 from typing import Optional, List
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 class BybitProvider(BaseProvider):
@@ -36,7 +40,7 @@ class BybitProvider(BaseProvider):
         start_date: str,
         end_date: str,
         interval: str = "1d",
-        **kwargs
+        **kwargs,
     ) -> DataResponse:
         """Fetch historical crypto data from Bybit."""
         try:
@@ -44,8 +48,15 @@ class BybitProvider(BaseProvider):
 
             # Map intervals
             interval_map = {
-                "1m": "1", "5m": "5", "15m": "15", "30m": "30",
-                "1h": "60", "4h": "240", "1d": "D", "1D": "D", "1w": "W"
+                "1m": "1",
+                "5m": "5",
+                "15m": "15",
+                "30m": "30",
+                "1h": "60",
+                "4h": "240",
+                "1d": "D",
+                "1D": "D",
+                "1w": "W",
             }
 
             bybit_interval = interval_map.get(interval, "D")
@@ -61,25 +72,31 @@ class BybitProvider(BaseProvider):
                 "interval": bybit_interval,
                 "start": start_ts,
                 "end": end_ts,
-                "limit": 1000
+                "limit": 1000,
             }
 
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
 
-            if data.get('retCode') != 0:
+            if data.get("retCode") != 0:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"Bybit error: {data.get('retMsg', 'Unknown error')}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"Bybit error: {data.get('retMsg', 'Unknown error')}",
                 )
 
-            klines = data.get('result', {}).get('list', [])
+            klines = data.get("result", {}).get("list", [])
 
             if not klines:
                 return DataResponse(
-                    symbol=symbol, provider=self.name, data=[], success=False,
-                    error=f"No data for {symbol}"
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=f"No data for {symbol}",
                 )
 
             records = []
@@ -87,32 +104,45 @@ class BybitProvider(BaseProvider):
                 timestamp = int(kline[0]) / 1000
                 dt = datetime.fromtimestamp(timestamp)
 
-                records.append({
-                    'Date': dt.strftime('%Y-%m-%d'),
-                    'open': float(kline[1]),
-                    'high': float(kline[2]),
-                    'low': float(kline[3]),
-                    'close': float(kline[4]),
-                    'volume': float(kline[5]),
-                })
+                records.append(
+                    {
+                        "Date": dt.strftime("%Y-%m-%d"),
+                        "open": float(kline[1]),
+                        "high": float(kline[2]),
+                        "low": float(kline[3]),
+                        "close": float(kline[4]),
+                        "volume": float(kline[5]),
+                    }
+                )
 
             return DataResponse(
-                symbol=symbol, provider=self.name, data=records,
-                metadata={'interval': interval, 'records': len(records), 'source': 'Bybit'},
-                success=True
+                symbol=symbol,
+                provider=self.name,
+                data=records,
+                metadata={
+                    "interval": interval,
+                    "records": len(records),
+                    "source": "Bybit",
+                },
+                success=True,
             )
 
         except Exception as e:
             return DataResponse(
-                symbol=symbol, provider=self.name, data=[], success=False,
-                error=f"Bybit error: {str(e)}"
+                symbol=symbol,
+                provider=self.name,
+                data=[],
+                success=False,
+                error=f"Bybit error: {str(e)}",
             )
 
     def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
         return OptionsChainResponse(
-            symbol=request.symbol, provider=self.name,
-            snapshot_timestamp=datetime.utcnow(), success=False,
-            error="Bybit does not provide traditional options data"
+            symbol=request.symbol,
+            provider=self.name,
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="Bybit does not provide traditional options data",
         )
 
     def get_available_expirations(self, symbol: str) -> List[date]:
@@ -123,7 +153,7 @@ class BybitProvider(BaseProvider):
             url = f"{self.base_url}/v5/market/time"
             response = requests.get(url, timeout=5)
             data = response.json()
-            return data.get('retCode') == 0
+            return data.get("retCode") == 0
         except:
             return False
 

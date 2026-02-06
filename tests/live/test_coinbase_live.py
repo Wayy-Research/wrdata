@@ -42,10 +42,7 @@ def test_coinbase_provider():
     # Test BTC-USD historical data
     print("\n✓ Fetching BTC-USD historical data...")
     response = provider.fetch_timeseries(
-        symbol="BTC-USD",
-        start_date="2024-11-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="BTC-USD", start_date="2024-11-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -59,10 +56,7 @@ def test_coinbase_provider():
     # Test ETH-USD data
     print("\n✓ Fetching ETH-USD historical data...")
     response = provider.fetch_timeseries(
-        symbol="ETH-USD",
-        start_date="2024-11-01",
-        end_date="2024-11-07",
-        interval="1d"
+        symbol="ETH-USD", start_date="2024-11-01", end_date="2024-11-07", interval="1d"
     )
 
     if response.success:
@@ -89,16 +83,13 @@ def test_datastream_with_coinbase():
     # Check provider status
     status = stream.status()
     print(f"\n✓ Available providers: {list(stream.providers.keys())}")
-    if 'coinbase' in status:
+    if "coinbase" in status:
         print(f"  Coinbase connected: {status['coinbase'].get('connected', False)}")
 
     # Fetch Bitcoin data
     print("\n✓ Fetching Bitcoin (BTC-USD) via DataStream...")
     df = stream.get(
-        "BTC-USD",
-        start="2024-11-01",
-        end="2024-11-07",
-        asset_type="crypto"
+        "BTC-USD", start="2024-11-01", end="2024-11-07", asset_type="crypto"
     )
 
     print(f"  ✓ Got {len(df)} rows of BTC data")
@@ -109,10 +100,7 @@ def test_datastream_with_coinbase():
     # Fetch Ethereum data
     print("\n✓ Fetching Ethereum (ETH-USD)...")
     df = stream.get(
-        "ETH-USD",
-        start="2024-11-01",
-        end="2024-11-07",
-        asset_type="crypto"
+        "ETH-USD", start="2024-11-01", end="2024-11-07", asset_type="crypto"
     )
 
     print(f"  ✓ Got {len(df)} rows")
@@ -127,7 +115,7 @@ def test_datastream_with_coinbase():
         start="2024-11-06",
         end="2024-11-07",
         asset_type="crypto",
-        provider="coinbase"
+        provider="coinbase",
     )
 
     print(f"  ✓ Got {len(df)} rows (symbol auto-normalized)")
@@ -148,7 +136,9 @@ async def test_coinbase_streaming():
     # Test 1: Stream BTC ticker
     print("\n✓ Streaming BTC-USD ticker (10 ticks)...")
     count = 0
-    async for tick in stream.stream("BTC-USD", stream_type="ticker", provider="coinbase_stream"):
+    async for tick in stream.stream(
+        "BTC-USD", stream_type="ticker", provider="coinbase_stream"
+    ):
         print(f"  BTC: ${tick.price:.2f} | Bid: ${tick.bid:.2f} | Ask: ${tick.ask:.2f}")
         count += 1
         if count >= 10:
@@ -157,7 +147,9 @@ async def test_coinbase_streaming():
     # Test 2: Stream ETH ticker
     print("\n✓ Streaming ETH-USD ticker (5 ticks)...")
     count = 0
-    async for tick in stream.stream("ETH-USD", stream_type="ticker", provider="coinbase_stream"):
+    async for tick in stream.stream(
+        "ETH-USD", stream_type="ticker", provider="coinbase_stream"
+    ):
         print(f"  ETH: ${tick.price:.2f}")
         count += 1
         if count >= 5:
