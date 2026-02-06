@@ -173,19 +173,37 @@ class PolymarketProvider(BaseProvider):
 
     def fetch_market(self, market_id_or_slug: str) -> Dict[str, Any]:
         """
-        Fetch a single market by condition ID or slug.
+        Fetch a single market by condition ID, numeric ID, or slug.
+
+        The Gamma API /markets/{id} endpoint accepts numeric IDs or slugs
+        but returns 422 for condition_id hashes (0x...). For those, we
+        query by condition_id parameter instead.
 
         Args:
-            market_id_or_slug: Gamma market condition_id or slug.
+            market_id_or_slug: Gamma market condition_id, numeric ID, or slug.
 
         Returns:
             Market dictionary with parsed fields.
         """
-        resp = self.session.get(
-            f"{self.GAMMA_URL}/markets/{market_id_or_slug}", timeout=15
-        )
-        resp.raise_for_status()
-        market = resp.json()
+        if market_id_or_slug.startswith("0x"):
+            resp = self.session.get(
+                f"{self.GAMMA_URL}/markets",
+                params={"condition_id": market_id_or_slug, "limit": 1},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            markets = resp.json()
+            if not markets:
+                raise ValueError(
+                    f"No market found with condition_id '{market_id_or_slug}'"
+                )
+            market = markets[0]
+        else:
+            resp = self.session.get(
+                f"{self.GAMMA_URL}/markets/{market_id_or_slug}", timeout=15
+            )
+            resp.raise_for_status()
+            market = resp.json()
         self._parse_gamma_market_fields(market)
         return market
 
