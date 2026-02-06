@@ -44,12 +44,6 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0.0",
 ]
-dashboard = [
-    "streamlit>=1.30.0",
-    "plotly>=5.18.0",
-    "feedparser>=6.0.0",
-]
-
 [project.urls]
 Homepage = "https://github.com/wayy-research/wrdata"
 Documentation = "https://github.com/wayy-research/wrdata"

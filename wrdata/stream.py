@@ -63,30 +63,24 @@ class DataStream:
         self,
         # Economic data (free with API key)
         fred_key: Optional[str] = None,
-
         # Stock market data (free tier with WebSocket!)
         finnhub_key: Optional[str] = None,
-
         # Broker API keys (data + trading)
         alpaca_key: Optional[str] = None,
         alpaca_secret: Optional[str] = None,
         alpaca_paper: bool = True,  # Use paper trading by default
-
         # Interactive Brokers (TWS/Gateway connection)
         ibkr_host: str = "127.0.0.1",
         ibkr_port: int = 7497,  # 7497 = paper, 7496 = live
         ibkr_client_id: int = 1,
         ibkr_readonly: bool = False,
-
         # Premium data provider keys (optional)
         polygon_key: Optional[str] = None,
         alphavantage_key: Optional[str] = None,
         twelvedata_key: Optional[str] = None,
-
         # Configuration
         default_provider: Optional[str] = None,
         fallback_enabled: bool = True,
-
         # Future: Cache configuration (Phase 3)
         cache_url: Optional[str] = None,
         cache_token: Optional[str] = None,
@@ -147,21 +141,47 @@ class DataStream:
         # Note: IBKR requires TWS/Gateway running, so we don't auto-enable
         self._add_ibkr_provider(ibkr_host, ibkr_port, ibkr_client_id, ibkr_readonly)
 
+        # Add Polymarket (no API key required for public data)
+        self._add_polymarket_provider()
+
         # TODO: Add Polygon, TwelveData, Tradier providers
         # Will implement next
 
         # Provider priority by asset type
         self._provider_priority = {
-            'equity': ['ibkr', 'alpaca', 'finnhub', 'alphavantage', 'yfinance'],
-            'stock': ['ibkr', 'alpaca', 'finnhub', 'alphavantage', 'yfinance'],
-            'etf': ['ibkr', 'alpaca', 'finnhub', 'yfinance'],
-            'option': ['ibkr'],  # IBKR is the best for options
-            'future': ['ibkr'],  # IBKR only for futures
-            'index': ['yfinance'],
-            'forex': ['ibkr', 'alphavantage', 'yfinance'],
-            'crypto': ['coinbase', 'kraken', 'ccxt_kucoin', 'ccxt_okx', 'ccxt_gateio', 'yfinance', 'coingecko', 'ccxt_bitfinex', 'ccxt_binance', 'ccxt_bybit'],
-            'cryptocurrency': ['coinbase', 'kraken', 'ccxt_kucoin', 'ccxt_okx', 'ccxt_gateio', 'yfinance', 'coingecko', 'ccxt_bitfinex', 'ccxt_binance', 'ccxt_bybit'],
-            'economic': ['fred'],  # FRED for economic data
+            "equity": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
+            "stock": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
+            "etf": ["ibkr", "alpaca", "finnhub", "yfinance"],
+            "option": ["ibkr"],  # IBKR is the best for options
+            "future": ["ibkr"],  # IBKR only for futures
+            "index": ["yfinance"],
+            "forex": ["ibkr", "alphavantage", "yfinance"],
+            "crypto": [
+                "coinbase",
+                "kraken",
+                "ccxt_kucoin",
+                "ccxt_okx",
+                "ccxt_gateio",
+                "yfinance",
+                "coingecko",
+                "ccxt_bitfinex",
+                "ccxt_binance",
+                "ccxt_bybit",
+            ],
+            "cryptocurrency": [
+                "coinbase",
+                "kraken",
+                "ccxt_kucoin",
+                "ccxt_okx",
+                "ccxt_gateio",
+                "yfinance",
+                "coingecko",
+                "ccxt_bitfinex",
+                "ccxt_binance",
+                "ccxt_bybit",
+            ],
+            "economic": ["fred"],  # FRED for economic data
+            "prediction_market": ["polymarket", "kalshi"],
         }
 
         # Cache configuration (Phase 3)
@@ -172,19 +192,24 @@ class DataStream:
 
         # Initialize streaming manager (lazy import)
         from wrdata.streaming.manager import StreamManager
+
         self.stream_manager = StreamManager()
 
         # Add streaming providers
         self._init_streaming_providers(
             finnhub_key,
-            alpaca_key, alpaca_secret, alpaca_paper,
-            ibkr_host, ibkr_port, ibkr_client_id
+            alpaca_key,
+            alpaca_secret,
+            alpaca_paper,
+            ibkr_host,
+            ibkr_port,
+            ibkr_client_id,
         )
 
     def _add_yfinance_provider(self):
         """Add Yahoo Finance provider (always available)."""
         try:
-            self.providers['yfinance'] = YFinanceProvider()
+            self.providers["yfinance"] = YFinanceProvider()
         except Exception as e:
             print(f"Warning: Could not initialize YFinance provider: {e}")
 
@@ -195,7 +220,8 @@ class DataStream:
 
         try:
             from wrdata.providers.fred_provider import FREDProvider
-            self.providers['fred'] = FREDProvider(api_key=api_key)
+
+            self.providers["fred"] = FREDProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize FRED provider: {e}")
 
@@ -206,7 +232,8 @@ class DataStream:
 
         try:
             from wrdata.providers.alphavantage_provider import AlphaVantageProvider
-            self.providers['alphavantage'] = AlphaVantageProvider(api_key=api_key)
+
+            self.providers["alphavantage"] = AlphaVantageProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize Alpha Vantage provider: {e}")
 
@@ -214,7 +241,8 @@ class DataStream:
         """Add Coinbase provider (no API key required for public data)."""
         try:
             from wrdata.providers.coinbase_provider import CoinbaseProvider
-            self.providers['coinbase'] = CoinbaseProvider()
+
+            self.providers["coinbase"] = CoinbaseProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Coinbase provider: {e}")
 
@@ -222,7 +250,8 @@ class DataStream:
         """Add CoinGecko provider (no API key required for basic use)."""
         try:
             from wrdata.providers.coingecko_provider import CoinGeckoProvider
-            self.providers['coingecko'] = CoinGeckoProvider()
+
+            self.providers["coingecko"] = CoinGeckoProvider()
         except Exception as e:
             print(f"Warning: Could not initialize CoinGecko provider: {e}")
 
@@ -230,7 +259,8 @@ class DataStream:
         """Add Kraken provider (no API key required for public data)."""
         try:
             from wrdata.providers.kraken_provider import KrakenProvider
-            self.providers['kraken'] = KrakenProvider()
+
+            self.providers["kraken"] = KrakenProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Kraken provider: {e}")
 
@@ -241,18 +271,18 @@ class DataStream:
 
             # Add major exchanges (free, no API key required for public data)
             major_exchanges = [
-                'binance',    # 7-8 years of 1-minute data, best for historical data
-                'bybit',      # Fast-growing crypto derivatives exchange
-                'okx',        # Top-tier global exchange
-                'kucoin',     # Wide variety of altcoins
-                'gateio',     # Extensive crypto selection
-                'bitfinex',   # Professional trading platform
+                "binance",  # 7-8 years of 1-minute data, best for historical data
+                "bybit",  # Fast-growing crypto derivatives exchange
+                "okx",  # Top-tier global exchange
+                "kucoin",  # Wide variety of altcoins
+                "gateio",  # Extensive crypto selection
+                "bitfinex",  # Professional trading platform
             ]
 
             for exchange_id in major_exchanges:
                 try:
                     provider = CCXTProvider(exchange_id=exchange_id)
-                    self.providers[f'ccxt_{exchange_id}'] = provider
+                    self.providers[f"ccxt_{exchange_id}"] = provider
                 except Exception as e:
                     # Silent fail - CCXT exchanges are optional
                     print(f"Warning: Could not initialize CCXT {exchange_id}: {e}")
@@ -268,21 +298,23 @@ class DataStream:
 
         try:
             from wrdata.providers.finnhub_provider import FinnhubProvider
-            self.providers['finnhub'] = FinnhubProvider(api_key=api_key)
+
+            self.providers["finnhub"] = FinnhubProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize Finnhub provider: {e}")
 
-    def _add_alpaca_provider(self, api_key: Optional[str], api_secret: Optional[str], paper: bool):
+    def _add_alpaca_provider(
+        self, api_key: Optional[str], api_secret: Optional[str], paper: bool
+    ):
         """Add Alpaca broker provider if API keys available."""
         if not api_key or not api_secret:
             return  # Alpaca requires both key and secret
 
         try:
             from wrdata.providers.alpaca_provider import AlpacaProvider
-            self.providers['alpaca'] = AlpacaProvider(
-                api_key=api_key,
-                api_secret=api_secret,
-                paper=paper
+
+            self.providers["alpaca"] = AlpacaProvider(
+                api_key=api_key, api_secret=api_secret, paper=paper
             )
         except Exception as e:
             print(f"Warning: Could not initialize Alpaca provider: {e}")
@@ -291,19 +323,26 @@ class DataStream:
         """Add Interactive Brokers provider if TWS/Gateway is running."""
         try:
             from wrdata.providers.ibkr_provider import IBKRProvider
+
             provider = IBKRProvider(
-                host=host,
-                port=port,
-                client_id=client_id,
-                readonly=readonly
+                host=host, port=port, client_id=client_id, readonly=readonly
             )
             # Try to connect - if it fails, don't add the provider
             if provider.connect():
-                self.providers['ibkr'] = provider
+                self.providers["ibkr"] = provider
             # Note: We don't print warning if TWS isn't running - it's optional
         except Exception as e:
             # Silent fail - IBKR is optional and requires external software
             pass
+
+    def _add_polymarket_provider(self):
+        """Add Polymarket prediction market provider (no API key required)."""
+        try:
+            from wrdata.providers.polymarket_provider import PolymarketProvider
+
+            self.providers["polymarket"] = PolymarketProvider()
+        except Exception as e:
+            print(f"Warning: Could not initialize Polymarket provider: {e}")
 
     def _init_streaming_providers(
         self,
@@ -313,14 +352,15 @@ class DataStream:
         alpaca_paper: bool,
         ibkr_host: str,
         ibkr_port: int,
-        ibkr_client_id: int
+        ibkr_client_id: int,
     ):
         """Initialize WebSocket streaming providers."""
         try:
             # Add Coinbase streaming (free, no auth required for public data)
             from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
+
             coinbase_stream = CoinbaseStreamProvider()
-            self.stream_manager.add_provider('coinbase_stream', coinbase_stream)
+            self.stream_manager.add_provider("coinbase_stream", coinbase_stream)
         except Exception as e:
             print(f"Warning: Could not initialize Coinbase streaming: {e}")
 
@@ -328,8 +368,9 @@ class DataStream:
         if finnhub_key:
             try:
                 from wrdata.streaming.finnhub_stream import FinnhubStreamProvider
+
                 finnhub_stream = FinnhubStreamProvider(api_key=finnhub_key)
-                self.stream_manager.add_provider('finnhub_stream', finnhub_stream)
+                self.stream_manager.add_provider("finnhub_stream", finnhub_stream)
             except Exception as e:
                 print(f"Warning: Could not initialize Finnhub streaming: {e}")
 
@@ -337,25 +378,34 @@ class DataStream:
         if alpaca_key and alpaca_secret:
             try:
                 from wrdata.streaming.alpaca_stream import AlpacaStreamProvider
+
                 alpaca_stream = AlpacaStreamProvider(
-                    api_key=alpaca_key,
-                    api_secret=alpaca_secret,
-                    paper=alpaca_paper
+                    api_key=alpaca_key, api_secret=alpaca_secret, paper=alpaca_paper
                 )
-                self.stream_manager.add_provider('alpaca_stream', alpaca_stream)
+                self.stream_manager.add_provider("alpaca_stream", alpaca_stream)
             except Exception as e:
                 print(f"Warning: Could not initialize Alpaca streaming: {e}")
+
+        # Add Polymarket streaming (free, no auth required)
+        try:
+            from wrdata.streaming.polymarket_stream import PolymarketStreamProvider
+
+            polymarket_stream = PolymarketStreamProvider()
+            self.stream_manager.add_provider("polymarket_stream", polymarket_stream)
+        except Exception as e:
+            print(f"Warning: Could not initialize Polymarket streaming: {e}")
 
         # Add IBKR streaming if TWS/Gateway is available
         # Use different client_id for streaming (client_id + 1)
         try:
             from wrdata.streaming.ibkr_stream import IBKRStreamProvider
+
             ibkr_stream = IBKRStreamProvider(
                 host=ibkr_host,
                 port=ibkr_port,
-                client_id=ibkr_client_id + 1  # Different client ID for streaming
+                client_id=ibkr_client_id + 1,  # Different client ID for streaming
             )
-            self.stream_manager.add_provider('ibkr_stream', ibkr_stream)
+            self.stream_manager.add_provider("ibkr_stream", ibkr_stream)
         except Exception:
             # Silent fail - IBKR streaming is optional
             pass
@@ -408,7 +458,9 @@ class DataStream:
             end = datetime.now().strftime("%Y-%m-%d")
         if start is None:
             # Default to 1 year ago
-            start = (datetime.now().replace(year=datetime.now().year - 1)).strftime("%Y-%m-%d")
+            start = (datetime.now().replace(year=datetime.now().year - 1)).strftime(
+                "%Y-%m-%d"
+            )
 
         # Create request
         request = DataRequest(
@@ -417,7 +469,7 @@ class DataStream:
             end_date=end,
             interval=interval,
             asset_type=asset_type,
-            provider=provider or self.default_provider
+            provider=provider or self.default_provider,
         )
 
         # Select provider
@@ -481,11 +533,13 @@ class DataStream:
         if end is None:
             end = datetime.now().strftime("%Y-%m-%d")
         if start is None:
-            start = (datetime.now().replace(year=datetime.now().year - 1)).strftime("%Y-%m-%d")
+            start = (datetime.now().replace(year=datetime.now().year - 1)).strftime(
+                "%Y-%m-%d"
+            )
 
         # Choose fetcher based on provider
         # Direct aiohttp fetchers are faster for supported exchanges
-        direct_providers = ['coinbase', 'binance', 'kraken']
+        direct_providers = ["coinbase", "binance", "kraken"]
 
         async def _async_fetch():
             if provider.lower() in direct_providers:
@@ -509,6 +563,7 @@ class DataStream:
             if loop.is_running():
                 # If already in async context, create task
                 import nest_asyncio
+
                 nest_asyncio.apply()
                 data = loop.run_until_complete(_async_fetch())
             else:
@@ -524,11 +579,11 @@ class DataStream:
         df = pl.DataFrame(data)
 
         # Parse timestamp
-        if 'timestamp' in df.columns:
+        if "timestamp" in df.columns:
             df = df.with_columns(
-                pl.col('timestamp').str.to_datetime().alias('timestamp')
+                pl.col("timestamp").str.to_datetime().alias("timestamp")
             )
-            df = df.sort('timestamp')
+            df = df.sort("timestamp")
 
         return df
 
@@ -595,7 +650,7 @@ class DataStream:
                     end=end,
                     interval=interval,
                     asset_type=asset_type,
-                    provider=provider
+                    provider=provider,
                 )
                 if not df.is_empty():
                     results[symbol] = df
@@ -615,8 +670,16 @@ class DataStream:
 
             # Expected rows per day by interval (for 24/7 crypto markets)
             interval_to_rows_per_day = {
-                '1m': 60 * 24, '5m': 12 * 24, '15m': 4 * 24, '30m': 2 * 24,
-                '1h': 24, '2h': 12, '4h': 6, '6h': 4, '12h': 2, '1d': 1,
+                "1m": 60 * 24,
+                "5m": 12 * 24,
+                "15m": 4 * 24,
+                "30m": 2 * 24,
+                "1h": 24,
+                "2h": 12,
+                "4h": 6,
+                "6h": 4,
+                "12h": 2,
+                "1d": 1,
             }
             rows_per_day = interval_to_rows_per_day.get(interval, 1)
             expected_rows = days * rows_per_day
@@ -633,10 +696,14 @@ class DataStream:
                     filtered_results[symbol] = df
                 else:
                     excluded_count += 1
-                    print(f"Excluding {symbol}: {actual_rows} rows ({coverage*100:.1f}% coverage, need {min_coverage*100:.0f}%)")
+                    print(
+                        f"Excluding {symbol}: {actual_rows} rows ({coverage*100:.1f}% coverage, need {min_coverage*100:.0f}%)"
+                    )
 
             if excluded_count > 0:
-                print(f"Excluded {excluded_count} symbols with coverage < {min_coverage*100:.0f}%")
+                print(
+                    f"Excluded {excluded_count} symbols with coverage < {min_coverage*100:.0f}%"
+                )
 
             results = filtered_results
 
@@ -646,7 +713,7 @@ class DataStream:
 
         # Normalize and combine DataFrames
         combined_dfs = []
-        standard_cols = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        standard_cols = ["timestamp", "open", "high", "low", "close", "volume"]
 
         for symbol, df in results.items():
             # Select only standard columns (skip metadata)
@@ -654,7 +721,7 @@ class DataStream:
             df_normalized = df.select(available_cols)
 
             # Cast numeric columns to float64 for consistency
-            numeric_cols = ['open', 'high', 'low', 'close', 'volume']
+            numeric_cols = ["open", "high", "low", "close", "volume"]
             for col in numeric_cols:
                 if col in df_normalized.columns:
                     df_normalized = df_normalized.with_columns(
@@ -662,27 +729,25 @@ class DataStream:
                     )
 
             # Forward fill gaps if requested
-            if forward_fill and 'timestamp' in df_normalized.columns:
+            if forward_fill and "timestamp" in df_normalized.columns:
                 fill_cols = [c for c in numeric_cols if c in df_normalized.columns]
                 if fill_cols:
-                    df_normalized = df_normalized.with_columns([
-                        pl.col(c).forward_fill() for c in fill_cols
-                    ])
+                    df_normalized = df_normalized.with_columns(
+                        [pl.col(c).forward_fill() for c in fill_cols]
+                    )
 
             # Add symbol column
-            df_with_symbol = df_normalized.with_columns(
-                pl.lit(symbol).alias('symbol')
-            )
+            df_with_symbol = df_normalized.with_columns(pl.lit(symbol).alias("symbol"))
             combined_dfs.append(df_with_symbol)
 
         # Concatenate all DataFrames
-        combined = pl.concat(combined_dfs, how='vertical')
+        combined = pl.concat(combined_dfs, how="vertical")
 
         # Sort by symbol and timestamp for better organization
-        if 'timestamp' in combined.columns:
-            combined = combined.sort(['symbol', 'timestamp'])
+        if "timestamp" in combined.columns:
+            combined = combined.sort(["symbol", "timestamp"])
         else:
-            combined = combined.sort('symbol')
+            combined = combined.sort("symbol")
 
         return combined
 
@@ -731,10 +796,10 @@ class DataStream:
         )
 
         # Use YFinance for options (supports options chains)
-        if 'yfinance' not in self.providers:
+        if "yfinance" not in self.providers:
             raise ValueError("YFinance provider not available for options data")
 
-        provider = self.providers['yfinance']
+        provider = self.providers["yfinance"]
         response = provider.fetch_options_chain(request)
 
         if not response.success:
@@ -757,10 +822,10 @@ class DataStream:
             >>> expirations = stream.get_expirations("SPY")
             >>> print(expirations[:5])  # Show first 5
         """
-        if 'yfinance' not in self.providers:
+        if "yfinance" not in self.providers:
             raise ValueError("YFinance provider not available")
 
-        provider = self.providers['yfinance']
+        provider = self.providers["yfinance"]
         return provider.get_available_expirations(symbol)
 
     def search_symbol(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -806,61 +871,71 @@ class DataStream:
         seen_symbols = set()
 
         # 1. Search YFinance (stocks, ETFs, major crypto)
-        if 'yfinance' in self.providers and len(results) < limit:
+        if "yfinance" in self.providers and len(results) < limit:
             try:
                 import yfinance as yf
+
                 search_results = yf.Search(query, max_results=min(limit, 10))
 
                 for result in search_results.quotes:
-                    symbol = result.get('symbol', '')
+                    symbol = result.get("symbol", "")
                     if symbol and symbol not in seen_symbols:
                         seen_symbols.add(symbol)
-                        results.append({
-                            'symbol': symbol,
-                            'name': result.get('longname') or result.get('shortname', ''),
-                            'type': result.get('quoteType', '').lower(),
-                            'provider': 'yfinance',
-                            'exchange': result.get('exchange', ''),
-                        })
+                        results.append(
+                            {
+                                "symbol": symbol,
+                                "name": result.get("longname")
+                                or result.get("shortname", ""),
+                                "type": result.get("quoteType", "").lower(),
+                                "provider": "yfinance",
+                                "exchange": result.get("exchange", ""),
+                            }
+                        )
                         if len(results) >= limit:
                             break
             except Exception as e:
                 print(f"Warning: YFinance search failed: {e}")
 
         # 2. Search CoinGecko (comprehensive crypto database)
-        if 'coingecko' in self.providers and len(results) < limit:
+        if "coingecko" in self.providers and len(results) < limit:
             try:
                 import requests
-                provider = self.providers['coingecko']
+
+                provider = self.providers["coingecko"]
 
                 # Search CoinGecko's coin list
                 url = f"{provider.base_url}/search"
                 params = {"query": query}
-                response = requests.get(url, headers=provider.headers, params=params, timeout=10)
+                response = requests.get(
+                    url, headers=provider.headers, params=params, timeout=10
+                )
 
                 if response.status_code == 200:
                     data = response.json()
-                    for coin in data.get('coins', [])[:limit - len(results)]:
-                        symbol_id = coin.get('id', '')
+                    for coin in data.get("coins", [])[: limit - len(results)]:
+                        symbol_id = coin.get("id", "")
                         if symbol_id and symbol_id not in seen_symbols:
                             seen_symbols.add(symbol_id)
-                            results.append({
-                                'symbol': symbol_id,
-                                'name': coin.get('name', ''),
-                                'type': 'cryptocurrency',
-                                'provider': 'coingecko',
-                                'exchange': 'CoinGecko',
-                            })
+                            results.append(
+                                {
+                                    "symbol": symbol_id,
+                                    "name": coin.get("name", ""),
+                                    "type": "cryptocurrency",
+                                    "provider": "coingecko",
+                                    "exchange": "CoinGecko",
+                                }
+                            )
                             if len(results) >= limit:
                                 break
             except Exception as e:
                 print(f"Warning: CoinGecko search failed: {e}")
 
         # 3. Search Kraken (major crypto pairs)
-        if 'kraken' in self.providers and len(results) < limit:
+        if "kraken" in self.providers and len(results) < limit:
             try:
                 import requests
-                provider = self.providers['kraken']
+
+                provider = self.providers["kraken"]
 
                 # Get Kraken asset pairs
                 url = f"{provider.base_url}/public/AssetPairs"
@@ -868,33 +943,36 @@ class DataStream:
 
                 if response.status_code == 200:
                     data = response.json()
-                    if data.get('error') is None and data.get('result'):
+                    if data.get("error") is None and data.get("result"):
                         query_upper = query.upper()
-                        for pair_name, pair_data in data['result'].items():
-                            altname = pair_data.get('altname', '')
+                        for pair_name, pair_data in data["result"].items():
+                            altname = pair_data.get("altname", "")
                             # Match query in pair name
                             if query_upper in altname or query_upper in pair_name:
                                 if altname and altname not in seen_symbols:
                                     seen_symbols.add(altname)
-                                    base = pair_data.get('base', '')
-                                    quote = pair_data.get('quote', '')
-                                    results.append({
-                                        'symbol': altname,
-                                        'name': f"{base}/{quote}",
-                                        'type': 'cryptocurrency',
-                                        'provider': 'kraken',
-                                        'exchange': 'Kraken',
-                                    })
+                                    base = pair_data.get("base", "")
+                                    quote = pair_data.get("quote", "")
+                                    results.append(
+                                        {
+                                            "symbol": altname,
+                                            "name": f"{base}/{quote}",
+                                            "type": "cryptocurrency",
+                                            "provider": "kraken",
+                                            "exchange": "Kraken",
+                                        }
+                                    )
                                     if len(results) >= limit:
                                         break
             except Exception as e:
                 print(f"Warning: Kraken search failed: {e}")
 
         # 4. Search Coinbase (major crypto pairs)
-        if 'coinbase' in self.providers and len(results) < limit:
+        if "coinbase" in self.providers and len(results) < limit:
             try:
                 import requests
-                provider = self.providers['coinbase']
+
+                provider = self.providers["coinbase"]
 
                 # Get Coinbase products
                 url = f"{provider.base_url}/products"
@@ -904,19 +982,21 @@ class DataStream:
                     products = response.json()
                     query_upper = query.upper()
                     for product in products:
-                        product_id = product.get('id', '')
-                        base_currency = product.get('base_currency', '')
+                        product_id = product.get("id", "")
+                        base_currency = product.get("base_currency", "")
                         # Match query in product
                         if query_upper in product_id or query_upper in base_currency:
                             if product_id and product_id not in seen_symbols:
                                 seen_symbols.add(product_id)
-                                results.append({
-                                    'symbol': product_id,
-                                    'name': product.get('display_name', product_id),
-                                    'type': 'cryptocurrency',
-                                    'provider': 'coinbase',
-                                    'exchange': 'Coinbase',
-                                })
+                                results.append(
+                                    {
+                                        "symbol": product_id,
+                                        "name": product.get("display_name", product_id),
+                                        "type": "cryptocurrency",
+                                        "provider": "coinbase",
+                                        "exchange": "Coinbase",
+                                    }
+                                )
                                 if len(results) >= limit:
                                     break
             except Exception as e:
@@ -925,7 +1005,9 @@ class DataStream:
         # 5. Search CCXT exchanges (100+ exchanges via unified API)
         if len(results) < limit:
             # Search across available CCXT exchanges
-            ccxt_providers = [name for name in self.providers.keys() if name.startswith('ccxt_')]
+            ccxt_providers = [
+                name for name in self.providers.keys() if name.startswith("ccxt_")
+            ]
 
             for provider_name in ccxt_providers:
                 if len(results) >= limit:
@@ -934,11 +1016,13 @@ class DataStream:
                 try:
                     provider = self.providers[provider_name]
                     # Use the provider's search method
-                    if hasattr(provider, 'search_symbols'):
-                        exchange_results = provider.search_symbols(query, limit - len(results))
+                    if hasattr(provider, "search_symbols"):
+                        exchange_results = provider.search_symbols(
+                            query, limit - len(results)
+                        )
 
                         for result in exchange_results:
-                            symbol = result.get('symbol', '')
+                            symbol = result.get("symbol", "")
                             if symbol and symbol not in seen_symbols:
                                 seen_symbols.add(symbol)
                                 results.append(result)
@@ -971,7 +1055,7 @@ class DataStream:
         if self.providers:
             return list(self.providers.keys())[0]
 
-        return 'unknown'
+        return "unknown"
 
     # ========================================================================
     # REAL-TIME STREAMING METHODS (Phase 2)
@@ -982,7 +1066,7 @@ class DataStream:
         symbol: str,
         stream_type: str = "ticker",
         interval: str = "1m",
-        provider: Optional[str] = None
+        provider: Optional[str] = None,
     ) -> AsyncIterator[StreamMessage]:
         """
         Stream real-time market data.
@@ -1011,7 +1095,9 @@ class DataStream:
             async for message in self.stream_manager.subscribe_ticker(symbol, provider):
                 yield message
         elif stream_type == "kline":
-            async for message in self.stream_manager.subscribe_kline(symbol, interval, provider):
+            async for message in self.stream_manager.subscribe_kline(
+                symbol, interval, provider
+            ):
                 yield message
         else:
             raise ValueError(f"Unknown stream type: {stream_type}")
@@ -1022,7 +1108,7 @@ class DataStream:
         callback: Callable[[StreamMessage], None],
         stream_type: str = "ticker",
         interval: str = "1m",
-        provider: Optional[str] = None
+        provider: Optional[str] = None,
     ):
         """
         Subscribe to real-time data with a callback function.
@@ -1048,12 +1134,15 @@ class DataStream:
             ...     await save_to_database(msg)
             >>> stream.subscribe("ETHUSDT", on_candle, stream_type="kline")
         """
+
         # Create and run async task in background
         async def _run_subscription():
             if stream_type == "ticker":
                 await self.stream_manager.subscribe_ticker(symbol, provider, callback)
             elif stream_type == "kline":
-                await self.stream_manager.subscribe_kline(symbol, interval, provider, callback)
+                await self.stream_manager.subscribe_kline(
+                    symbol, interval, provider, callback
+                )
 
         # Run in background task
         task = asyncio.create_task(_run_subscription())
@@ -1064,7 +1153,7 @@ class DataStream:
         symbols: List[str],
         callback: Optional[Callable[[StreamMessage], None]] = None,
         stream_type: str = "ticker",
-        provider: Optional[str] = None
+        provider: Optional[str] = None,
     ):
         """
         Stream multiple symbols simultaneously.
@@ -1084,7 +1173,9 @@ class DataStream:
             ...     callback=on_tick
             ... )
         """
-        await self.stream_manager.subscribe_many(symbols, stream_type, provider, callback)
+        await self.stream_manager.subscribe_many(
+            symbols, stream_type, provider, callback
+        )
 
     async def disconnect_streams(self):
         """
@@ -1115,25 +1206,36 @@ class DataStream:
         symbol_upper = symbol.upper()
 
         # Crypto patterns
-        if any(pair in symbol_upper for pair in ['USDT', 'USDC', 'BUSD', 'USD', 'BTC', 'ETH']):
+        if any(
+            pair in symbol_upper
+            for pair in ["USDT", "USDC", "BUSD", "USD", "BTC", "ETH"]
+        ):
             # Common crypto pairs
-            if symbol_upper.endswith('USDT') or symbol_upper.endswith('USDC') or symbol_upper.endswith('BUSD'):
-                return 'crypto'
-            if '-USD' in symbol_upper or '-BTC' in symbol_upper or '-ETH' in symbol_upper:
-                return 'crypto'
+            if (
+                symbol_upper.endswith("USDT")
+                or symbol_upper.endswith("USDC")
+                or symbol_upper.endswith("BUSD")
+            ):
+                return "crypto"
+            if (
+                "-USD" in symbol_upper
+                or "-BTC" in symbol_upper
+                or "-ETH" in symbol_upper
+            ):
+                return "crypto"
 
         # Forex patterns (6 chars, all caps, e.g., EURUSD)
         if len(symbol_upper) == 6 and symbol_upper.isalpha():
             # Could be forex like EURUSD, GBPJPY
-            return 'forex'
+            return "forex"
 
         # Economic indicators (typically short codes)
-        economic_symbols = ['GDP', 'CPI', 'UNRATE', 'DGS10', 'FEDFUNDS', 'PAYEMS']
+        economic_symbols = ["GDP", "CPI", "UNRATE", "DGS10", "FEDFUNDS", "PAYEMS"]
         if symbol_upper in economic_symbols:
-            return 'economic'
+            return "economic"
 
         # Default to equity (stocks, ETFs)
-        return 'equity'
+        return "equity"
 
     def _select_provider(self, request: DataRequest) -> str:
         """
@@ -1149,7 +1251,9 @@ class DataStream:
             if request.provider in self.providers:
                 return request.provider
             else:
-                print(f"Warning: Provider '{request.provider}' not available, using fallback")
+                print(
+                    f"Warning: Provider '{request.provider}' not available, using fallback"
+                )
 
         # Select based on asset type
         asset_type = request.asset_type.lower()
@@ -1165,9 +1269,7 @@ class DataStream:
         raise ValueError("No providers available")
 
     def _fetch_with_fallback(
-        self,
-        request: DataRequest,
-        primary_provider: str
+        self, request: DataRequest, primary_provider: str
     ) -> DataResponse:
         """
         Fetch data with automatic fallback on failure.
@@ -1180,7 +1282,7 @@ class DataStream:
                     symbol=request.symbol,
                     start_date=request.start_date,
                     end_date=request.end_date,
-                    interval=request.interval
+                    interval=request.interval,
                 )
 
                 if response.success:
@@ -1213,7 +1315,7 @@ class DataStream:
                         symbol=request.symbol,
                         start_date=request.start_date,
                         end_date=request.end_date,
-                        interval=request.interval
+                        interval=request.interval,
                     )
 
                     if response.success:
@@ -1236,7 +1338,7 @@ class DataStream:
                         symbol=request.symbol,
                         start_date=request.start_date,
                         end_date=request.end_date,
-                        interval=request.interval
+                        interval=request.interval,
                     )
 
                     if response.success:
@@ -1252,7 +1354,7 @@ class DataStream:
             provider=primary_provider,
             data=[],
             success=False,
-            error="All providers failed to fetch data"
+            error="All providers failed to fetch data",
         )
 
     def _response_to_dataframe(self, response: DataResponse) -> pl.DataFrame:
@@ -1267,11 +1369,11 @@ class DataStream:
         df = pl.DataFrame(response.data)
 
         # Normalize column names to lowercase for consistency
-        df = df.rename({col: col.lower().replace(' ', '_') for col in df.columns})
+        df = df.rename({col: col.lower().replace(" ", "_") for col in df.columns})
 
         # Normalize column names and handle timestamps
         # Check for various timestamp column names
-        timestamp_cols = ['timestamp', 'date', 'datetime']
+        timestamp_cols = ["timestamp", "date", "datetime"]
         for col in timestamp_cols:
             if col in df.columns:
                 # Try multiple parsing strategies
@@ -1282,13 +1384,21 @@ class DataStream:
                 # Define parsing strategies in order of specificity
                 parsing_strategies = [
                     # ISO format with microseconds
-                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S%.f', strict=False),
+                    lambda c: pl.col(c).str.strptime(
+                        pl.Datetime, format="%Y-%m-%dT%H:%M:%S%.f", strict=False
+                    ),
                     # ISO format without microseconds
-                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S', strict=False),
+                    lambda c: pl.col(c).str.strptime(
+                        pl.Datetime, format="%Y-%m-%dT%H:%M:%S", strict=False
+                    ),
                     # ISO format with timezone
-                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%dT%H:%M:%S%:z', strict=False),
+                    lambda c: pl.col(c).str.strptime(
+                        pl.Datetime, format="%Y-%m-%dT%H:%M:%S%:z", strict=False
+                    ),
                     # Simple date format (YYYY-MM-DD)
-                    lambda c: pl.col(c).str.strptime(pl.Datetime, format='%Y-%m-%d', strict=False),
+                    lambda c: pl.col(c).str.strptime(
+                        pl.Datetime, format="%Y-%m-%d", strict=False
+                    ),
                     # Polars auto-parse
                     lambda c: pl.col(c).str.to_datetime(),
                 ]
@@ -1298,10 +1408,12 @@ class DataStream:
                         break
                     try:
                         test_df = original_df.with_columns(
-                            strategy(col).alias('timestamp')
+                            strategy(col).alias("timestamp")
                         )
                         # Check if parsing produced non-null values
-                        non_null_count = len(test_df) - test_df['timestamp'].null_count()
+                        non_null_count = (
+                            len(test_df) - test_df["timestamp"].null_count()
+                        )
                         if non_null_count > 0:
                             df = test_df
                             parsed = True
@@ -1310,16 +1422,16 @@ class DataStream:
 
                 if not parsed:
                     # If all else fails, keep original column renamed
-                    if col != 'timestamp':
-                        df = df.rename({col: 'timestamp'})
+                    if col != "timestamp":
+                        df = df.rename({col: "timestamp"})
 
-                if col != 'timestamp' and 'timestamp' in df.columns:
+                if col != "timestamp" and "timestamp" in df.columns:
                     df = df.drop(col)
                 break
 
         # Sort by timestamp if present
-        if 'timestamp' in df.columns:
-            df = df.sort('timestamp')
+        if "timestamp" in df.columns:
+            df = df.sort("timestamp")
 
         return df
 
@@ -1333,7 +1445,7 @@ class DataStream:
         # Convert contracts to list of dicts (they might be Pydantic or dicts)
         data = []
         for contract in response.contracts:
-            if hasattr(contract, 'model_dump'):
+            if hasattr(contract, "model_dump"):
                 data.append(contract.model_dump())
             else:
                 data.append(contract)
@@ -1364,15 +1476,12 @@ class DataStream:
             try:
                 is_connected = provider.validate_connection()
                 status[name] = {
-                    'connected': is_connected,
-                    'supports_options': hasattr(provider, 'fetch_options_chain'),
-                    'supports_historical_options': provider.supports_historical_options(),
+                    "connected": is_connected,
+                    "supports_options": hasattr(provider, "fetch_options_chain"),
+                    "supports_historical_options": provider.supports_historical_options(),
                 }
             except Exception as e:
-                status[name] = {
-                    'connected': False,
-                    'error': str(e)
-                }
+                status[name] = {"connected": False, "error": str(e)}
 
         return status
 
