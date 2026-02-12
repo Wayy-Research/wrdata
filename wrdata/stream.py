@@ -25,6 +25,7 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
 )
 from wrdata.core.config import settings
+from wrdata.providers.polygon_options_provider import PolygonOptionsProvider # New import for PolygonOptionsProvider
 
 # Streaming imports (lazy loaded to avoid dependency issues)
 from wrdata.streaming.base import StreamMessage
@@ -144,7 +145,11 @@ class DataStream:
         # Add Polymarket (no API key required for public data)
         self._add_polymarket_provider()
 
-        # TODO: Add Polygon, TwelveData, Tradier providers
+        # Add Polygon options provider if API key provided (or use from env)
+        polygon_key = polygon_key or settings.POLYGON_API_KEY
+        self._add_polygon_options_provider(polygon_key)
+
+        # TODO: Add TwelveData, Tradier providers
         # Will implement next
 
         # Provider priority by asset type
@@ -152,7 +157,7 @@ class DataStream:
             "equity": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
             "stock": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
             "etf": ["ibkr", "alpaca", "finnhub", "yfinance"],
-            "option": ["ibkr"],  # IBKR is the best for options
+            "option": ["ibkr", "polygon_options"],  # Prioritize IBKR, then Polygon for options
             "future": ["ibkr"],  # IBKR only for futures
             "index": ["yfinance"],
             "forex": ["ibkr", "alphavantage", "yfinance"],
@@ -343,6 +348,16 @@ class DataStream:
             self.providers["polymarket"] = PolymarketProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Polymarket provider: {e}")
+
+    def _add_polygon_options_provider(self, api_key: Optional[str]):
+        """Add Polygon.io options provider if API key available."""
+        if not api_key:
+            return  # Polygon.io options requires an API key
+
+        try:
+            self.providers["polygon_options"] = PolygonOptionsProvider(api_key=api_key)
+        except Exception as e:
+            print(f"Warning: Could not initialize Polygon.io options provider: {e}")
 
     def _init_streaming_providers(
         self,
@@ -795,11 +810,24 @@ class DataStream:
             strike_max=Decimal(str(strike_max)) if strike_max else None,
         )
 
-        # Use YFinance for options (supports options chains)
-        if "yfinance" not in self.providers:
-            raise ValueError("YFinance provider not available for options data")
+        # Select provider based on priority (IBKR, then Polygon, then YFinance)
+        provider_name = self._select_provider(
+            DataRequest(
+                symbol=symbol,
+                asset_type="option",
+                start_date=expiry.isoformat() if expiry else date.today().isoformat(),
+                end_date=expiry.isoformat() if expiry else date.today().isoformat(),
+                interval="1d",
+                provider=None, # Allow auto-selection
+            )
+        )
 
-        provider = self.providers["yfinance"]
+        if provider_name not in self.providers:
+            raise ValueError("No options provider available")
+
+        provider = self.providers[provider_name]
+        
+        # Use a more generic fetch_options_chain that providers should implement
         response = provider.fetch_options_chain(request)
 
         if not response.success:

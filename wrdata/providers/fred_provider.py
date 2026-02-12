@@ -1,339 +1,153 @@
-"""
-FRED (Federal Reserve Economic Data) provider.
-
-Access to 800,000+ economic data series from the Federal Reserve Bank of St. Louis.
-
-Get your free API key: https://fred.stlouisfed.org/docs/api/api_key.html
-
-Popular series:
-- GDP: Gross Domestic Product
-- UNRATE: Unemployment Rate
-- CPIAUCSL: Consumer Price Index (CPI)
-- DGS10: 10-Year Treasury Rate
-- DEXUSEU: USD/EUR Exchange Rate
-- DCOILWTICO: WTI Crude Oil Prices
-- MORTGAGE30US: 30-Year Mortgage Rate
-"""
-
+from typing import List, Dict, Any, Optional
 import requests
-from typing import Optional, List
-from datetime import datetime, date
-from wrdata.providers.base import BaseProvider
-from wrdata.models.schemas import (
-    DataResponse,
-    OptionsChainRequest,
-    OptionsChainResponse,
-)
+from datetime import datetime
+import pandas as pd # Using pandas for easier data processing
+import io
 
+from ..providers.base import BaseProvider
+from ..models.schemas import DataResponse, DataRequest
+from ..core.config import settings
 
-class FREDProvider(BaseProvider):
+class FredProvider(BaseProvider):
     """
-    FRED (Federal Reserve Economic Data) provider.
-
-    Provides access to economic indicators from the St. Louis Federal Reserve.
+    FRED (Federal Reserve Economic Data) data provider.
+    Fetches economic time series data.
     """
 
-    def __init__(self, api_key: Optional[str] = None):
-        super().__init__(name="fred", api_key=api_key)
-        self.base_url = "https://api.stlouisfed.org/fred"
-
+    def __init__(self, api_key: str):
         if not api_key:
-            raise ValueError(
-                "FRED API key required. Get one free at: "
-                "https://fred.stlouisfed.org/docs/api/api_key.html"
-            )
+            raise ValueError("FRED_API_KEY must be provided for FredProvider")
+        self.api_key = api_key
+        self.base_url = "https://api.stlouisfed.org/fred/"
+        self.session = requests.Session()
+        self.session.params.update({
+            "api_key": self.api_key,
+            "file_type": "json"
+        })
 
-    def fetch_timeseries(
-        self,
-        symbol: str,
-        start_date: str,
-        end_date: str,
-        interval: str = "1d",
-        **kwargs,
-    ) -> DataResponse:
+    def validate_connection(self) -> bool:
         """
-        Fetch economic data series from FRED.
-
-        Args:
-            symbol: FRED series ID (e.g., "GDP", "UNRATE", "CPIAUCSL")
-            start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format
-            interval: Not used for FRED (data frequency is series-specific)
-
-        Returns:
-            DataResponse with economic data
+        Validate FRED API connection by fetching a sample series.
         """
         try:
-            # FRED uses series_id instead of symbol
-            series_id = symbol.upper()
-
-            # Build request URL
-            url = f"{self.base_url}/series/observations"
-            params = {
-                "series_id": series_id,
-                "api_key": self.api_key,
-                "file_type": "json",
-                "observation_start": start_date,
-                "observation_end": end_date,
-            }
-
-            # Make request
-            response = requests.get(url, params=params, timeout=10)
+            # Try to fetch a well-known series like FEDFUNDS
+            response = self.session.get(f"{self.base_url}series/observations", params={
+                "series_id": "FEDFUNDS",
+                "limit": 1
+            })
             response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException:
+            return False
 
+    def fetch_timeseries(self, symbol: str, start_date: str, end_date: str, interval: str = "1d") -> DataResponse:
+        """
+        Fetch historical data for a FRED series ID.
+        FRED does not have 'open', 'high', 'low', 'volume' for most series.
+        We return 'close' as the series value and other OHLCV as None/0.
+        """
+        params = {
+            "series_id": symbol,
+            "observation_start": start_date,
+            "observation_end": end_date,
+            "frequency": self._map_interval_to_fred_frequency(interval)
+        }
+
+        try:
+            response = self.session.get(f"{self.base_url}series/observations", params=params)
+            response.raise_for_status()
             data = response.json()
 
-            # Check for API errors
-            if "error_message" in data:
-                return DataResponse(
-                    symbol=symbol,
-                    provider=self.name,
-                    data=[],
-                    success=False,
-                    error=data["error_message"],
-                )
-
-            # Parse observations
             observations = data.get("observations", [])
-
-            if not observations:
-                return DataResponse(
-                    symbol=symbol,
-                    provider=self.name,
-                    data=[],
-                    success=False,
-                    error=f"No data found for series {series_id}",
-                )
-
-            # Convert to standard format
-            records = []
+            df_data = []
             for obs in observations:
-                # Skip missing values (FRED uses "." for missing)
-                if obs["value"] == ".":
-                    continue
-
-                try:
-                    records.append(
-                        {
-                            "Date": obs["date"],
-                            "close": float(
-                                obs["value"]
-                            ),  # Economic data as "close" price
-                            "value": float(obs["value"]),  # Also keep as "value"
-                            "open": float(obs["value"]),  # For compatibility
-                            "high": float(obs["value"]),
-                            "low": float(obs["value"]),
-                            "volume": 0,  # No volume for economic data
-                        }
-                    )
-                except (ValueError, KeyError):
-                    continue
-
-            if not records:
-                return DataResponse(
-                    symbol=symbol,
-                    provider=self.name,
-                    data=[],
-                    success=False,
-                    error=f"No valid data points for series {series_id}",
-                )
+                if obs["value"] != ".": # FRED uses "." for missing values
+                    df_data.append({
+                        "timestamp": datetime.strptime(obs["date"], "%Y-%m-%d"),
+                        "open": float(obs["value"]),
+                        "high": float(obs["value"]),
+                        "low": float(obs["value"]),
+                        "close": float(obs["value"]),
+                        "volume": 0
+                    })
+            
+            # Sort data by timestamp if not already sorted
+            df_data.sort(key=lambda x: x["timestamp"])
 
             return DataResponse(
                 symbol=symbol,
-                provider=self.name,
-                data=records,
-                metadata={
-                    "series_id": series_id,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "records": len(records),
-                    "source": "Federal Reserve Economic Data (FRED)",
-                },
+                provider="fred",
+                data=df_data,
                 success=True,
+                error=None
             )
 
         except requests.exceptions.RequestException as e:
             return DataResponse(
                 symbol=symbol,
-                provider=self.name,
+                provider="fred",
                 data=[],
                 success=False,
-                error=f"FRED API request failed: {str(e)}",
+                error=f"FRED API error: {e}"
             )
         except Exception as e:
             return DataResponse(
                 symbol=symbol,
-                provider=self.name,
+                provider="fred",
                 data=[],
                 success=False,
-                error=f"Unexpected error: {str(e)}",
+                error=f"Error processing FRED data: {e}"
             )
 
-    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
-        """FRED does not support options data."""
-        return OptionsChainResponse(
-            symbol=request.symbol,
-            provider=self.name,
-            snapshot_timestamp=datetime.utcnow(),
-            success=False,
-            error="FRED does not provide options data",
-        )
-
-    def get_available_expirations(self, symbol: str) -> List[date]:
-        """FRED does not support options data."""
-        return []
-
-    def validate_connection(self) -> bool:
+    def search_series(self, query: str) -> List[Dict[str, Any]]:
         """
-        Validate FRED API connection.
-
-        Tests by fetching GDP series metadata.
+        Search for FRED series.
         """
+        params = {
+            "search_text": query,
+            "limit": 100
+        }
         try:
-            url = f"{self.base_url}/series"
-            params = {"series_id": "GDP", "api_key": self.api_key, "file_type": "json"}
-
-            response = requests.get(url, params=params, timeout=5)
+            response = self.session.get(f"{self.base_url}series/search", params=params)
             response.raise_for_status()
-
             data = response.json()
-            return "seriess" in data or "series" in data
-
-        except Exception:
-            return False
-
-    def search_series(self, search_text: str, limit: int = 10) -> List[dict]:
-        """
-        Search for FRED data series.
-
-        Args:
-            search_text: Search query (e.g., "unemployment", "inflation")
-            limit: Maximum number of results
-
-        Returns:
-            List of series information dictionaries
-
-        Example:
-            >>> provider = FREDProvider(api_key="...")
-            >>> results = provider.search_series("gdp")
-            >>> for series in results:
-            ...     print(f"{series['id']}: {series['title']}")
-        """
-        try:
-            url = f"{self.base_url}/series/search"
-            params = {
-                "search_text": search_text,
-                "api_key": self.api_key,
-                "file_type": "json",
-                "limit": limit,
-            }
-
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-
-            data = response.json()
-            series_list = data.get("seriess", [])
-
-            results = []
-            for series in series_list:
-                results.append(
-                    {
-                        "id": series.get("id"),
-                        "title": series.get("title"),
-                        "units": series.get("units"),
-                        "frequency": series.get("frequency"),
-                        "seasonal_adjustment": series.get("seasonal_adjustment"),
-                        "last_updated": series.get("last_updated"),
-                        "popularity": series.get("popularity"),
-                    }
-                )
-
-            return results
-
+            
+            series_results = []
+            for series in data.get("seriess", []):
+                series_results.append({
+                    "symbol": series["id"],
+                    "name": series["title"],
+                    "description": series.get("notes", ""),
+                    "asset_type": "economic",
+                    "provider": "fred",
+                    "frequency": series.get("frequency_short")
+                })
+            return series_results
+        except requests.exceptions.RequestException as e:
+            print(f"Error searching FRED series: {e}")
+            return []
         except Exception as e:
-            print(f"FRED search failed: {e}")
+            print(f"Error processing FRED search results: {e}")
             return []
 
-    def get_series_info(self, series_id: str) -> dict:
+    def _map_interval_to_fred_frequency(self, interval: str) -> str:
         """
-        Get detailed information about a FRED series.
-
-        Args:
-            series_id: FRED series ID
-
-        Returns:
-            Dictionary with series metadata
+        Maps a generic interval string to FRED API frequency.
+        FRED frequencies: 'd' (daily), 'w' (weekly), 'm' (monthly), 'q' (quarterly), 'a' (annual), 'bh' (business hour), 'b' (business day), 'wef' (weekly, ending Friday).
         """
-        try:
-            url = f"{self.base_url}/series"
-            params = {
-                "series_id": series_id,
-                "api_key": self.api_key,
-                "file_type": "json",
-            }
-
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-
-            data = response.json()
-            series_list = data.get("seriess", [])
-
-            if series_list:
-                return series_list[0]
-
-            return {}
-
-        except Exception as e:
-            print(f"Failed to get series info: {e}")
-            return {}
+        if interval in ["1d", "D"]:
+            return "d"
+        elif interval in ["1w", "W", "WK"]:
+            return "w"
+        elif interval in ["1M", "M", "MON"]:
+            return "m"
+        elif interval in ["1q", "Q"]:
+            return "q"
+        elif interval in ["1y", "Y", "ANN"]:
+            return "a"
+        # FRED does not support intraday frequencies like 1m, 5m, 1h for general series
+        # Default to daily if no specific mapping, or the closest reasonable frequency
+        return "d"
 
     def supports_historical_options(self) -> bool:
-        """FRED does not support options."""
         return False
-
-
-# Popular FRED series IDs for easy reference
-POPULAR_SERIES = {
-    # GDP & Growth
-    "GDP": "Gross Domestic Product",
-    "GDPC1": "Real Gross Domestic Product",
-    "A191RL1Q225SBEA": "Real GDP Growth Rate",
-    # Unemployment & Jobs
-    "UNRATE": "Unemployment Rate",
-    "PAYEMS": "Nonfarm Payrolls",
-    "CIVPART": "Labor Force Participation Rate",
-    "U6RATE": "Total Unemployed (U-6)",
-    # Inflation & Prices
-    "CPIAUCSL": "Consumer Price Index (CPI)",
-    "PCEPI": "Personal Consumption Expenditures Price Index",
-    "CORESTICKM159SFRBATL": "Core CPI (Sticky Price)",
-    # Interest Rates
-    "DGS10": "10-Year Treasury Constant Maturity Rate",
-    "DGS2": "2-Year Treasury Constant Maturity Rate",
-    "DFF": "Federal Funds Effective Rate",
-    "MORTGAGE30US": "30-Year Fixed Rate Mortgage Average",
-    # Money & Credit
-    "M1SL": "M1 Money Stock",
-    "M2SL": "M2 Money Stock",
-    "TOTCI": "Commercial and Industrial Loans",
-    # Housing
-    "CSUSHPISA": "Case-Shiller U.S. Home Price Index",
-    "HOUST": "Housing Starts",
-    "PERMIT": "New Private Housing Units Authorized by Building Permits",
-    # Consumer & Retail
-    "RSXFS": "Retail Sales",
-    "UMCSENT": "University of Michigan Consumer Sentiment",
-    "PCE": "Personal Consumption Expenditures",
-    # Manufacturing & Production
-    "INDPRO": "Industrial Production Index",
-    "IPMAN": "Industrial Production: Manufacturing",
-    "NAPM": "ISM Manufacturing PMI",
-    # Trade & Exchange
-    "DEXUSEU": "USD/EUR Exchange Rate",
-    "DEXCHUS": "China/USD Exchange Rate",
-    "BOPGSTB": "Trade Balance: Goods and Services",
-    # Commodities
-    "DCOILWTICO": "Crude Oil Prices: WTI",
-    "DCOILBRENTEU": "Crude Oil Prices: Brent",
-    "GOLDAMGBD228NLBM": "Gold Fixing Price",
-}

@@ -14,8 +14,20 @@ __version__ = "0.1.6"
 
 # Main API - this is what users should use
 from .stream import DataStream
+from .symbol_ops import (
+    search_async,
+    validate_async,
+    resolve_async,
+    get_metadata_async,
+    get_economic_calendar_async,
+)
 
 __all__ = [
     "__version__",
     "DataStream",
+    "search_async",
+    "validate_async",
+    "resolve_async",
+    "get_metadata_async",
+    "get_economic_calendar_async",
 ]
