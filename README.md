@@ -24,7 +24,7 @@ chain = stream.options("SPY")
 
 ## Real-Time Streaming LIVE
 
-Stream live market data from 7 providers via WebSockets:
+Stream live market data from 8 providers via WebSockets:
 
 ```python
 import asyncio
@@ -49,6 +49,7 @@ asyncio.run(main())
 - **Alpaca** - US stocks (free with key)
 - **Kraken** - Crypto (free, no key required)
 - **Polygon** - Premium stocks (paid)
+- **Polymarket** - Prediction markets (free, no key required)
 - **IBKR** - Global markets (requires TWS/Gateway)
 
 **Stream Multiple Symbols:**
@@ -306,16 +307,19 @@ pip install wrdata
 
 ## Features
 
-- ✅ **32+ Data Providers** - Yahoo, Polygon, Alpaca, FRED, and 28+ more
-- ✅ **Real-Time Streaming** - Live WebSocket data from 7 providers
+- ✅ **32+ Data Providers** - Yahoo, Polygon, Alpaca, FRED, Polymarket, and more
+- ✅ **Real-Time Streaming** - Live WebSocket data from 8 providers (including Polymarket)
 - ✅ **Whale Transaction Tracking** 🐋 - Real-time detection of large volume crypto transactions
-- ✅ **Multi-Asset Support** - Stocks, crypto, forex, options, economic data
+- ✅ **Prediction Markets** - Polymarket events, price history, order books, and live streaming
+- ✅ **Symbol Operations** - Search, validate, resolve, and get metadata for any symbol
+- ✅ **Multi-Asset Support** - Stocks, crypto, forex, options, economic data, prediction markets
 - ✅ **Multi-Provider Search** - Search across 9+ providers simultaneously
 - ✅ **100+ Crypto Exchanges** - CCXT integration (Bybit, OKX, KuCoin, Gate.io, Bitfinex)
 - ✅ **Comprehensive Crypto** - 10,000+ cryptocurrencies via CoinGecko integration
 - ✅ **Auto-Detection** - Automatically detects asset type from symbol
 - ✅ **Smart Defaults** - Works immediately, configure only when needed
-- ✅ **Options Data** - Full options chains with Greeks
+- ✅ **Options Data** - Full options chains with Greeks (YFinance + Polygon.io)
+- ✅ **Economic Data** - 800,000+ FRED series with search + economic calendar
 - ✅ **Zero Dependencies** - No database required
 - ✅ **Type Safety** - Full Pydantic v2 support
 
@@ -400,6 +404,210 @@ for provider, symbols in by_provider.items():
 # coingecko: 25 results
 ```
 
+## Symbol Operations (v0.1.6)
+
+Standalone functions for searching, validating, and resolving symbols. Available as both sync and async, exported at the top level.
+
+```python
+from wrdata.symbol_ops import search, validate, resolve, get_metadata
+
+# Search for symbols via yfinance
+results = search("NVIDIA", limit=5)
+for r in results:
+    print(f"{r['symbol']:10} {r['name']:30} ({r['exchange']})")
+
+# Validate a symbol exists
+assert validate("AAPL") == True
+assert validate("FAKESYMBOL123") == False
+
+# Resolve a canonical symbol to provider-specific format
+resolve("BTC", "binance")     # -> "BTCUSDT"
+resolve("BTC", "coinbase")    # -> "BTC-USD"
+resolve("BTC", "coingecko")   # -> "bitcoin"
+resolve("BTC", "kraken")      # -> "XXBTZUSD"
+resolve("EURUSD", "yfinance") # -> "EURUSD=X"
+resolve("EURUSD", "twelvedata") # -> "EUR/USD"
+
+# Get rich metadata for any symbol
+meta = get_metadata("AAPL")
+print(meta)
+# {'symbol': 'AAPL', 'name': 'Apple Inc.', 'sector': 'Technology',
+#  'industry': 'Consumer Electronics', 'market_cap': 3500000000000,
+#  'currency': 'USD', 'exchange': 'NMS', ...}
+```
+
+**Async versions** (for use in async code / FastAPI / notebooks):
+
+```python
+import asyncio
+from wrdata import search_async, validate_async, resolve_async, get_metadata_async
+
+async def main():
+    results = await search_async("Tesla", limit=3)
+    is_valid = await validate_async("TSLA")
+    symbol = await resolve_async("ETH", provider="binance")  # -> "ETHUSDT"
+    meta = await get_metadata_async("MSFT")
+    print(meta["sector"])  # "Technology"
+
+asyncio.run(main())
+```
+
+**Economic Calendar** (requires Alpha Vantage API key):
+
+```python
+from wrdata.symbol_ops import get_economic_calendar
+
+events = get_economic_calendar(horizon="3month")
+for event in events[:3]:
+    print(f"{event['date']} - {event['event']} ({event['country']})")
+```
+
+## Prediction Markets (Polymarket)
+
+Access Polymarket prediction markets -- no API key required. Search events, fetch historical prices, stream live updates.
+
+### Market Discovery
+
+```python
+from wrdata import DataStream
+
+stream = DataStream()
+
+# Or use the provider directly for full API access
+from wrdata.providers.polymarket_provider import PolymarketProvider
+
+poly = PolymarketProvider()
+
+# Search for markets
+markets = poly.search_markets("bitcoin", limit=5)
+for m in markets:
+    print(f"  {m.get('question', '?')}")
+
+# Browse active events by category
+events = poly.fetch_events(active=True, tag_slug="crypto", limit=10)
+for e in events:
+    print(f"{e['title']} ({len(e.get('markets', []))} markets)")
+
+# Fetch all available tags
+tags = poly.fetch_tags()
+for t in tags[:5]:
+    print(t.get("label"))
+```
+
+### Historical Price Data
+
+Prices are probabilities in [0.0, 1.0]:
+
+```python
+# Fetch YES/NO price history for a market (by slug or condition_id)
+df = poly.fetch_market_history(
+    "will-bitcoin-hit-100k-in-2026",
+    start_date="2026-01-01",
+    end_date="2026-02-12",
+    fidelity=poly.FIDELITY_1HR,  # 1min, 5min, 15min, 1hr, 6hr, 1day
+)
+print(df.head())
+# timestamp | yes_price | no_price
+# 2026-01-01 00:00:00 | 0.72 | 0.28
+
+# Or use via DataStream (auto-detected asset type)
+df = stream.get("will-bitcoin-hit-100k-in-2026", interval="1h")
+```
+
+### Order Books & Live Pricing
+
+```python
+# Fetch order book for a specific token
+market = poly.fetch_market("will-bitcoin-hit-100k-in-2026")
+token_id = market["clobTokenIds"][0]  # YES token
+
+book = poly.fetch_orderbook(token_id)
+print(f"Best bid: {book['bids'][0]}, Best ask: {book['asks'][0]}")
+
+# Midpoint and last trade
+mid = poly.fetch_midpoint(token_id)
+last = poly.fetch_last_trade_price(token_id)
+print(f"Mid: {mid:.4f}, Last: {last:.4f}")
+```
+
+### Real-Time Streaming
+
+```python
+import asyncio
+from wrdata.streaming.polymarket_stream import PolymarketStreamProvider
+
+async def stream_predictions():
+    provider = PolymarketStreamProvider()
+    await provider.connect()
+
+    # Stream price changes (pass a condition_id or clob_token_id)
+    async for msg in provider.subscribe_ticker(token_id):
+        print(f"Price: {msg.price:.4f} at {msg.timestamp}")
+
+    # Stream order book snapshots
+    async for msg in provider.subscribe_book(token_id):
+        print(f"Mid: {msg.price:.4f} | Bid: {msg.bid} | Ask: {msg.ask}")
+
+    await provider.disconnect()
+
+asyncio.run(stream_predictions())
+```
+
+## Polygon.io Options (v0.1.6)
+
+Dedicated options data via Polygon.io for historical options chains and timeseries. Requires a paid Polygon.io API key.
+
+```python
+stream = DataStream(polygon_key="your_polygon_key")
+
+# Get options chain (auto-routes to Polygon when key is configured)
+chain = stream.options("SPY")
+
+# Or use the provider directly for advanced queries
+from wrdata.providers.polygon_options_provider import PolygonOptionsProvider
+
+poly_opts = PolygonOptionsProvider(api_key="your_polygon_key")
+
+# Get available expirations
+expirations = poly_opts.get_available_expirations("AAPL")
+print(expirations[:5])
+
+# Fetch historical OHLCV for a specific options contract
+from wrdata.models.schemas import OptionsTimeseriesRequest
+
+request = OptionsTimeseriesRequest(
+    contract_symbol="O:SPY260220C00600000",
+    underlying_symbol="SPY",
+    start_date="2026-01-01",
+    end_date="2026-02-12",
+)
+result = poly_opts.fetch_options_timeseries(request)
+for bar in result.data[:3]:
+    print(f"{bar['timestamp']} | C: {bar['close']} | V: {bar['volume']}")
+```
+
+## FRED Economic Data
+
+Access 800,000+ economic indicators from the Federal Reserve (requires free API key from [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html)).
+
+```python
+stream = DataStream(fred_key="your_fred_key")
+
+# Fetch economic time series
+df = stream.get("FEDFUNDS", asset_type="economic")  # Federal Funds Rate
+df = stream.get("GDP")       # GDP (auto-detected as economic)
+df = stream.get("UNRATE")    # Unemployment rate
+df = stream.get("DGS10")     # 10-Year Treasury yield
+
+# Search for series
+from wrdata.providers.fred_provider import FredProvider
+
+fred = FredProvider(api_key="your_fred_key")
+results = fred.search_series("consumer price index")
+for r in results[:5]:
+    print(f"{r['symbol']:15} {r['name'][:50]}  ({r['frequency']})")
+```
+
 ## API Keys (Optional)
 
 Free providers work without keys. Add keys for premium providers:
@@ -408,10 +616,12 @@ Free providers work without keys. Add keys for premium providers:
 
 ```bash
 # .env file
-POLYGON_API_KEY=your_key_here
-ALPACA_API_KEY=your_key_here
+POLYGON_API_KEY=your_key_here        # Options + premium equity data
+ALPACA_API_KEY=your_key_here         # US stocks + streaming
 ALPACA_API_SECRET=your_secret_here
-FINNHUB_API_KEY=your_key_here
+FINNHUB_API_KEY=your_key_here        # Stocks + streaming
+FRED_API_KEY=your_key_here           # 800K+ economic indicators
+ALPHA_VANTAGE_API_KEY=your_key_here  # Stocks, forex, economic calendar
 ```
 
 **Or pass directly:**
@@ -431,6 +641,7 @@ stream = DataStream(
 - **Yahoo Finance** - Stocks, ETFs, crypto (delayed)
 - **Coinbase** - Crypto market data + streaming
 - **CoinGecko** - 10,000+ cryptocurrencies
+- **Polymarket** - Prediction markets (events, prices, order books, streaming)
 - **CCXT Exchanges** (5 pre-configured):
   - **OKX** - Global crypto exchange
   - **KuCoin** - 700+ altcoins
@@ -452,7 +663,7 @@ stream = DataStream(
 
 ### Premium (Paid)
 
-- **Polygon.io** - Professional US market data + streaming
+- **Polygon.io** - Professional US market data + streaming + **options chains/timeseries**
 - **Interactive Brokers** - Global markets + streaming
 - **Tradier** - Options chains
 - **IEX Cloud** - US stocks
@@ -571,6 +782,6 @@ Pull requests welcome! Please ensure tests pass and code is formatted with black
 
 **Simple. Fast. Powerful.**
 
-32+ providers. 100+ crypto exchanges. Historical + Real-time. One API.
+32+ providers. 100+ crypto exchanges. Prediction markets. Historical + Real-time. One API.
 
-© Wayy Research, 2025
+© Wayy Research, 2026
