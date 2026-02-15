@@ -145,6 +145,9 @@ class DataStream:
         # Add Polymarket (no API key required for public data)
         self._add_polymarket_provider()
 
+        # Add DEX Arb provider (no API key required)
+        self._add_dex_arb_provider()
+
         # Add Polygon options provider if API key provided (or use from env)
         polygon_key = polygon_key or settings.POLYGON_API_KEY
         self._add_polygon_options_provider(polygon_key)
@@ -172,6 +175,7 @@ class DataStream:
                 "ccxt_bitfinex",
                 "ccxt_binance",
                 "ccxt_bybit",
+                "dex_arb",
             ],
             "cryptocurrency": [
                 "coinbase",
@@ -184,6 +188,7 @@ class DataStream:
                 "ccxt_bitfinex",
                 "ccxt_binance",
                 "ccxt_bybit",
+                "dex_arb",
             ],
             "economic": ["fred"],  # FRED for economic data
             "prediction_market": ["polymarket", "kalshi"],
@@ -348,6 +353,15 @@ class DataStream:
             self.providers["polymarket"] = PolymarketProvider()
         except Exception as e:
             print(f"Warning: Could not initialize Polymarket provider: {e}")
+
+    def _add_dex_arb_provider(self):
+        """Add DEX Arb provider for cross-DEX price comparison (no API key required)."""
+        try:
+            from wrdata.providers.dex_arb_provider import DexArbProvider
+
+            self.providers["dex_arb"] = DexArbProvider()
+        except Exception as e:
+            print(f"Warning: Could not initialize DEX Arb provider: {e}")
 
     def _add_polygon_options_provider(self, api_key: Optional[str]):
         """Add Polygon.io options provider if API key available."""

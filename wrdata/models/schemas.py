@@ -309,3 +309,142 @@ class WhaleTransactionBatch(BaseModel):
     provider: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# DEX Pool & Arbitrage Schemas
+
+
+class DexPoolPrice(BaseModel):
+    """Price snapshot for a token on a specific DEX pool."""
+
+    timestamp: datetime
+    chain: str  # 'ethereum', 'arbitrum', 'base', 'bsc', 'polygon', 'solana'
+    dex: str  # 'uniswap_v3', 'sushiswap', 'curve', 'pancakeswap', etc.
+    pool_address: str
+    token_symbol: str
+    token_address: str
+    quote_token: str = "USDC"  # Quote token symbol
+    price_usd: float
+    liquidity_usd: float = 0.0
+    volume_24h: float = 0.0
+    fee_tier: float = 0.003  # Default 0.3%
+    price_change_24h: float = 0.0
+
+    model_config = ConfigDict(from_attributes=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "timestamp": self.timestamp.isoformat(),
+            "chain": self.chain,
+            "dex": self.dex,
+            "pool_address": self.pool_address,
+            "token_symbol": self.token_symbol,
+            "token_address": self.token_address,
+            "quote_token": self.quote_token,
+            "price_usd": self.price_usd,
+            "liquidity_usd": self.liquidity_usd,
+            "volume_24h": self.volume_24h,
+            "fee_tier": self.fee_tier,
+            "price_change_24h": self.price_change_24h,
+        }
+
+
+class ArbOpportunity(BaseModel):
+    """Detected arbitrage opportunity between two DEX pools."""
+
+    detected_at: datetime
+    token_symbol: str
+    token_address: str
+    chain: str
+
+    # Buy side (lower price)
+    buy_dex: str
+    buy_pool: str
+    buy_price: float
+    buy_liquidity: float = 0.0
+    buy_fee: float = 0.003
+
+    # Sell side (higher price)
+    sell_dex: str
+    sell_pool: str
+    sell_price: float
+    sell_liquidity: float = 0.0
+    sell_fee: float = 0.003
+
+    # Spread metrics
+    spread_bps: int  # Spread in basis points
+    spread_pct: float  # Raw spread as percentage
+
+    # Cost estimates
+    gas_cost_usd: float = 0.0
+    slippage_estimate_usd: float = 0.0
+    total_fees_usd: float = 0.0
+
+    # Profitability
+    net_profit_usd: float = 0.0
+    optimal_trade_size_usd: float = 0.0
+
+    # Status
+    status: str = "detected"  # 'detected', 'expired', 'stale'
+
+    model_config = ConfigDict(from_attributes=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "detected_at": self.detected_at.isoformat(),
+            "token_symbol": self.token_symbol,
+            "token_address": self.token_address,
+            "chain": self.chain,
+            "buy_dex": self.buy_dex,
+            "buy_pool": self.buy_pool,
+            "buy_price": self.buy_price,
+            "sell_dex": self.sell_dex,
+            "sell_pool": self.sell_pool,
+            "sell_price": self.sell_price,
+            "spread_bps": self.spread_bps,
+            "spread_pct": self.spread_pct,
+            "gas_cost_usd": self.gas_cost_usd,
+            "net_profit_usd": self.net_profit_usd,
+            "optimal_trade_size_usd": self.optimal_trade_size_usd,
+            "status": self.status,
+        }
+
+
+class GasEstimate(BaseModel):
+    """Gas price estimate for a blockchain."""
+
+    timestamp: datetime
+    chain: str
+    gas_gwei: float
+    native_token_price_usd: float
+    swap_gas_units: int = 150000  # Default Uniswap V3 swap
+    swap_cost_usd: float = 0.0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CrossDexPriceRequest(BaseModel):
+    """Request for cross-DEX price comparison."""
+
+    token_symbol: str
+    token_address: Optional[str] = None
+    chains: List[str] = ["ethereum", "arbitrum", "base"]
+    min_liquidity_usd: float = 10000.0
+    max_pools_per_dex: int = 3
+
+
+class CrossDexPriceResponse(BaseModel):
+    """Response containing cross-DEX price comparison."""
+
+    token_symbol: str
+    timestamp: datetime
+    pools: List[DexPoolPrice]
+    arb_opportunities: List[ArbOpportunity] = []
+    best_buy: Optional[DexPoolPrice] = None
+    best_sell: Optional[DexPoolPrice] = None
+    max_spread_bps: int = 0
+
+    success: bool = True
+    error: Optional[str] = None

@@ -32,6 +32,12 @@ try:
 except ImportError:
     PolymarketProvider = None  # type: ignore[assignment, misc]
 
+# DEX providers
+try:
+    from wrdata.providers.dex_arb_provider import DexArbProvider
+except ImportError:
+    DexArbProvider = None  # type: ignore[assignment, misc]
+
 __all__ = [
     "BaseProvider",
     "YFinanceProvider",
@@ -39,4 +45,5 @@ __all__ = [
     "AlpacaOptionsProvider",
     "PanopticProvider",
     "PolymarketProvider",
+    "DexArbProvider",
 ]
