@@ -17,44 +17,84 @@ logger = logging.getLogger(__name__)
 # Common crypto symbol mappings: canonical → provider-specific
 _CRYPTO_PROVIDER_MAP: Dict[str, Dict[str, str]] = {
     "BTC": {
-        "yfinance": "BTC-USD", "coingecko": "bitcoin", "kraken": "XXBTZUSD",
-        "coinbase": "BTC-USD", "binance": "BTCUSDT", "twelvedata": "BTC/USD",
+        "yfinance": "BTC-USD",
+        "coingecko": "bitcoin",
+        "kraken": "XXBTZUSD",
+        "coinbase": "BTC-USD",
+        "binance": "BTCUSDT",
+        "twelvedata": "BTC/USD",
     },
     "ETH": {
-        "yfinance": "ETH-USD", "coingecko": "ethereum", "kraken": "XETHZUSD",
-        "coinbase": "ETH-USD", "binance": "ETHUSDT", "twelvedata": "ETH/USD",
+        "yfinance": "ETH-USD",
+        "coingecko": "ethereum",
+        "kraken": "XETHZUSD",
+        "coinbase": "ETH-USD",
+        "binance": "ETHUSDT",
+        "twelvedata": "ETH/USD",
     },
     "SOL": {
-        "yfinance": "SOL-USD", "coingecko": "solana", "kraken": "SOLUSD",
-        "coinbase": "SOL-USD", "binance": "SOLUSDT", "twelvedata": "SOL/USD",
+        "yfinance": "SOL-USD",
+        "coingecko": "solana",
+        "kraken": "SOLUSD",
+        "coinbase": "SOL-USD",
+        "binance": "SOLUSDT",
+        "twelvedata": "SOL/USD",
     },
     "DOGE": {
-        "yfinance": "DOGE-USD", "coingecko": "dogecoin", "kraken": "XDGUSD",
-        "coinbase": "DOGE-USD", "binance": "DOGEUSDT", "twelvedata": "DOGE/USD",
+        "yfinance": "DOGE-USD",
+        "coingecko": "dogecoin",
+        "kraken": "XDGUSD",
+        "coinbase": "DOGE-USD",
+        "binance": "DOGEUSDT",
+        "twelvedata": "DOGE/USD",
     },
     "XRP": {
-        "yfinance": "XRP-USD", "coingecko": "ripple", "kraken": "XXRPZUSD",
-        "coinbase": "XRP-USD", "binance": "XRPUSDT", "twelvedata": "XRP/USD",
+        "yfinance": "XRP-USD",
+        "coingecko": "ripple",
+        "kraken": "XXRPZUSD",
+        "coinbase": "XRP-USD",
+        "binance": "XRPUSDT",
+        "twelvedata": "XRP/USD",
     },
     "ADA": {
-        "yfinance": "ADA-USD", "coingecko": "cardano", "kraken": "ADAUSD",
-        "coinbase": "ADA-USD", "binance": "ADAUSDT", "twelvedata": "ADA/USD",
+        "yfinance": "ADA-USD",
+        "coingecko": "cardano",
+        "kraken": "ADAUSD",
+        "coinbase": "ADA-USD",
+        "binance": "ADAUSDT",
+        "twelvedata": "ADA/USD",
     },
     "AVAX": {
-        "yfinance": "AVAX-USD", "coingecko": "avalanche-2", "kraken": "AVAXUSD",
-        "coinbase": "AVAX-USD", "binance": "AVAXUSDT", "twelvedata": "AVAX/USD",
+        "yfinance": "AVAX-USD",
+        "coingecko": "avalanche-2",
+        "kraken": "AVAXUSD",
+        "coinbase": "AVAX-USD",
+        "binance": "AVAXUSDT",
+        "twelvedata": "AVAX/USD",
     },
     "DOT": {
-        "yfinance": "DOT-USD", "coingecko": "polkadot", "kraken": "DOTUSD",
-        "coinbase": "DOT-USD", "binance": "DOTUSDT", "twelvedata": "DOT/USD",
+        "yfinance": "DOT-USD",
+        "coingecko": "polkadot",
+        "kraken": "DOTUSD",
+        "coinbase": "DOT-USD",
+        "binance": "DOTUSDT",
+        "twelvedata": "DOT/USD",
     },
     "LINK": {
-        "yfinance": "LINK-USD", "coingecko": "chainlink", "kraken": "LINKUSD",
-        "coinbase": "LINK-USD", "binance": "LINKUSDT", "twelvedata": "LINK/USD",
+        "yfinance": "LINK-USD",
+        "coingecko": "chainlink",
+        "kraken": "LINKUSD",
+        "coinbase": "LINK-USD",
+        "binance": "LINKUSDT",
+        "twelvedata": "LINK/USD",
     },
     "ATOM": {
-        "yfinance": "ATOM-USD", "coingecko": "cosmos", "kraken": "ATOMUSD",
-        "coinbase": "ATOM-USD", "binance": "ATOMUSDT", "twelvedata": "ATOM/USD",
+        "yfinance": "ATOM-USD",
+        "coingecko": "cosmos",
+        "kraken": "ATOMUSD",
+        "coinbase": "ATOM-USD",
+        "binance": "ATOMUSDT",
+        "twelvedata": "ATOM/USD",
     },
 }
 
@@ -90,13 +130,15 @@ def search(query: str, limit: int = 10) -> List[Dict]:
             symbol = result.get("symbol", "")
             if symbol and symbol not in seen:
                 seen.add(symbol)
-                results.append({
-                    "symbol": symbol,
-                    "name": result.get("longname") or result.get("shortname", ""),
-                    "type": result.get("quoteType", "").lower(),
-                    "provider": "yfinance",
-                    "exchange": result.get("exchange", ""),
-                })
+                results.append(
+                    {
+                        "symbol": symbol,
+                        "name": result.get("longname") or result.get("shortname", ""),
+                        "type": result.get("quoteType", "").lower(),
+                        "provider": "yfinance",
+                        "exchange": result.get("exchange", ""),
+                    }
+                )
                 if len(results) >= limit:
                     break
     except Exception as e:
@@ -190,7 +232,11 @@ def get_metadata(symbol: str) -> Optional[Dict]:
             "quote_type": info.get("quoteType"),
             "country": info.get("country"),
             "website": info.get("website"),
-            "description": info.get("longBusinessSummary", "")[:500] if info.get("longBusinessSummary") else None,
+            "description": (
+                info.get("longBusinessSummary", "")[:500]
+                if info.get("longBusinessSummary")
+                else None
+            ),
         }
     except Exception as e:
         logger.warning(f"Failed to get metadata for {symbol}: {e}")
@@ -233,27 +279,34 @@ def get_economic_calendar(horizon: str = "3month") -> List[Dict]:
 
 # --- Async Wrappers ---
 
+
 async def search_async(query: str, limit: int = 10) -> List[Dict]:
     """Async wrapper for search."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, partial(search, query, limit=limit))
+
 
 async def validate_async(symbol: str) -> bool:
     """Async wrapper for validate."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, partial(validate, symbol))
 
+
 async def resolve_async(symbol: str, provider: str) -> Optional[str]:
     """Async wrapper for resolve."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, partial(resolve, symbol, provider=provider))
+
 
 async def get_metadata_async(symbol: str) -> Optional[Dict]:
     """Async wrapper for get_metadata."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, partial(get_metadata, symbol))
 
+
 async def get_economic_calendar_async(horizon: str = "3month") -> List[Dict]:
     """Async wrapper for get_economic_calendar."""
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, partial(get_economic_calendar, horizon=horizon))
+    return await loop.run_in_executor(
+        None, partial(get_economic_calendar, horizon=horizon)
+    )

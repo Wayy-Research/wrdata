@@ -20,7 +20,11 @@ from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
 from wrdata.providers.dexscreener_provider import DexScreenerProvider
 from wrdata.providers.geckoterminal_provider import GeckoTerminalProvider
-from wrdata.models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
+from wrdata.models.schemas import (
+    DataResponse,
+    OptionsChainRequest,
+    OptionsChainResponse,
+)
 
 
 # Major token addresses for convenience
@@ -235,28 +239,30 @@ class DexArbProvider(BaseProvider):
             if price_usd <= 0:
                 continue
 
-            pools.append({
-                "chain": chain,
-                "dex": pair.get("dexId", "unknown"),
-                "pool_address": pair.get("pairAddress", ""),
-                "pair_name": (
-                    pair.get("baseToken", {}).get("symbol", "")
-                    + "/"
-                    + pair.get("quoteToken", {}).get("symbol", "")
-                ),
-                "token_symbol": pair.get("baseToken", {}).get("symbol", ""),
-                "token_address": pair.get("baseToken", {}).get("address", ""),
-                "quote_token": pair.get("quoteToken", {}).get("symbol", ""),
-                "price_usd": price_usd,
-                "price_native": float(pair.get("priceNative", 0) or 0),
-                "liquidity_usd": liquidity,
-                "volume_24h": float(pair.get("volume", {}).get("h24", 0) or 0),
-                "price_change_24h": float(
-                    pair.get("priceChange", {}).get("h24", 0) or 0
-                ),
-                "txns_24h": pair.get("txns", {}).get("h24", {}),
-                "created_at": pair.get("pairCreatedAt"),
-            })
+            pools.append(
+                {
+                    "chain": chain,
+                    "dex": pair.get("dexId", "unknown"),
+                    "pool_address": pair.get("pairAddress", ""),
+                    "pair_name": (
+                        pair.get("baseToken", {}).get("symbol", "")
+                        + "/"
+                        + pair.get("quoteToken", {}).get("symbol", "")
+                    ),
+                    "token_symbol": pair.get("baseToken", {}).get("symbol", ""),
+                    "token_address": pair.get("baseToken", {}).get("address", ""),
+                    "quote_token": pair.get("quoteToken", {}).get("symbol", ""),
+                    "price_usd": price_usd,
+                    "price_native": float(pair.get("priceNative", 0) or 0),
+                    "liquidity_usd": liquidity,
+                    "volume_24h": float(pair.get("volume", {}).get("h24", 0) or 0),
+                    "price_change_24h": float(
+                        pair.get("priceChange", {}).get("h24", 0) or 0
+                    ),
+                    "txns_24h": pair.get("txns", {}).get("h24", {}),
+                    "created_at": pair.get("pairCreatedAt"),
+                }
+            )
 
         # Sort by liquidity descending
         pools.sort(key=lambda p: p["liquidity_usd"], reverse=True)
@@ -330,7 +336,10 @@ class DexArbProvider(BaseProvider):
         dex_best: Dict[str, Dict[str, Any]] = {}
         for pool in pools:
             dex = pool["dex"]
-            if dex not in dex_best or pool["liquidity_usd"] > dex_best[dex]["liquidity_usd"]:
+            if (
+                dex not in dex_best
+                or pool["liquidity_usd"] > dex_best[dex]["liquidity_usd"]
+            ):
                 dex_best[dex] = pool
 
         unique_pools = list(dex_best.values())
@@ -356,22 +365,26 @@ class DexArbProvider(BaseProvider):
                 if spread_bps < min_spread_bps:
                     continue
 
-                opportunities.append({
-                    "chain": chain,
-                    "token_symbol": buy["token_symbol"],
-                    "token_address": token_address,
-                    "buy_dex": buy["dex"],
-                    "buy_pool": buy["pool_address"],
-                    "buy_price": buy["price_usd"],
-                    "buy_liquidity": buy["liquidity_usd"],
-                    "sell_dex": sell["dex"],
-                    "sell_pool": sell["pool_address"],
-                    "sell_price": sell["price_usd"],
-                    "sell_liquidity": sell["liquidity_usd"],
-                    "spread_bps": spread_bps,
-                    "spread_pct": round(spread_pct * 100, 4),
-                    "min_liquidity": min(buy["liquidity_usd"], sell["liquidity_usd"]),
-                })
+                opportunities.append(
+                    {
+                        "chain": chain,
+                        "token_symbol": buy["token_symbol"],
+                        "token_address": token_address,
+                        "buy_dex": buy["dex"],
+                        "buy_pool": buy["pool_address"],
+                        "buy_price": buy["price_usd"],
+                        "buy_liquidity": buy["liquidity_usd"],
+                        "sell_dex": sell["dex"],
+                        "sell_pool": sell["pool_address"],
+                        "sell_price": sell["price_usd"],
+                        "sell_liquidity": sell["liquidity_usd"],
+                        "spread_bps": spread_bps,
+                        "spread_pct": round(spread_pct * 100, 4),
+                        "min_liquidity": min(
+                            buy["liquidity_usd"], sell["liquidity_usd"]
+                        ),
+                    }
+                )
 
         # Sort by spread descending
         opportunities.sort(key=lambda o: o["spread_bps"], reverse=True)
@@ -424,14 +437,16 @@ class DexArbProvider(BaseProvider):
             )
 
             if arb_result.get("success"):
-                results.append({
-                    "token_symbol": symbol,
-                    "token_address": address,
-                    "pools_checked": arb_result.get("pools_checked", 0),
-                    "opportunity_count": arb_result.get("opportunity_count", 0),
-                    "max_spread_bps": arb_result.get("max_spread_bps", 0),
-                    "opportunities": arb_result.get("opportunities", []),
-                })
+                results.append(
+                    {
+                        "token_symbol": symbol,
+                        "token_address": address,
+                        "pools_checked": arb_result.get("pools_checked", 0),
+                        "opportunity_count": arb_result.get("opportunity_count", 0),
+                        "max_spread_bps": arb_result.get("max_spread_bps", 0),
+                        "opportunities": arb_result.get("opportunities", []),
+                    }
+                )
                 total_opportunities += arb_result.get("opportunity_count", 0)
 
             # Respect rate limits (DexScreener: 300/min = 5/sec)

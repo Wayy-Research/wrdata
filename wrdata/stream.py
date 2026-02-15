@@ -25,7 +25,9 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
 )
 from wrdata.core.config import settings
-from wrdata.providers.polygon_options_provider import PolygonOptionsProvider # New import for PolygonOptionsProvider
+from wrdata.providers.polygon_options_provider import (
+    PolygonOptionsProvider,
+)  # New import for PolygonOptionsProvider
 
 # Streaming imports (lazy loaded to avoid dependency issues)
 from wrdata.streaming.base import StreamMessage
@@ -160,7 +162,10 @@ class DataStream:
             "equity": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
             "stock": ["ibkr", "alpaca", "finnhub", "alphavantage", "yfinance"],
             "etf": ["ibkr", "alpaca", "finnhub", "yfinance"],
-            "option": ["ibkr", "polygon_options"],  # Prioritize IBKR, then Polygon for options
+            "option": [
+                "ibkr",
+                "polygon_options",
+            ],  # Prioritize IBKR, then Polygon for options
             "future": ["ibkr"],  # IBKR only for futures
             "index": ["yfinance"],
             "forex": ["ibkr", "alphavantage", "yfinance"],
@@ -832,7 +837,7 @@ class DataStream:
                 start_date=expiry.isoformat() if expiry else date.today().isoformat(),
                 end_date=expiry.isoformat() if expiry else date.today().isoformat(),
                 interval="1d",
-                provider=None, # Allow auto-selection
+                provider=None,  # Allow auto-selection
             )
         )
 
@@ -840,7 +845,7 @@ class DataStream:
             raise ValueError("No options provider available")
 
         provider = self.providers[provider_name]
-        
+
         # Use a more generic fetch_options_chain that providers should implement
         response = provider.fetch_options_chain(request)
 
