@@ -21,7 +21,6 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
 )
 
-
 # Supported chains on DEX Screener
 SUPPORTED_CHAINS = [
     "ethereum",

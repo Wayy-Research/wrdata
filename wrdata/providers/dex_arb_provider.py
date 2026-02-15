@@ -26,7 +26,6 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
 )
 
-
 # Major token addresses for convenience
 MAJOR_TOKENS: Dict[str, Dict[str, str]] = {
     "ethereum": {

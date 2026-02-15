@@ -27,7 +27,6 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
 )
 
-
 # Panoptic subgraph endpoints by network
 # Note: Panoptic uses Goldsky for their subgraph hosting
 SUBGRAPH_ENDPOINTS = {
