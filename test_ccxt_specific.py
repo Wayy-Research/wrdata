@@ -3,6 +3,7 @@
 
 from wrdata import DataStream
 
+
 def test_ccxt_specific():
     """Test searching for a symbol that's more common on CCXT exchanges."""
     stream = DataStream()
@@ -18,7 +19,7 @@ def test_ccxt_specific():
     # Group by provider
     by_provider = {}
     for r in results:
-        provider = r['provider']
+        provider = r["provider"]
         if provider not in by_provider:
             by_provider[provider] = []
         by_provider[provider].append(r)
@@ -27,6 +28,7 @@ def test_ccxt_specific():
         print(f"\n{provider.upper()} ({len(items)} results):")
         for item in items[:5]:  # Show first 5 from each
             print(f"  • {item['symbol']:25} - {item['name'][:30]}")
+
 
 if __name__ == "__main__":
     test_ccxt_specific()

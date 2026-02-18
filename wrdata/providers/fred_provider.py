@@ -1,12 +1,9 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import requests
 from datetime import datetime
-import pandas as pd  # Using pandas for easier data processing
-import io
 
 from ..providers.base import BaseProvider
-from ..models.schemas import DataResponse, DataRequest
-from ..core.config import settings
+from ..models.schemas import DataResponse
 
 
 class FredProvider(BaseProvider):

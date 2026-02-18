@@ -8,7 +8,7 @@ This example shows:
 4. How to retrieve historical options timeseries data
 """
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from wrdata.utils.db_utils import init_database, get_session
@@ -31,19 +31,19 @@ def setup_database():
     session = get_session()
 
     # Ensure yfinance provider exists
-    provider = session.query(DataProvider).filter(
-        DataProvider.name == 'yfinance'
-    ).first()
+    provider = (
+        session.query(DataProvider).filter(DataProvider.name == "yfinance").first()
+    )
 
     if not provider:
         provider = DataProvider(
-            name='yfinance',
-            provider_type='market_data',
+            name="yfinance",
+            provider_type="market_data",
             api_key_required=False,
             has_api_key=False,
             is_active=True,
             supported_assets='["equity", "options"]',
-            rate_limit=2000
+            rate_limit=2000,
         )
         session.add(provider)
         session.commit()
@@ -76,13 +76,13 @@ def fetch_current_options_chain(session, symbol: str = "AAPL"):
         expiration_date=expirations[0],
         option_type=None,  # Get both calls and puts
         min_strike=None,
-        max_strike=None
+        max_strike=None,
     )
 
     response = fetcher.fetch_and_store_options_chain(request)
 
     if response.success:
-        print(f"Successfully fetched options chain!")
+        print("Successfully fetched options chain!")
         print(f"Snapshot time: {response.snapshot_timestamp}")
         print(f"Underlying price: ${response.underlying_price}")
         print(f"Number of calls: {len(response.calls)}")
@@ -92,8 +92,15 @@ def fetch_current_options_chain(session, symbol: str = "AAPL"):
         # Display some sample calls
         print("Sample calls:")
         for call in response.calls[:3]:
-            print(f"  Strike ${call.strike_price}: Last ${call.last_price}, "
-                  f"IV {call.implied_volatility:.2%} " if call.implied_volatility else "", end='')
+            print(
+                (
+                    f"  Strike ${call.strike_price}: Last ${call.last_price}, "
+                    f"IV {call.implied_volatility:.2%} "
+                    if call.implied_volatility
+                    else ""
+                ),
+                end="",
+            )
             if call.greeks and call.greeks.delta:
                 print(f"Delta {call.greeks.delta:.3f}")
             else:
@@ -104,8 +111,15 @@ def fetch_current_options_chain(session, symbol: str = "AAPL"):
         # Display some sample puts
         print("Sample puts:")
         for put in response.puts[:3]:
-            print(f"  Strike ${put.strike_price}: Last ${put.last_price}, "
-                  f"IV {put.implied_volatility:.2%} " if put.implied_volatility else "", end='')
+            print(
+                (
+                    f"  Strike ${put.strike_price}: Last ${put.last_price}, "
+                    f"IV {put.implied_volatility:.2%} "
+                    if put.implied_volatility
+                    else ""
+                ),
+                end="",
+            )
             if put.greeks and put.greeks.delta:
                 print(f"Delta {put.greeks.delta:.3f}")
             else:
@@ -136,7 +150,7 @@ def fetch_filtered_options(session, symbol: str = "AAPL"):
         expiration_date=expirations[0],
         option_type="call",  # Only calls
         min_strike=Decimal("150.00"),  # Example: only strikes above $150
-        max_strike=Decimal("200.00")   # and below $200
+        max_strike=Decimal("200.00"),  # and below $200
     )
 
     response = fetcher.fetch_and_store_options_chain(request)
@@ -164,7 +178,7 @@ def retrieve_historical_options_data(session, symbol: str = "AAPL"):
         underlying_symbol=symbol,
         start_date=start_date.isoformat(),
         end_date=end_date.isoformat(),
-        interval="1d"
+        interval="1d",
     )
 
     response = fetcher.get_options_timeseries(request)
@@ -175,11 +189,16 @@ def retrieve_historical_options_data(session, symbol: str = "AAPL"):
         if response.data:
             print("\nSample data points:")
             for snapshot in response.data[:5]:
-                print(f"  {snapshot['timestamp']}: {snapshot['contract_symbol']} "
-                      f"Last ${snapshot['last_price']}, IV {snapshot['implied_volatility']:.2%}"
-                      if snapshot['implied_volatility'] else "")
+                print(
+                    f"  {snapshot['timestamp']}: {snapshot['contract_symbol']} "
+                    f"Last ${snapshot['last_price']}, IV {snapshot['implied_volatility']:.2%}"
+                    if snapshot["implied_volatility"]
+                    else ""
+                )
         else:
-            print("No historical data found (you may need to run this script multiple times")
+            print(
+                "No historical data found (you may need to run this script multiple times"
+            )
             print("over several days to accumulate historical data)")
         print()
     else:

@@ -16,11 +16,27 @@ import polars as pl
 stream = DataStream()
 
 symbols = [
-    'ALCX-USD', 'BARD-USD', 'ATOM-USD', 'CVX-USD', 'SKY-USD',
-    'EDGE-USD', 'AVAX-USD', 'ZORA-USD', 'KSM-USD', 'COOKIE-USD',
-    'CRV-USD', 'AERGO-USD', 'ACX-USD', 'ALLO-USD', 'YFI-USD',
-    'FARM-USD', 'LOKA-USD', 'AST-USD', 'T-USD', 'CAKE-USD',
-    'PENGU-USD'
+    "ALCX-USD",
+    "BARD-USD",
+    "ATOM-USD",
+    "CVX-USD",
+    "SKY-USD",
+    "EDGE-USD",
+    "AVAX-USD",
+    "ZORA-USD",
+    "KSM-USD",
+    "COOKIE-USD",
+    "CRV-USD",
+    "AERGO-USD",
+    "ACX-USD",
+    "ALLO-USD",
+    "YFI-USD",
+    "FARM-USD",
+    "LOKA-USD",
+    "AST-USD",
+    "T-USD",
+    "CAKE-USD",
+    "PENGU-USD",
 ]
 
 end_date = datetime.now().strftime("%Y-%m-%d")
@@ -38,9 +54,9 @@ df = stream.get_many_combined(
     end=end_date,
     interval="1m",
     asset_type="crypto",
-    min_coverage=0.70,      # Exclude symbols with <70% data
-    forward_fill=True,      # Fill gaps
-    drop_low_coverage=True  # Auto-remove low coverage symbols
+    min_coverage=0.70,  # Exclude symbols with <70% data
+    forward_fill=True,  # Fill gaps
+    drop_low_coverage=True,  # Auto-remove low coverage symbols
 )
 
 print("\n" + "=" * 80)
@@ -51,10 +67,11 @@ print(df)
 print("\n" + "=" * 80)
 print("Summary by Symbol:")
 print("=" * 80)
-summary = df.group_by('symbol').agg([
-    pl.count().alias('rows'),
-    pl.col('close').mean().alias('avg_price')
-]).sort('symbol')
+summary = (
+    df.group_by("symbol")
+    .agg([pl.count().alias("rows"), pl.col("close").mean().alias("avg_price")])
+    .sort("symbol")
+)
 print(summary)
 
 print("\n" + "=" * 80)

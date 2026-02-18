@@ -71,7 +71,7 @@ def test_market_clock():
         clock = provider.get_market_clock()
 
         if clock:
-            print(f"✓ Market clock retrieved:")
+            print("✓ Market clock retrieved:")
             print(f"  Date: {clock.get('date')}")
             print(f"  State: {clock.get('state')}")
             print(f"  Description: {clock.get('description')}")
@@ -101,7 +101,7 @@ def test_real_time_quote():
         quote = provider.get_quote(symbol)
 
         if quote:
-            print(f"✓ Quote retrieved:")
+            print("✓ Quote retrieved:")
             print(f"  Symbol: {quote.get('symbol')}")
             print(f"  Description: {quote.get('description')}")
             print(f"  Last: ${quote.get('last')}")
@@ -256,9 +256,9 @@ def test_options_chain():
         response = provider.fetch_options_chain(request)
 
         if response.success:
-            print(f"✓ Options chain retrieved!")
+            print("✓ Options chain retrieved!")
             print(f"\nMetadata: {response.metadata}")
-            print(f"\n💡 This is FREE data! Most providers charge for this.")
+            print("\n💡 This is FREE data! Most providers charge for this.")
             return True
         else:
             print(f"✗ Failed: {response.error}")
@@ -289,7 +289,7 @@ def test_market_calendar():
 
             if "days" in cal_data and "day" in cal_data["days"]:
                 days = cal_data["days"]["day"]
-                print(f"✓ Market calendar retrieved:")
+                print("✓ Market calendar retrieved:")
                 print(f"  Total days: {len(days) if isinstance(days, list) else 1}")
 
                 # Show first few days

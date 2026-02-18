@@ -5,9 +5,8 @@ This is the core symbol management service for wrdata package.
 """
 
 import json
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime
-import asyncio
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -30,8 +29,6 @@ class SymbolManager:
         """
         try:
             import requests
-            import pandas as pd
-            from io import StringIO
 
             symbols = []
 

@@ -14,7 +14,7 @@ API Docs: https://polygon.io/docs/stocks/getting-started
 
 import requests
 from typing import Optional, List
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
 from wrdata.models.schemas import (
     DataResponse,

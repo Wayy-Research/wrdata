@@ -11,7 +11,7 @@ Delayed data is free.
 import asyncio
 from typing import Optional, Callable, AsyncIterator
 from datetime import datetime
-from ib_insync import IB, Stock, util
+from ib_insync import IB, Stock
 
 from wrdata.streaming.base import BaseStreamProvider, StreamMessage
 

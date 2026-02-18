@@ -3,9 +3,8 @@ Base provider interface for data fetching.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
-from datetime import datetime, date
-from decimal import Decimal
+from typing import Optional, List
+from datetime import date
 
 from wrdata.models.schemas import (
     DataResponse,

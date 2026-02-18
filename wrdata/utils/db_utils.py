@@ -9,8 +9,6 @@ import os
 
 from wrdata.models.database import (
     Base,
-    DataProvider,
-    Symbol,
     OptionsContract,
     OptionsChainSnapshot,
 )

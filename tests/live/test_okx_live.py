@@ -6,7 +6,6 @@ FREE API - No key required for market data!
 API Docs: https://www.okx.com/docs-v5/
 """
 
-import os
 from datetime import datetime, timedelta
 from wrdata.providers.okx_provider import OKXProvider
 

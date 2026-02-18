@@ -10,7 +10,6 @@ Usage:
 
 import argparse
 import sys
-import os
 from pathlib import Path
 
 # Add parent directory to path
@@ -18,54 +17,193 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from wrdata.models.database import Base, DataProvider, Symbol
+from wrdata.models.database import Base, DataProvider
 from wrdata.services.symbol_manager import SymbolManager
 from wrdata.services.symbol_discovery import SymbolDiscoveryService
-from datetime import datetime
 
 
 def init_providers(db):
     """Initialize all 28 providers in the database."""
     providers = [
         # Stock & Options
-        {'name': 'alpaca', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,options'},
-        {'name': 'polygon', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,options,forex,crypto'},
-        {'name': 'tradier', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,options'},
-        {'name': 'twelvedata', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,forex'},
-        {'name': 'ibkr', 'provider_type': 'stock', 'api_key_required': False, 'supported_assets': 'stock,options,futures,forex'},
-        {'name': 'finnhub', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,forex,crypto'},
-        {'name': 'alphavantage', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,forex,crypto'},
-        {'name': 'yfinance', 'provider_type': 'stock', 'api_key_required': False, 'supported_assets': 'stock,options,forex'},
-        {'name': 'iexcloud', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock'},
-        {'name': 'tdameritrade', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock,options'},
-        {'name': 'marketstack', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock'},
-        {'name': 'tiingo', 'provider_type': 'stock', 'api_key_required': True, 'supported_assets': 'stock'},
-
+        {
+            "name": "alpaca",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,options",
+        },
+        {
+            "name": "polygon",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,options,forex,crypto",
+        },
+        {
+            "name": "tradier",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,options",
+        },
+        {
+            "name": "twelvedata",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,forex",
+        },
+        {
+            "name": "ibkr",
+            "provider_type": "stock",
+            "api_key_required": False,
+            "supported_assets": "stock,options,futures,forex",
+        },
+        {
+            "name": "finnhub",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,forex,crypto",
+        },
+        {
+            "name": "alphavantage",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,forex,crypto",
+        },
+        {
+            "name": "yfinance",
+            "provider_type": "stock",
+            "api_key_required": False,
+            "supported_assets": "stock,options,forex",
+        },
+        {
+            "name": "iexcloud",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock",
+        },
+        {
+            "name": "tdameritrade",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock,options",
+        },
+        {
+            "name": "marketstack",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock",
+        },
+        {
+            "name": "tiingo",
+            "provider_type": "stock",
+            "api_key_required": True,
+            "supported_assets": "stock",
+        },
         # Cryptocurrency
-        {'name': 'binance', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'coinbase', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'coinbase_advanced', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'kraken', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'kucoin', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'bybit', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'okx', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'gateio', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'bitfinex', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'gemini', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'huobi', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'coingecko', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'cryptocompare', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'messari', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto'},
-        {'name': 'deribit', 'provider_type': 'crypto', 'api_key_required': False, 'supported_assets': 'crypto,options'},
-
+        {
+            "name": "binance",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "coinbase",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "coinbase_advanced",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "kraken",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "kucoin",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "bybit",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "okx",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "gateio",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "bitfinex",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "gemini",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "huobi",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "coingecko",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "cryptocompare",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "messari",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto",
+        },
+        {
+            "name": "deribit",
+            "provider_type": "crypto",
+            "api_key_required": False,
+            "supported_assets": "crypto,options",
+        },
         # Economic Data
-        {'name': 'fred', 'provider_type': 'economic', 'api_key_required': True, 'supported_assets': 'economic'},
+        {
+            "name": "fred",
+            "provider_type": "economic",
+            "api_key_required": True,
+            "supported_assets": "economic",
+        },
     ]
 
     for provider_data in providers:
-        existing = db.query(DataProvider).filter(
-            DataProvider.name == provider_data['name']
-        ).first()
+        existing = (
+            db.query(DataProvider)
+            .filter(DataProvider.name == provider_data["name"])
+            .first()
+        )
 
         if not existing:
             provider = DataProvider(**provider_data)
@@ -106,8 +244,10 @@ def sync_symbols(db, provider_names=None, force=False):
             # Use existing manager methods or discovery service
             result = manager.sync_provider_symbols(provider.id, force=force)
 
-            if result.get('success'):
-                print(f"✅ {provider.name}: {result['created']} created, {result['updated']} updated")
+            if result.get("success"):
+                print(
+                    f"✅ {provider.name}: {result['created']} created, {result['updated']} updated"
+                )
                 results.append(result)
             else:
                 print(f"⚠️  {provider.name}: {result.get('error', 'Unknown error')}")
@@ -119,9 +259,9 @@ def sync_symbols(db, provider_names=None, force=False):
     print("Sync Summary")
     print("=" * 60)
 
-    total_created = sum(r.get('created', 0) for r in results)
-    total_updated = sum(r.get('updated', 0) for r in results)
-    total_symbols = sum(r.get('total_symbols', 0) for r in results)
+    total_created = sum(r.get("created", 0) for r in results)
+    total_updated = sum(r.get("updated", 0) for r in results)
+    total_symbols = sum(r.get("total_symbols", 0) for r in results)
 
     print(f"Providers synced: {len(results)}")
     print(f"Symbols created: {total_created:,}")
@@ -140,13 +280,17 @@ def analyze_coverage(db):
     # Provider statistics
     provider_counts = discovery.get_provider_symbol_count()
     print("\n📊 Symbols per provider:")
-    for provider, count in sorted(provider_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
+    for provider, count in sorted(
+        provider_counts.items(), key=lambda x: x[1], reverse=True
+    )[:10]:
         print(f"  {provider}: {count:,} symbols")
 
     # Asset type distribution
     asset_dist = discovery.get_asset_type_distribution()
     print("\n📊 Asset type distribution:")
-    for asset_type, count in sorted(asset_dist.items(), key=lambda x: x[1], reverse=True):
+    for asset_type, count in sorted(
+        asset_dist.items(), key=lambda x: x[1], reverse=True
+    ):
         print(f"  {asset_type}: {count:,} symbols")
 
     # High-coverage symbols
@@ -157,27 +301,27 @@ def analyze_coverage(db):
 
     # Coverage distribution
     coverage_ranges = {
-        '1': 0,
-        '2-3': 0,
-        '4-5': 0,
-        '6-9': 0,
-        '10+': 0,
+        "1": 0,
+        "2-3": 0,
+        "4-5": 0,
+        "6-9": 0,
+        "10+": 0,
     }
 
     # Get coverage for all symbols
     all_symbols = discovery.find_symbols_by_coverage(min_providers=1, limit=100000)
     for symbol_info in all_symbols:
-        count = symbol_info['coverage_count']
+        count = symbol_info["coverage_count"]
         if count == 1:
-            coverage_ranges['1'] += 1
+            coverage_ranges["1"] += 1
         elif count <= 3:
-            coverage_ranges['2-3'] += 1
+            coverage_ranges["2-3"] += 1
         elif count <= 5:
-            coverage_ranges['4-5'] += 1
+            coverage_ranges["4-5"] += 1
         elif count <= 9:
-            coverage_ranges['6-9'] += 1
+            coverage_ranges["6-9"] += 1
         else:
-            coverage_ranges['10+'] += 1
+            coverage_ranges["10+"] += 1
 
     print("\n📊 Coverage distribution:")
     total = sum(coverage_ranges.values())
@@ -187,18 +331,30 @@ def analyze_coverage(db):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Sync symbols from all providers')
-    parser.add_argument('--force', action='store_true', help='Force re-sync even if recently synced')
-    parser.add_argument('--providers', type=str, help='Comma-separated list of provider names to sync')
-    parser.add_argument('--init-only', action='store_true', help='Only initialize providers, do not sync')
-    parser.add_argument('--analyze-only', action='store_true', help='Only analyze coverage, do not sync')
-    parser.add_argument('--db', type=str, default='wrdata.db', help='Database path (default: wrdata.db)')
+    parser = argparse.ArgumentParser(description="Sync symbols from all providers")
+    parser.add_argument(
+        "--force", action="store_true", help="Force re-sync even if recently synced"
+    )
+    parser.add_argument(
+        "--providers", type=str, help="Comma-separated list of provider names to sync"
+    )
+    parser.add_argument(
+        "--init-only",
+        action="store_true",
+        help="Only initialize providers, do not sync",
+    )
+    parser.add_argument(
+        "--analyze-only", action="store_true", help="Only analyze coverage, do not sync"
+    )
+    parser.add_argument(
+        "--db", type=str, default="wrdata.db", help="Database path (default: wrdata.db)"
+    )
 
     args = parser.parse_args()
 
     # Setup database
     db_path = args.db
-    engine = create_engine(f'sqlite:///{db_path}')
+    engine = create_engine(f"sqlite:///{db_path}")
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     db = Session()
@@ -220,7 +376,7 @@ def main():
             return
 
         # Sync symbols
-        provider_list = args.providers.split(',') if args.providers else None
+        provider_list = args.providers.split(",") if args.providers else None
         sync_symbols(db, provider_names=provider_list, force=args.force)
 
         # Analyze coverage
@@ -233,10 +389,11 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
     finally:
         db.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

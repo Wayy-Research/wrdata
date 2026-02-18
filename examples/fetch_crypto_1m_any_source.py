@@ -6,7 +6,7 @@ Let wrdata's fallback system find data wherever it exists.
 
 from wrdata import DataStream
 from datetime import datetime, timedelta
-import polars as pl
+
 
 def main():
     # Initialize stream with fallback enabled (default)
@@ -20,21 +20,21 @@ def main():
     # wrdata will try multiple providers automatically
     symbols = [
         # Try different formats - wrdata will normalize
-        'BTC-USD',    # Coinbase format
-        'ETH-USD',
-        'SOL-USD',
-        'AVAX-USD',
-        'MATIC-USD',
-        'LINK-USD',
-        'DOGE-USD',
-        'XRP-USD',
-        'ADA-USD',
-        'DOT-USD',
-        'ATOM-USD',
-        'UNI-USD',
-        'LTC-USD',
-        'BCH-USD',
-        'NEAR-USD',
+        "BTC-USD",  # Coinbase format
+        "ETH-USD",
+        "SOL-USD",
+        "AVAX-USD",
+        "MATIC-USD",
+        "LINK-USD",
+        "DOGE-USD",
+        "XRP-USD",
+        "ADA-USD",
+        "DOT-USD",
+        "ATOM-USD",
+        "UNI-USD",
+        "LTC-USD",
+        "BCH-USD",
+        "NEAR-USD",
     ]
 
     # Use reasonable time range for 1-minute data
@@ -46,7 +46,7 @@ def main():
 
     print(f"\nSymbols to fetch: {len(symbols)}")
     print(f"Date range: {start_date} to {end_date} ({days_back} days)")
-    print(f"Interval: 1-minute bars")
+    print("Interval: 1-minute bars")
     print("\nLetting wrdata find data from any available provider...")
     print("(coinbase, yfinance, kraken, coingecko, ccxt exchanges)")
     print("\n" + "=" * 80)
@@ -74,8 +74,8 @@ def main():
         print("-" * 80)
         for symbol, df in successful.items():
             rows = len(df)
-            start_ts = df['timestamp'].min()
-            end_ts = df['timestamp'].max()
+            start_ts = df["timestamp"].min()
+            end_ts = df["timestamp"].max()
             print(f"{symbol:15} - {rows:,} rows ({start_ts} to {end_ts})")
 
         total_rows = sum(len(df) for df in successful.values())
@@ -85,7 +85,9 @@ def main():
 
         # Calculate expected bars
         expected = days_back * 24 * 60
-        coverage = (total_rows / len(successful) / expected) * 100 if expected > 0 else 0
+        coverage = (
+            (total_rows / len(successful) / expected) * 100 if expected > 0 else 0
+        )
         print(f"Expected bars/symbol: ~{expected:,}")
         print(f"Coverage: ~{coverage:.1f}%")
 
@@ -129,5 +131,7 @@ if __name__ == "__main__":
         print("\nExample - Calculate returns for BTC-USD:")
         print("  btc_df = successful_data['BTC-USD']")
         print("  btc_returns = btc_df.with_columns([")
-        print("      (pl.col('close').log() - pl.col('close').log().shift(1)).alias('log_return')")
+        print(
+            "      (pl.col('close').log() - pl.col('close').log().shift(1)).alias('log_return')"
+        )
         print("  ])")

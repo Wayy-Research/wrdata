@@ -3,16 +3,13 @@ Unit tests for data providers.
 """
 
 import pytest
-from datetime import datetime, timedelta, date
-from unittest.mock import Mock, patch, MagicMock
-from decimal import Decimal
+from datetime import date
+from unittest.mock import Mock, patch
 
 from wrdata.providers.yfinance_provider import YFinanceProvider
 from wrdata.providers.binance_provider import BinanceProvider
 from wrdata.models.schemas import (
-    DataResponse,
     OptionsChainRequest,
-    OptionsChainResponse,
 )
 
 

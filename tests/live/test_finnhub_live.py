@@ -28,7 +28,7 @@ def test_finnhub_provider():
         return
 
     # Create provider
-    print(f"\n✓ Finnhub API key found")
+    print("\n✓ Finnhub API key found")
     provider = FinnhubProvider(api_key=api_key)
 
     # Test connection

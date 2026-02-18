@@ -14,7 +14,7 @@ Events:
 
 import asyncio
 import json
-from typing import Optional, Callable, AsyncIterator, Dict, List
+from typing import Optional, Callable, AsyncIterator, Dict
 from datetime import datetime, timezone
 
 import aiohttp

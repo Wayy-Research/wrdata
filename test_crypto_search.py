@@ -5,6 +5,7 @@ Test crypto-specific symbol search across providers.
 
 from wrdata import DataStream
 
+
 def test_crypto_search():
     """Test crypto search across CoinGecko, Kraken, Coinbase."""
     stream = DataStream()
@@ -20,7 +21,7 @@ def test_crypto_search():
     # Group by provider
     by_provider = {}
     for r in results:
-        provider = r['provider']
+        provider = r["provider"]
         if provider not in by_provider:
             by_provider[provider] = []
         by_provider[provider].append(r)
@@ -37,7 +38,7 @@ def test_crypto_search():
     # Group by provider
     by_provider = {}
     for r in results:
-        provider = r['provider']
+        provider = r["provider"]
         if provider not in by_provider:
             by_provider[provider] = []
         by_provider[provider].append(r)
@@ -54,7 +55,7 @@ def test_crypto_search():
     # Group by provider
     by_provider = {}
     for r in results:
-        provider = r['provider']
+        provider = r["provider"]
         if provider not in by_provider:
             by_provider[provider] = []
         by_provider[provider].append(r)
@@ -72,6 +73,7 @@ def test_crypto_search():
     print(f"\nTotal providers initialized: {len(providers)}")
     for name in sorted(providers.keys()):
         print(f"  ✓ {name}")
+
 
 if __name__ == "__main__":
     test_crypto_search()

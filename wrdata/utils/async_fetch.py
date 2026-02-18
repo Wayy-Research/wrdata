@@ -12,7 +12,7 @@ Example:
 
 import asyncio
 import aiohttp
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import time

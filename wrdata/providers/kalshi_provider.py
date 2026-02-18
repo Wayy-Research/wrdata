@@ -12,7 +12,7 @@ API Documentation: https://docs.kalshi.com/
 
 import requests
 import polars as pl
-from datetime import datetime, date, timedelta
+from datetime import date
 from typing import Optional, List, Dict, Any
 import re
 
@@ -372,12 +372,12 @@ if __name__ == "__main__":
         print(f"  Strike: {details['strike_price']}")
         print(f"  Underlying: {details['underlying_symbol']}")
 
-        print(f"\n3. Fetching orderbook:")
+        print("\n3. Fetching orderbook:")
         orderbook = provider.fetch_orderbook(markets[0]["ticker"])
         print(f"  YES bids: {orderbook['yes_bids'][:3]}")
         print(f"  NO bids: {orderbook['no_bids'][:3]}")
 
-    print(f"\n4. Searching for 'bitcoin':")
+    print("\n4. Searching for 'bitcoin':")
     btc_markets = provider.search_markets("bitcoin", limit=3)
     for m in btc_markets:
         print(f"  {m['title']} ({m['yes_price']}¢)")

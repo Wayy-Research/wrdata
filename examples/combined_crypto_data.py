@@ -14,8 +14,14 @@ stream = DataStream()
 
 # Major liquid crypto pairs
 symbols = [
-    'BTC-USD', 'ETH-USD', 'SOL-USD', 'AVAX-USD',
-    'MATIC-USD', 'LINK-USD', 'XRP-USD', 'ADA-USD'
+    "BTC-USD",
+    "ETH-USD",
+    "SOL-USD",
+    "AVAX-USD",
+    "MATIC-USD",
+    "LINK-USD",
+    "XRP-USD",
+    "ADA-USD",
 ]
 
 # Use 7 days for 1-minute data
@@ -25,15 +31,11 @@ start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
 print("Fetching data...")
 print(f"Symbols: {symbols}")
 print(f"Range: {start_date} to {end_date}")
-print(f"Interval: 1 minute\n")
+print("Interval: 1 minute\n")
 
 # NEW METHOD: Get as single combined DataFrame
 df = stream.get_many_combined(
-    symbols=symbols,
-    start=start_date,
-    end=end_date,
-    interval="1m",
-    asset_type="crypto"
+    symbols=symbols, start=start_date, end=end_date, interval="1m", asset_type="crypto"
 )
 
 print("=" * 80)
@@ -44,12 +46,14 @@ print(df)
 print("\n" + "=" * 80)
 print("Data Summary by Symbol:")
 print("=" * 80)
-summary = df.group_by('symbol').agg([
-    pl.count().alias('rows'),
-    pl.col('timestamp').min().alias('start'),
-    pl.col('timestamp').max().alias('end'),
-    pl.col('close').mean().alias('avg_price')
-])
+summary = df.group_by("symbol").agg(
+    [
+        pl.count().alias("rows"),
+        pl.col("timestamp").min().alias("start"),
+        pl.col("timestamp").max().alias("end"),
+        pl.col("close").mean().alias("avg_price"),
+    ]
+)
 print(summary)
 
 print("\n" + "=" * 80)
@@ -84,11 +88,7 @@ if not df.is_empty():
     print("=" * 80)
 
     try:
-        pivot_df = df.pivot(
-            values='close',
-            index='timestamp',
-            columns='symbol'
-        )
+        pivot_df = df.pivot(values="close", index="timestamp", columns="symbol")
         print(pivot_df.head(10))
         print(f"\nPivot shape: {pivot_df.shape}")
         print("\n✅ This pivot table is ready for correlation analysis!")

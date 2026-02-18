@@ -3,7 +3,6 @@ import requests
 from datetime import datetime, date
 from decimal import Decimal
 import logging
-import math
 
 from ..providers.base import BaseProvider
 from ..models.schemas import (
@@ -15,7 +14,6 @@ from ..models.schemas import (
     OptionsTimeseriesRequest,
     OptionsTimeseriesResponse,
 )
-from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 

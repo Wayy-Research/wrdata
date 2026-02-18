@@ -43,12 +43,12 @@ async def test_orderbook_stream():
         )
 
         if message.bids:
-            print(f"\nTop 5 Bids:")
+            print("\nTop 5 Bids:")
             for i, (price, size) in enumerate(message.bids[:5]):
                 print(f"  {i+1}. ${price:,.2f} x {size:.4f} BTC")
 
         if message.asks:
-            print(f"\nTop 5 Asks:")
+            print("\nTop 5 Asks:")
             for i, (price, size) in enumerate(message.asks[:5]):
                 print(f"  {i+1}. ${price:,.2f} x {size:.4f} BTC")
 

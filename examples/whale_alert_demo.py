@@ -14,7 +14,6 @@ Requirements:
 import os
 from datetime import datetime, timedelta
 from wrdata.providers.whale_alert_provider import WhaleAlertProvider
-from wrdata.providers.binance_provider import BinanceProvider
 
 
 def demo_whale_alert_api():
@@ -54,7 +53,7 @@ def demo_whale_alert_api():
         if status.get("success"):
             usage = status.get("usage", {})
             limits = status.get("limits", {})
-            print(f"\n📊 API Status:")
+            print("\n📊 API Status:")
             print(f"   Usage: {usage}")
             print(f"   Limits: {limits}")
     else:
@@ -75,7 +74,7 @@ def demo_whale_alert_api():
             end_date=yesterday,
             blockchain="bitcoin",
             min_value=1000000,
-            limit=20
+            limit=20,
         )
 
         print(f"\n✅ Found {batch.count} whale transactions")

@@ -57,14 +57,10 @@ print("=" * 60)
 
 # Get 5-minute bars for today
 from datetime import datetime
+
 today = datetime.now().strftime("%Y-%m-%d")
 
-df = stream.get(
-    "AAPL",
-    start=today,
-    end=today,
-    interval="5m"
-)
+df = stream.get("AAPL", start=today, end=today, interval="5m")
 print(f"\nAAPL 5m data shape: {df.shape}")
 print(df.head())
 
@@ -102,12 +98,7 @@ print(f"\nSPY options chain shape: {chain.shape}")
 print(chain.head())
 
 # Get only calls near current price
-chain_calls = stream.options(
-    "SPY",
-    option_type="call",
-    strike_min=580,
-    strike_max=600
-)
+chain_calls = stream.options("SPY", option_type="call", strike_min=580, strike_max=600)
 print(f"\nSPY calls near money: {chain_calls.shape}")
 print(chain_calls)
 

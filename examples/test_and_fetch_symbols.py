@@ -14,7 +14,10 @@ import polars as pl
 import sys
 from io import StringIO
 
-def test_symbol_quietly(stream, symbol, start_date, end_date, interval="1m", asset_type="crypto"):
+
+def test_symbol_quietly(
+    stream, symbol, start_date, end_date, interval="1m", asset_type="crypto"
+):
     """
     Test if a symbol has data available, suppressing all output.
 
@@ -33,7 +36,7 @@ def test_symbol_quietly(stream, symbol, start_date, end_date, interval="1m", ass
             start=start_date,
             end=end_date,
             interval=interval,
-            asset_type=asset_type
+            asset_type=asset_type,
         )
 
         # Restore output
@@ -52,12 +55,7 @@ def test_symbol_quietly(stream, symbol, start_date, end_date, interval="1m", ass
         return (False, 0, str(e))
 
 
-def test_and_fetch_symbols(
-    symbols,
-    interval="1m",
-    days_back=7,
-    asset_type="crypto"
-):
+def test_and_fetch_symbols(symbols, interval="1m", days_back=7, asset_type="crypto"):
     """
     Test symbols and fetch data for working ones.
 
@@ -139,7 +137,7 @@ def test_and_fetch_symbols(
         start=start_date,
         end=end_date,
         interval=interval,
-        asset_type=asset_type
+        asset_type=asset_type,
     )
 
     print("\n✅ Data fetch complete!")
@@ -153,19 +151,32 @@ def test_and_fetch_symbols(
 def main():
     # Your specific list of symbols
     symbols = [
-        'ALCX-USD', 'BARD-USD', 'ATOM-USD', 'CVX-USD', 'SKY-USD',
-        'EDGE-USD', 'AVAX-USD', 'ZORA-USD', 'KSM-USD', 'COOKIE-USD',
-        'CRV-USD', 'AERGO-USD', 'ACX-USD', 'ALLO-USD', 'YFI-USD',
-        'FARM-USD', 'LOKA-USD', 'AST-USD', 'T-USD', 'CAKE-USD',
-        'PENGU-USD'
+        "ALCX-USD",
+        "BARD-USD",
+        "ATOM-USD",
+        "CVX-USD",
+        "SKY-USD",
+        "EDGE-USD",
+        "AVAX-USD",
+        "ZORA-USD",
+        "KSM-USD",
+        "COOKIE-USD",
+        "CRV-USD",
+        "AERGO-USD",
+        "ACX-USD",
+        "ALLO-USD",
+        "YFI-USD",
+        "FARM-USD",
+        "LOKA-USD",
+        "AST-USD",
+        "T-USD",
+        "CAKE-USD",
+        "PENGU-USD",
     ]
 
     # Test and fetch
     df, working, failed = test_and_fetch_symbols(
-        symbols=symbols,
-        interval="1m",
-        days_back=7,
-        asset_type="crypto"
+        symbols=symbols, interval="1m", days_back=7, asset_type="crypto"
     )
 
     if not df.is_empty():
@@ -177,12 +188,18 @@ def main():
         print("\n" + "=" * 80)
         print("Summary by Symbol:")
         print("=" * 80)
-        summary = df.group_by('symbol').agg([
-            pl.count().alias('rows'),
-            pl.col('close').mean().alias('avg_price'),
-            pl.col('timestamp').min().alias('start'),
-            pl.col('timestamp').max().alias('end')
-        ]).sort('symbol')
+        summary = (
+            df.group_by("symbol")
+            .agg(
+                [
+                    pl.count().alias("rows"),
+                    pl.col("close").mean().alias("avg_price"),
+                    pl.col("timestamp").min().alias("start"),
+                    pl.col("timestamp").max().alias("end"),
+                ]
+            )
+            .sort("symbol")
+        )
         print(summary)
 
         print("\n" + "=" * 80)

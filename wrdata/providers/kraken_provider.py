@@ -11,7 +11,7 @@ API Docs: https://docs.kraken.com/rest/
 
 import requests
 from typing import Optional, List
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
 from wrdata.models.schemas import (
     DataResponse,

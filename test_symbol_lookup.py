@@ -5,6 +5,7 @@ Test script for the new symbol lookup feature.
 
 from wrdata import DataStream
 
+
 def test_symbol_search():
     """Test the search_symbol functionality."""
     stream = DataStream()
@@ -31,7 +32,9 @@ def test_symbol_search():
         print(f"   Found {len(results)} results:")
         for i, result in enumerate(results, 1):
             print(f"   {i}. {result['symbol']:20} - {result['name'][:40]:40}")
-            print(f"      Provider: {result['provider']:15} Exchange: {result['exchange']}")
+            print(
+                f"      Provider: {result['provider']:15} Exchange: {result['exchange']}"
+            )
     else:
         print("   No results found")
 
@@ -71,6 +74,7 @@ def test_symbol_search():
     print("\n" + "=" * 60)
     print("Test completed!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     test_symbol_search()

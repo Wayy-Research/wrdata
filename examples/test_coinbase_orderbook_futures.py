@@ -31,17 +31,17 @@ def load_env_file(filepath: str) -> dict:
         with open(path) as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     env_vars[key.strip()] = value.strip()
     return env_vars
 
 
 PERP_CONTRACTS = {
-    'BTC': 'BIP-20DEC30-CDE',
-    'ETH': 'ETP-20DEC30-CDE',
-    'SOL': 'SLP-20DEC30-CDE',
-    'XRP': 'XPP-20DEC30-CDE',
+    "BTC": "BIP-20DEC30-CDE",
+    "ETH": "ETP-20DEC30-CDE",
+    "SOL": "SLP-20DEC30-CDE",
+    "XRP": "XPP-20DEC30-CDE",
 }
 
 
@@ -56,6 +56,7 @@ async def test_rest_api():
     api_secret = env.get("COINBASE_PRIVATE_KEY")
 
     from wrdata.providers.coinbase_advanced_provider import CoinbaseAdvancedProvider
+
     provider = CoinbaseAdvancedProvider(api_key=api_key, api_secret=api_secret)
 
     print(f"\nAuthenticated: {provider.is_authenticated}")
@@ -64,19 +65,23 @@ async def test_rest_api():
     print("\n--- Recent Trades (Tick Data) ---")
     for asset, contract in PERP_CONTRACTS.items():
         result = provider.get_recent_trades(contract)
-        if result['success']:
-            trades = result['data'].get('trades', [])
+        if result["success"]:
+            trades = result["data"].get("trades", [])
             print(f"{asset}: {len(trades)} trades")
             if trades:
                 t = trades[0]
-                print(f"  Latest: ${float(t['price']):,.0f} | Size: {t['size']} | {t['side']}")
+                print(
+                    f"  Latest: ${float(t['price']):,.0f} | Size: {t['size']} | {t['side']}"
+                )
         else:
             print(f"{asset}: FAILED - {result['error']}")
 
     # Test 2: Historical 1-minute data
     print("\n--- Historical 1-Minute OHLCV ---")
     for asset, contract in list(PERP_CONTRACTS.items())[:2]:
-        result = provider.fetch_timeseries(contract, '2025-12-11', '2025-12-11', interval='1m')
+        result = provider.fetch_timeseries(
+            contract, "2025-12-11", "2025-12-11", interval="1m"
+        )
         if result.success:
             print(f"{asset}: {len(result.data)} candles")
         else:
@@ -86,12 +91,14 @@ async def test_rest_api():
     print("\n--- Orderbook Snapshot ---")
     for asset, contract in list(PERP_CONTRACTS.items())[:2]:
         result = provider.get_product_book(contract, limit=5)
-        if result['success']:
-            pb = result['data'].get('pricebook', {})
-            bids, asks = pb.get('bids', []), pb.get('asks', [])
+        if result["success"]:
+            pb = result["data"].get("pricebook", {})
+            bids, asks = pb.get("bids", []), pb.get("asks", [])
             if bids and asks:
-                spread = float(asks[0]['price']) - float(bids[0]['price'])
-                print(f"{asset}: Bid ${float(bids[0]['price']):,.0f} | Ask ${float(asks[0]['price']):,.0f} | Spread ${spread:.0f}")
+                spread = float(asks[0]["price"]) - float(bids[0]["price"])
+                print(
+                    f"{asset}: Bid ${float(bids[0]['price']):,.0f} | Ask ${float(asks[0]['price']):,.0f} | Spread ${spread:.0f}"
+                )
         else:
             print(f"{asset}: FAILED - {result['error']}")
 
@@ -120,7 +127,9 @@ async def test_websocket_orderbook(duration_seconds: int = 10):
                     break
         finally:
             await provider.disconnect()
-        print(f"  {count} updates in {duration_seconds}s ({count/duration_seconds:.1f}/sec)")
+        print(
+            f"  {count} updates in {duration_seconds}s ({count/duration_seconds:.1f}/sec)"
+        )
 
 
 async def test_websocket_trades(duration_seconds: int = 15):
@@ -131,7 +140,7 @@ async def test_websocket_trades(duration_seconds: int = 15):
 
     from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
 
-    contract = PERP_CONTRACTS['BTC']
+    contract = PERP_CONTRACTS["BTC"]
     provider = CoinbaseStreamProvider()
     await provider.connect()
 
@@ -144,8 +153,10 @@ async def test_websocket_trades(duration_seconds: int = 15):
         async for msg in provider.subscribe_market_trades(contract):
             count += 1
             if count <= 20:
-                side = msg.raw_data.get('side', 'N/A')
-                print(f"  #{count:3d} {msg.timestamp.strftime('%H:%M:%S')} | ${msg.price:>10,.0f} | Size: {msg.volume:>6} | {side:>4}")
+                side = msg.raw_data.get("side", "N/A")
+                print(
+                    f"  #{count:3d} {msg.timestamp.strftime('%H:%M:%S')} | ${msg.price:>10,.0f} | Size: {msg.volume:>6} | {side:>4}"
+                )
             if (datetime.utcnow() - start).total_seconds() > duration_seconds:
                 break
     finally:
@@ -177,7 +188,7 @@ async def test_multi_asset_streaming(duration_seconds: int = 10):
                     break
         finally:
             await provider.disconnect()
-        results[f'{name}_trades'] = count
+        results[f"{name}_trades"] = count
 
     async def stream_orderbook(name, symbol):
         provider = CoinbaseStreamProvider()
@@ -191,7 +202,7 @@ async def test_multi_asset_streaming(duration_seconds: int = 10):
                     break
         finally:
             await provider.disconnect()
-        results[f'{name}_orderbook'] = count
+        results[f"{name}_orderbook"] = count
 
     # Stream all 4 assets
     tasks = []

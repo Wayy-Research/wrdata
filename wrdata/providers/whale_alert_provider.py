@@ -10,7 +10,7 @@ Pricing: https://whale-alert.io/#pricing
 
 import requests
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from decimal import Decimal
 
 from wrdata.providers.base import BaseProvider

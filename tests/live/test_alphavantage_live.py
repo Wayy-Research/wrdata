@@ -27,7 +27,7 @@ def test_alphavantage_provider():
         return
 
     # Create provider
-    print(f"\n✓ Alpha Vantage API key found")
+    print("\n✓ Alpha Vantage API key found")
     provider = AlphaVantageProvider(api_key=api_key)
 
     # Test connection

@@ -9,7 +9,6 @@ Demonstrates the three ways to provide API keys in wrdata:
 Run this to verify your configuration is working.
 """
 
-import os
 from wrdata.core.config import settings
 
 
@@ -25,14 +24,30 @@ def check_configuration():
 
     # Check each provider
     providers = [
-        ("Alpha Vantage", settings.ALPHA_VANTAGE_API_KEY, "https://www.alphavantage.co/support/#api-key"),
+        (
+            "Alpha Vantage",
+            settings.ALPHA_VANTAGE_API_KEY,
+            "https://www.alphavantage.co/support/#api-key",
+        ),
         ("Twelve Data", settings.TWELVE_DATA_API_KEY, "https://twelvedata.com/apikey"),
-        ("FRED", settings.FRED_API_KEY, "https://fred.stlouisfed.org/docs/api/api_key.html"),
+        (
+            "FRED",
+            settings.FRED_API_KEY,
+            "https://fred.stlouisfed.org/docs/api/api_key.html",
+        ),
         ("Finnhub", settings.FINNHUB_API_KEY, "https://finnhub.io/register"),
         ("Polygon", settings.POLYGON_API_KEY, "https://polygon.io/dashboard/api-keys"),
         ("Alpaca", settings.ALPACA_API_KEY, "https://app.alpaca.markets/"),
-        ("Binance", settings.BINANCE_API_KEY, "https://www.binance.com/en/my/settings/api-management"),
-        ("Coinbase", settings.COINBASE_API_KEY, "https://www.coinbase.com/settings/api"),
+        (
+            "Binance",
+            settings.BINANCE_API_KEY,
+            "https://www.binance.com/en/my/settings/api-management",
+        ),
+        (
+            "Coinbase",
+            settings.COINBASE_API_KEY,
+            "https://www.coinbase.com/settings/api",
+        ),
         ("Kraken", settings.KRAKEN_API_KEY, "https://www.kraken.com/u/security/api"),
         ("Whale Alert", settings.WHALE_ALERT_API_KEY, "https://whale-alert.io/"),
     ]
@@ -59,13 +74,13 @@ def check_configuration():
         print()
 
     print("-" * 80)
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"   Total configured: {configured_count}/{len(providers)}")
     print(f"   Free tier: {free_count}")
     print(f"   Paid tier: {configured_count - free_count}")
 
     # Check helper properties
-    print(f"\n🔍 Helper Property Checks:")
+    print("\n🔍 Helper Property Checks:")
     print(f"   settings.has_alpha_vantage_key: {settings.has_alpha_vantage_key}")
     print(f"   settings.has_twelve_data_key: {settings.has_twelve_data_key}")
     print(f"   settings.has_binance_key: {settings.has_binance_key}")

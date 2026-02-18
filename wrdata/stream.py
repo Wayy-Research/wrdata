@@ -346,7 +346,7 @@ class DataStream:
             if provider.connect():
                 self.providers["ibkr"] = provider
             # Note: We don't print warning if TWS isn't running - it's optional
-        except Exception as e:
+        except Exception:
             # Silent fail - IBKR is optional and requires external software
             pass
 
@@ -1075,7 +1075,7 @@ class DataStream:
                                 results.append(result)
                                 if len(results) >= limit:
                                     break
-                except Exception as e:
+                except Exception:
                     # Silent fail - individual exchanges may have issues
                     pass
 

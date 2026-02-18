@@ -447,7 +447,7 @@ class CoinbaseAdvancedProvider(BaseProvider):
         """
         try:
             product_id = self._normalize_symbol(product_id)
-            path = f"/api/v3/brokerage/product_book"
+            path = "/api/v3/brokerage/product_book"
             params = {"product_id": product_id, "limit": limit}
             response = self._make_request("GET", path, params)
             response.raise_for_status()

@@ -4,7 +4,6 @@ Service for fetching and storing options chain data.
 
 from typing import Optional, List
 from datetime import datetime, date
-from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 

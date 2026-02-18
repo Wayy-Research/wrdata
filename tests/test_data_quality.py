@@ -7,7 +7,7 @@ Tests each provider's ability to return valid data with proper timestamps.
 
 import polars as pl
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import traceback
 
 
@@ -349,7 +349,7 @@ def test_ccxt_providers():
                 if result["issues"]:
                     print(f"   Issues: {result['issues']}")
             else:
-                print(f"   SKIPPED: Provider not available")
+                print("   SKIPPED: Provider not available")
                 results.append(
                     {
                         "provider": provider_name,
@@ -389,7 +389,7 @@ def print_summary(all_results: List[Dict[str, Any]]):
         print(f"  Status: {status}")
         print(f"  Rows: {row_count}")
         if issues:
-            print(f"  Issues:")
+            print("  Issues:")
             for issue in issues:
                 print(f"    - {issue}")
 

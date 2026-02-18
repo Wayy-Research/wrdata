@@ -318,7 +318,7 @@ class AlphaVantageProvider(BaseProvider):
                     provider=self.name,
                     data=[],
                     success=False,
-                    error=f"No data found in date range",
+                    error="No data found in date range",
                 )
 
             records.sort(key=lambda x: x["Date"])

@@ -13,8 +13,7 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-import getpass
+from typing import Dict, Any, List
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -73,7 +72,6 @@ PROVIDERS = {
         "asset_type": "crypto",
         "description": "Free crypto data via CCXT",
     },
-
     # FREE - API key required (free to get)
     "alphavantage": {
         "name": "Alpha Vantage",
@@ -129,7 +127,6 @@ PROVIDERS = {
         "description": "Freemium stock/crypto data",
         "signup_url": "https://api.tiingo.com/account/api/token",
     },
-
     # BROKER - Free paper trading
     "alpaca": {
         "name": "Alpaca",
@@ -152,8 +149,8 @@ def load_existing_env() -> Dict[str, str]:
         with open(env_path) as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     env_vars[key.strip()] = value.strip()
 
     return env_vars
@@ -174,8 +171,8 @@ def save_env_file(env_vars: Dict[str, str]):
     new_lines = []
     for line in lines:
         stripped = line.strip()
-        if stripped and not stripped.startswith('#') and '=' in stripped:
-            key = stripped.split('=', 1)[0].strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            key = stripped.split("=", 1)[0].strip()
             if key in env_vars:
                 new_lines.append(f"{key}={env_vars[key]}\n")
                 updated_keys.add(key)
@@ -190,7 +187,7 @@ def save_env_file(env_vars: Dict[str, str]):
             new_lines.append(f"{key}={value}\n")
 
     # Write back
-    with open(env_path, 'w') as f:
+    with open(env_path, "w") as f:
         f.writelines(new_lines)
 
     print(f"\nCredentials saved to: {env_path}")
@@ -223,7 +220,7 @@ def test_provider(provider_name: str, stream) -> Dict[str, Any]:
             start=start.strftime("%Y-%m-%d"),
             end=end.strftime("%Y-%m-%d"),
             interval="1d",
-            provider=provider_name
+            provider=provider_name,
         )
 
         if df is not None and len(df) > 0:
@@ -240,9 +237,9 @@ def test_provider(provider_name: str, stream) -> Dict[str, Any]:
 
 def test_all_providers(env_vars: Dict[str, str]) -> List[Dict[str, Any]]:
     """Test all configured providers."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TESTING PROVIDERS")
-    print("="*60)
+    print("=" * 60)
 
     # Set environment variables
     for key, value in env_vars.items():
@@ -272,13 +269,15 @@ def test_all_providers(env_vars: Dict[str, str]) -> List[Dict[str, Any]]:
             env_var = info.get("env_vars", [])[0] if info.get("env_vars") else None
             if env_var and not env_vars.get(env_var):
                 print("SKIPPED (no API key)")
-                results.append({
-                    "provider": provider_name,
-                    "name": info["name"],
-                    "success": False,
-                    "error": "No API key configured",
-                    "rows": 0,
-                })
+                results.append(
+                    {
+                        "provider": provider_name,
+                        "name": info["name"],
+                        "success": False,
+                        "error": "No API key configured",
+                        "rows": 0,
+                    }
+                )
                 continue
 
         result = test_provider(provider_name, stream)
@@ -294,9 +293,9 @@ def test_all_providers(env_vars: Dict[str, str]) -> List[Dict[str, Any]]:
 
 def print_summary(results: List[Dict[str, Any]]):
     """Print test summary."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("PROVIDER STATUS SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     working = [r for r in results if r["success"]]
     failed = [r for r in results if not r["success"]]
@@ -318,9 +317,9 @@ def print_summary(results: List[Dict[str, Any]]):
 
 def interactive_setup():
     """Interactive setup wizard."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("WRDATA PROVIDER SETUP WIZARD")
-    print("="*60)
+    print("=" * 60)
     print("\nThis will help you configure API keys for data providers.")
     print("Most providers offer FREE API keys with generous limits.\n")
 
@@ -330,21 +329,23 @@ def interactive_setup():
 
     # Group providers
     no_key_providers = {k: v for k, v in PROVIDERS.items() if not v.get("requires_key")}
-    free_key_providers = {k: v for k, v in PROVIDERS.items()
-                         if v.get("requires_key") and "signup_url" in v
-                         and k not in ["alpaca"]}
+    free_key_providers = {
+        k: v
+        for k, v in PROVIDERS.items()
+        if v.get("requires_key") and "signup_url" in v and k not in ["alpaca"]
+    }
     broker_providers = {k: v for k, v in PROVIDERS.items() if k == "alpaca"}
 
-    print("="*60)
+    print("=" * 60)
     print("STEP 1: Testing No-Key Providers")
-    print("="*60)
+    print("=" * 60)
     print(f"\n{len(no_key_providers)} providers work without any API key:")
     for name, info in no_key_providers.items():
         print(f"  - {info['name']}: {info['description']}")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 2: Free API Key Providers")
-    print("="*60)
+    print("=" * 60)
     print("\nThe following providers need FREE API keys:")
 
     for provider_name, info in free_key_providers.items():
@@ -358,7 +359,7 @@ def interactive_setup():
         if current_value:
             print(f"Current key: {current_value[:8]}...{current_value[-4:]}")
             update = input("Update this key? (y/N): ").strip().lower()
-            if update != 'y':
+            if update != "y":
                 continue
 
         if env_var:
@@ -366,9 +367,9 @@ def interactive_setup():
             if new_key:
                 env_vars[env_var] = new_key
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 3: Broker Providers (Optional)")
-    print("="*60)
+    print("=" * 60)
 
     for provider_name, info in broker_providers.items():
         print(f"\n--- {info['name']} ---")
@@ -376,7 +377,7 @@ def interactive_setup():
         print(f"Sign up: {info.get('signup_url', 'N/A')}")
 
         setup = input(f"Set up {info['name']}? (y/N): ").strip().lower()
-        if setup == 'y':
+        if setup == "y":
             for env_var in info.get("env_vars", []):
                 current = env_vars.get(env_var, "")
                 if current:
@@ -386,21 +387,21 @@ def interactive_setup():
                     env_vars[env_var] = new_val
 
     # Save credentials
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 4: Save Configuration")
-    print("="*60)
+    print("=" * 60)
 
     save = input("\nSave credentials to .env file? (Y/n): ").strip().lower()
-    if save != 'n':
+    if save != "n":
         save_env_file(env_vars)
 
     # Test all providers
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 5: Testing All Providers")
-    print("="*60)
+    print("=" * 60)
 
     test = input("\nTest all providers now? (Y/n): ").strip().lower()
-    if test != 'n':
+    if test != "n":
         results = test_all_providers(env_vars)
         working, failed = print_summary(results)
 
@@ -413,9 +414,9 @@ def interactive_setup():
 
 def quick_test():
     """Quick test without interactive setup."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("WRDATA QUICK PROVIDER TEST")
-    print("="*60)
+    print("=" * 60)
 
     env_vars = load_existing_env()
     results = test_all_providers(env_vars)

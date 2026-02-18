@@ -12,6 +12,7 @@ from wrdata.providers.coinbase_provider import CoinbaseProvider
 from datetime import datetime, timedelta
 import polars as pl
 
+
 def test_symbol(stream, symbol, start_date, end_date, interval="1m"):
     """
     Test if a symbol has available data.
@@ -26,7 +27,7 @@ def test_symbol(stream, symbol, start_date, end_date, interval="1m"):
             end=end_date,
             interval=interval,
             asset_type="crypto",
-            provider="coinbase"
+            provider="coinbase",
         )
 
         if df.is_empty():
@@ -52,17 +53,27 @@ def main():
 
     # Filter for USDC pairs (more stable/liquid than some USD pairs)
     usdc_pairs = [
-        p['id'] for p in products
-        if p['id'].endswith('-USDC')
-        and p.get('status') == 'online'
-        and p.get('trading_disabled') == False
+        p["id"]
+        for p in products
+        if p["id"].endswith("-USDC")
+        and p.get("status") == "online"
+        and p.get("trading_disabled") == False
     ]
 
     # Also get major USD pairs
     usd_pairs = [
-        'BTC-USD', 'ETH-USD', 'SOL-USD', 'USDC-USD',
-        'AVAX-USD', 'MATIC-USD', 'LINK-USD', 'DOGE-USD',
-        'XRP-USD', 'ADA-USD', 'DOT-USD', 'ATOM-USD'
+        "BTC-USD",
+        "ETH-USD",
+        "SOL-USD",
+        "USDC-USD",
+        "AVAX-USD",
+        "MATIC-USD",
+        "LINK-USD",
+        "DOGE-USD",
+        "XRP-USD",
+        "ADA-USD",
+        "DOT-USD",
+        "ATOM-USD",
     ]
 
     # Combine and deduplicate
@@ -80,7 +91,7 @@ def main():
     start_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
     print(f"\nDate range: {start_date} to {end_date} ({days_back} days)")
-    print(f"Interval: 1-minute bars")
+    print("Interval: 1-minute bars")
     print("\n" + "=" * 80)
     print("Testing symbols (this may take a few minutes)...")
     print("=" * 80)
@@ -111,7 +122,9 @@ def main():
         print("\n✅ Successfully fetched data for:")
         print("-" * 80)
         for symbol, df in successful.items():
-            print(f"  {symbol:20} - {len(df):,} rows ({df['timestamp'].min()} to {df['timestamp'].max()})")
+            print(
+                f"  {symbol:20} - {len(df):,} rows ({df['timestamp'].min()} to {df['timestamp'].max()})"
+            )
 
         # Calculate some basic stats
         print("\n" + "=" * 80)
@@ -127,7 +140,9 @@ def main():
 
         # Show correlation potential
         if len(successful) >= 2:
-            print(f"\n✅ You have {len(successful)} symbols with data - enough for correlation analysis!")
+            print(
+                f"\n✅ You have {len(successful)} symbols with data - enough for correlation analysis!"
+            )
             print("\nNext steps:")
             print("  1. Calculate returns for each symbol")
             print("  2. Compute rolling correlation matrix")

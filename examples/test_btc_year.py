@@ -18,17 +18,13 @@ print("=" * 80)
 print("Testing BTC-USD: 1 Year of 1-Minute Data")
 print("=" * 80)
 print(f"Date range: {start_date} to {end_date} (365 days)")
-print(f"Interval: 1-minute bars")
-print(f"Expected rows: ~525,600 (365 × 1440 minutes/day)")
+print("Interval: 1-minute bars")
+print("Expected rows: ~525,600 (365 × 1440 minutes/day)")
 print()
 
 # Fetch data
 df = stream.get(
-    symbol='BTC-USD',
-    start=start_date,
-    end=end_date,
-    interval="1m",
-    asset_type="crypto"
+    symbol="BTC-USD", start=start_date, end=end_date, interval="1m", asset_type="crypto"
 )
 
 print("\n" + "=" * 80)
@@ -36,7 +32,7 @@ print("Results:")
 print("=" * 80)
 
 if not df.is_empty():
-    print(f"✅ Success!")
+    print("✅ Success!")
     print(f"   Rows fetched: {len(df):,}")
     print(f"   Coverage: {(len(df) / 525600) * 100:.1f}%")
     print(f"   Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")

@@ -27,7 +27,7 @@ def test_fred_provider():
         return
 
     # Create provider
-    print(f"\n✓ FRED API key found")
+    print("\n✓ FRED API key found")
     provider = FREDProvider(api_key=api_key)
 
     # Test connection

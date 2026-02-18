@@ -5,7 +5,6 @@ Uses ccxt library for unified exchange interface.
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
-from decimal import Decimal
 import ccxt
 
 from wrdata.providers.base import BaseProvider

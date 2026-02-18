@@ -24,7 +24,6 @@ to allow both to connect simultaneously.
 import asyncio
 import sys
 import os
-from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -203,8 +202,8 @@ async def test_multi_symbol_stream():
         # Wait for all to complete
         await asyncio.gather(*tasks)
 
-        print(f"\n✓ Multi-symbol streaming complete")
-        print(f"  Messages received:")
+        print("\n✓ Multi-symbol streaming complete")
+        print("  Messages received:")
         for symbol, count in message_counts.items():
             print(f"    {symbol}: {count}")
 

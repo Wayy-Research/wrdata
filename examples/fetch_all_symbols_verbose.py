@@ -8,7 +8,10 @@ from wrdata import DataStream
 from datetime import datetime, timedelta
 import polars as pl
 
-def fetch_with_provider_info(stream, symbol, start_date, end_date, interval="1m", asset_type="crypto"):
+
+def fetch_with_provider_info(
+    stream, symbol, start_date, end_date, interval="1m", asset_type="crypto"
+):
     """
     Fetch data and track which provider succeeded.
 
@@ -17,9 +20,15 @@ def fetch_with_provider_info(stream, symbol, start_date, end_date, interval="1m"
     """
     # Manually try each provider to see which one works
     providers_to_try = [
-        'coinbase', 'yfinance', 'kraken', 'coingecko',
-        'ccxt_bybit', 'ccxt_okx', 'ccxt_kucoin',
-        'ccxt_gateio', 'ccxt_bitfinex'
+        "coinbase",
+        "yfinance",
+        "kraken",
+        "coingecko",
+        "ccxt_bybit",
+        "ccxt_okx",
+        "ccxt_kucoin",
+        "ccxt_gateio",
+        "ccxt_bitfinex",
     ]
 
     for provider_name in providers_to_try:
@@ -30,13 +39,13 @@ def fetch_with_provider_info(stream, symbol, start_date, end_date, interval="1m"
                 end=end_date,
                 interval=interval,
                 asset_type=asset_type,
-                provider=provider_name
+                provider=provider_name,
             )
 
             if not df.is_empty():
                 return (df, provider_name, None)
 
-        except Exception as e:
+        except Exception:
             continue
 
     # All providers failed
@@ -48,11 +57,27 @@ def main():
 
     # Your list of symbols
     symbols = [
-        'ALCX-USD', 'BARD-USD', 'ATOM-USD', 'CVX-USD', 'SKY-USD',
-        'EDGE-USD', 'AVAX-USD', 'ZORA-USD', 'KSM-USD', 'COOKIE-USD',
-        'CRV-USD', 'AERGO-USD', 'ACX-USD', 'ALLO-USD', 'YFI-USD',
-        'FARM-USD', 'LOKA-USD', 'AST-USD', 'T-USD', 'CAKE-USD',
-        'PENGU-USD'
+        "ALCX-USD",
+        "BARD-USD",
+        "ATOM-USD",
+        "CVX-USD",
+        "SKY-USD",
+        "EDGE-USD",
+        "AVAX-USD",
+        "ZORA-USD",
+        "KSM-USD",
+        "COOKIE-USD",
+        "CRV-USD",
+        "AERGO-USD",
+        "ACX-USD",
+        "ALLO-USD",
+        "YFI-USD",
+        "FARM-USD",
+        "LOKA-USD",
+        "AST-USD",
+        "T-USD",
+        "CAKE-USD",
+        "PENGU-USD",
     ]
 
     # Use shorter time range for 1-minute data
@@ -64,7 +89,7 @@ def main():
     print(f"Fetching {len(symbols)} symbols with provider tracking")
     print("=" * 80)
     print(f"Date range: {start_date} to {end_date} ({days_back} days)")
-    print(f"Interval: 1-minute bars")
+    print("Interval: 1-minute bars")
     print("\nTesting each symbol across all providers...\n")
 
     results = {}
@@ -82,7 +107,7 @@ def main():
             provider_stats[symbol] = provider
             print(f"✅ {provider:15} - {len(df):,} rows")
         else:
-            print(f"❌ No data")
+            print("❌ No data")
 
     print("\n" + "=" * 80)
     print(f"Results: {len(results)}/{len(symbols)} symbols found")
@@ -96,7 +121,9 @@ def main():
         for provider in provider_stats.values():
             provider_counts[provider] = provider_counts.get(provider, 0) + 1
 
-        for provider, count in sorted(provider_counts.items(), key=lambda x: x[1], reverse=True):
+        for provider, count in sorted(
+            provider_counts.items(), key=lambda x: x[1], reverse=True
+        ):
             print(f"  {provider:20} - {count} symbols")
 
         # Create combined DataFrame
@@ -106,7 +133,7 @@ def main():
 
         combined_dfs = []
         # Ensure all DataFrames have the same columns and types
-        standard_cols = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        standard_cols = ["timestamp", "open", "high", "low", "close", "volume"]
 
         for symbol, df in results.items():
             # Select only standard columns (skip metadata)
@@ -114,7 +141,7 @@ def main():
             df_normalized = df.select(available_cols)
 
             # Cast numeric columns to float64 for consistency
-            numeric_cols = ['open', 'high', 'low', 'close', 'volume']
+            numeric_cols = ["open", "high", "low", "close", "volume"]
             for col in numeric_cols:
                 if col in df_normalized.columns:
                     df_normalized = df_normalized.with_columns(
@@ -122,19 +149,17 @@ def main():
                     )
 
             # Add symbol column
-            df_with_symbol = df_normalized.with_columns(
-                pl.lit(symbol).alias('symbol')
-            )
+            df_with_symbol = df_normalized.with_columns(pl.lit(symbol).alias("symbol"))
             combined_dfs.append(df_with_symbol)
 
-        combined = pl.concat(combined_dfs, how='vertical')
+        combined = pl.concat(combined_dfs, how="vertical")
 
-        if 'timestamp' in combined.columns:
-            combined = combined.sort(['symbol', 'timestamp'])
+        if "timestamp" in combined.columns:
+            combined = combined.sort(["symbol", "timestamp"])
         else:
-            combined = combined.sort('symbol')
+            combined = combined.sort("symbol")
 
-        print(f"\n✅ Combined DataFrame created!")
+        print("\n✅ Combined DataFrame created!")
         print(f"   Total rows: {len(combined):,}")
         print(f"   Symbols: {combined['symbol'].n_unique()}")
         print(f"   Columns: {', '.join(combined.columns)}")
@@ -147,12 +172,18 @@ def main():
         print("\n" + "=" * 80)
         print("Summary by Symbol:")
         print("=" * 80)
-        summary = combined.group_by('symbol').agg([
-            pl.count().alias('rows'),
-            pl.col('close').mean().alias('avg_price'),
-            pl.col('timestamp').min().alias('start'),
-            pl.col('timestamp').max().alias('end')
-        ]).sort('symbol')
+        summary = (
+            combined.group_by("symbol")
+            .agg(
+                [
+                    pl.count().alias("rows"),
+                    pl.col("close").mean().alias("avg_price"),
+                    pl.col("timestamp").min().alias("start"),
+                    pl.col("timestamp").max().alias("end"),
+                ]
+            )
+            .sort("symbol")
+        )
         print(summary)
 
         return combined, list(results.keys()), provider_stats

@@ -2,7 +2,7 @@
 YFinance provider for fetching stock and options data.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from datetime import datetime, date
 from decimal import Decimal
 import math
@@ -15,8 +15,6 @@ from wrdata.models.schemas import (
     OptionsChainResponse,
     OptionsChainData,
     OptionsGreeks,
-    OptionsTimeseriesRequest,
-    OptionsTimeseriesResponse,
 )
 
 

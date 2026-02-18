@@ -12,7 +12,7 @@ API Docs: https://finnhub.io/docs/api
 
 import requests
 from typing import Optional, List
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 import time
 from wrdata.providers.base import BaseProvider
 from wrdata.models.schemas import (

@@ -2,7 +2,6 @@
 Quick test script to verify options chain functionality works.
 """
 
-from datetime import datetime
 from wrdata.utils.db_utils import get_session
 from wrdata.services.options_fetcher import OptionsFetcher
 from wrdata.models.schemas import OptionsChainRequest
@@ -49,7 +48,7 @@ if expirations:
     response = fetcher.fetch_and_store_options_chain(request)
 
     if response.success:
-        print(f"✓ Successfully fetched and stored options chain!")
+        print("✓ Successfully fetched and stored options chain!")
         print(f"  Snapshot time: {response.snapshot_timestamp}")
         print(f"  Underlying price: ${response.underlying_price}")
         print(f"  Number of calls: {len(response.calls)}")

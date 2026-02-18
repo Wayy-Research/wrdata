@@ -119,7 +119,7 @@ def test_market_data():
         data = provider.get_market_data(symbol)
 
         if data:
-            print(f"✓ Market data retrieved:")
+            print("✓ Market data retrieved:")
             print(f"  Symbol: {data.get('symbol')}")
             print(f"  Last: ${data.get('last')}")
             print(f"  Bid: ${data.get('bid')} x {data.get('bid_size')}")

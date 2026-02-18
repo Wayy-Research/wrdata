@@ -58,7 +58,9 @@ def test_ibkr_connection(host: str, port: int):
 def main():
     parser = argparse.ArgumentParser(description="Test IB Gateway Docker connection")
     parser.add_argument("--host", default="localhost", help="IB Gateway host")
-    parser.add_argument("--port", type=int, default=4002, help="IB Gateway port (4002=paper, 4001=live)")
+    parser.add_argument(
+        "--port", type=int, default=4002, help="IB Gateway port (4002=paper, 4001=live)"
+    )
     args = parser.parse_args()
 
     print("=" * 60)

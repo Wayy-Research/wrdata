@@ -67,7 +67,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
                 welcome[0].get("T") == "success"
                 and welcome[0].get("msg") == "connected"
             ):
-                print(f"✓ Connected to Alpaca WebSocket")
+                print("✓ Connected to Alpaca WebSocket")
 
             # Authenticate
             auth_msg = {
@@ -83,7 +83,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
                 auth_response[0].get("T") == "success"
                 and auth_response[0].get("msg") == "authenticated"
             ):
-                print(f"✓ Authenticated with Alpaca")
+                print("✓ Authenticated with Alpaca")
                 self._connected = True
                 self._authenticated = True
                 self._reconnect_attempts = 0

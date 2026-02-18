@@ -14,6 +14,7 @@ import polars as pl
 import numpy as np
 from datetime import datetime, timedelta
 
+
 def main():
     # Initialize stream
     stream = DataStream()
@@ -24,10 +25,11 @@ def main():
 
     # Filter for USD pairs that are actively trading
     usd_pairs = [
-        p['id'] for p in products
-        if p['id'].endswith('-USDC')
-        and p.get('status') == 'online'
-        and p.get('trading_disabled') == False
+        p["id"]
+        for p in products
+        if p["id"].endswith("-USDC")
+        and p.get("status") == "online"
+        and p.get("trading_disabled") == False
     ]
 
     print(f"Found {len(usd_pairs)} active USD trading pairs on Coinbase")
@@ -36,8 +38,16 @@ def main():
     # For this example, let's use a subset of major coins
     # (fetching all pairs would take a while)
     major_pairs = [
-        'BTC-USD', 'ETH-USD', 'SOL-USD', 'ADA-USD', 'XRP-USD',
-        'DOGE-USD', 'MATIC-USD', 'LINK-USD', 'AVAX-USD', 'DOT-USD'
+        "BTC-USD",
+        "ETH-USD",
+        "SOL-USD",
+        "ADA-USD",
+        "XRP-USD",
+        "DOGE-USD",
+        "MATIC-USD",
+        "LINK-USD",
+        "AVAX-USD",
+        "DOT-USD",
     ]
 
     # Calculate date range (past year)
@@ -46,7 +56,9 @@ def main():
 
     print(f"\nFetching 1-minute data from {start_date} to {end_date}")
     print(f"Pairs to fetch: {major_pairs}")
-    print("\nNote: Coinbase API may have data limits for 1-minute bars over long periods.")
+    print(
+        "\nNote: Coinbase API may have data limits for 1-minute bars over long periods."
+    )
     print("If you get empty results, try a shorter time range (e.g., 7-30 days)\n")
 
     # Fetch 1-minute data from Coinbase
@@ -56,7 +68,7 @@ def main():
         end=end_date,
         interval="1m",
         asset_type="crypto",
-        provider="coinbase"
+        provider="coinbase",
     )
 
     # Check results
@@ -66,7 +78,9 @@ def main():
         if df.is_empty():
             print(f"{symbol:15} - No data")
         else:
-            print(f"{symbol:15} - {len(df):,} rows, {df['timestamp'].min()} to {df['timestamp'].max()}")
+            print(
+                f"{symbol:15} - {len(df):,} rows, {df['timestamp'].min()} to {df['timestamp'].max()}"
+            )
 
     # Filter out empty DataFrames
     valid_data = {k: v for k, v in data.items() if not v.is_empty()}
@@ -83,18 +97,22 @@ def main():
 
     for symbol, df in valid_data.items():
         # Sort by timestamp and calculate log returns
-        df = df.sort('timestamp')
-        df = df.with_columns([
-            (pl.col('close').log() - pl.col('close').log().shift(1)).alias('log_return')
-        ])
-        returns_data[symbol] = df.select(['timestamp', 'log_return']).drop_nulls()
+        df = df.sort("timestamp")
+        df = df.with_columns(
+            [
+                (pl.col("close").log() - pl.col("close").log().shift(1)).alias(
+                    "log_return"
+                )
+            ]
+        )
+        returns_data[symbol] = df.select(["timestamp", "log_return"]).drop_nulls()
 
     # Align all timestamps (find common timestamps across all pairs)
     # This is a simple approach - for production you might want to resample to common intervals
     print("\nAligning timestamps across pairs...")
 
     # Get common timestamps
-    timestamp_sets = [set(df['timestamp'].to_list()) for df in returns_data.values()]
+    timestamp_sets = [set(df["timestamp"].to_list()) for df in returns_data.values()]
     common_timestamps = set.intersection(*timestamp_sets)
 
     print(f"Found {len(common_timestamps)} common timestamps across all pairs")
@@ -111,8 +129,10 @@ def main():
     combined_returns = {}
     for symbol, df in returns_data.items():
         # Filter to common timestamps
-        df_filtered = df.filter(pl.col('timestamp').is_in(sorted(common_timestamps)))
-        combined_returns[symbol] = df_filtered.sort('timestamp')['log_return'].to_numpy()
+        df_filtered = df.filter(pl.col("timestamp").is_in(sorted(common_timestamps)))
+        combined_returns[symbol] = df_filtered.sort("timestamp")[
+            "log_return"
+        ].to_numpy()
 
     # Calculate correlation matrix
     symbols = list(combined_returns.keys())
@@ -128,7 +148,9 @@ def main():
     returns_matrix = np.array([combined_returns[s] for s in symbols])
 
     if returns_matrix.shape[1] < window:
-        print(f"Not enough data for the rolling window. Need {window}, have {returns_matrix.shape[1]}")
+        print(
+            f"Not enough data for the rolling window. Need {window}, have {returns_matrix.shape[1]}"
+        )
         return
 
     # Get the most recent window
@@ -141,12 +163,14 @@ def main():
     print("-" * 80)
 
     # Print correlation matrix
-    header = "Symbol".ljust(15) + "".join([s.replace('-USD', '').ljust(8) for s in symbols])
+    header = "Symbol".ljust(15) + "".join(
+        [s.replace("-USD", "").ljust(8) for s in symbols]
+    )
     print(header)
     print("-" * 80)
 
     for i, symbol in enumerate(symbols):
-        row = symbol.replace('-USD', '').ljust(15)
+        row = symbol.replace("-USD", "").ljust(15)
         for j in range(n_symbols):
             row += f"{corr_matrix[i, j]:7.2f} "
         print(row)
@@ -173,7 +197,7 @@ def main():
 
     corr_pairs = []
     for i in range(n_symbols):
-        for j in range(i+1, n_symbols):
+        for j in range(i + 1, n_symbols):
             corr_pairs.append((symbols[i], symbols[j], corr_matrix[i, j]))
 
     corr_pairs.sort(key=lambda x: x[2], reverse=True)
@@ -190,6 +214,7 @@ def main():
     print("\nTo save this data, you can export the DataFrames:")
     print("  df.write_csv('btc_1m.csv')")
     print("  df.write_parquet('btc_1m.parquet')")
+
 
 if __name__ == "__main__":
     main()

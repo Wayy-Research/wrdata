@@ -40,7 +40,7 @@ def test_stock_data():
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=30)
 
-    print(f"\n📊 Testing Tiingo stock data for AAPL...")
+    print("\n📊 Testing Tiingo stock data for AAPL...")
     response = provider.fetch_timeseries(
         symbol="AAPL",
         start_date=start_date.strftime("%Y-%m-%d"),

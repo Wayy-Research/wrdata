@@ -54,7 +54,7 @@ async def stream_eth_candles():
     max_candles = 3
 
     async for candle in stream.stream("ETHUSDT", stream_type="kline", interval="1m"):
-        print(f"  ETH Candle:")
+        print("  ETH Candle:")
         print(f"    Open:  ${candle.open:.2f}")
         print(f"    High:  ${candle.high:.2f}")
         print(f"    Low:   ${candle.low:.2f}")
@@ -133,7 +133,7 @@ async def stream_multiple_symbols():
 
     def on_tick(msg):
         prices[msg.symbol] = msg.price
-        print(f"  Prices: ", end="")
+        print("  Prices: ", end="")
         for sym, price in prices.items():
             if price:
                 print(f"{sym}=${price:.2f}  ", end="")
@@ -142,9 +142,7 @@ async def stream_multiple_symbols():
     print(f"\nStreaming {len(symbols)} symbols...")
 
     # Stream all symbols
-    task = asyncio.create_task(
-        stream.stream_many(symbols, callback=on_tick)
-    )
+    task = asyncio.create_task(stream.stream_many(symbols, callback=on_tick))
 
     # Let it run for 5 seconds
     await asyncio.sleep(5)
@@ -178,30 +176,30 @@ async def aggregate_trades():
 
     # Track statistics
     stats = {
-        'count': 0,
-        'total_volume': 0,
-        'min_price': float('inf'),
-        'max_price': 0,
-        'prices': []
+        "count": 0,
+        "total_volume": 0,
+        "min_price": float("inf"),
+        "max_price": 0,
+        "prices": [],
     }
 
     async for tick in stream.stream("BTCUSDT", stream_type="ticker"):
-        stats['count'] += 1
-        stats['total_volume'] += tick.volume or 0
-        stats['min_price'] = min(stats['min_price'], tick.price)
-        stats['max_price'] = max(stats['max_price'], tick.price)
-        stats['prices'].append(tick.price)
+        stats["count"] += 1
+        stats["total_volume"] += tick.volume or 0
+        stats["min_price"] = min(stats["min_price"], tick.price)
+        stats["max_price"] = max(stats["max_price"], tick.price)
+        stats["prices"].append(tick.price)
 
         # Print stats every 10 ticks
-        if stats['count'] % 10 == 0:
-            avg_price = sum(stats['prices']) / len(stats['prices'])
+        if stats["count"] % 10 == 0:
+            avg_price = sum(stats["prices"]) / len(stats["prices"])
             print(f"\n  Trade Statistics (last {stats['count']} ticks):")
             print(f"    Avg Price:    ${avg_price:.2f}")
             print(f"    Min Price:    ${stats['min_price']:.2f}")
             print(f"    Max Price:    ${stats['max_price']:.2f}")
             print(f"    Total Volume: {stats['total_volume']:.4f} BTC")
 
-        if stats['count'] >= 30:
+        if stats["count"] >= 30:
             break
 
     await stream.disconnect_streams()
@@ -246,7 +244,9 @@ async def momentum_signal():
             else:
                 signal = "⚪ NEUTRAL"
 
-            print(f"  ETH: ${current:.2f} | Momentum: {momentum:+.3f}% | Signal: {signal}")
+            print(
+                f"  ETH: ${current:.2f} | Momentum: {momentum:+.3f}% | Signal: {signal}"
+            )
 
         if len(prices) >= 50:  # Stop after 50 ticks
             break

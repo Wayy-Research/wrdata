@@ -55,7 +55,7 @@ class PolygonStreamProvider(BaseStreamProvider):
             # Connect to stocks WebSocket
             self.websocket = await self.session.ws_connect(self.ws_url)
 
-            print(f"✓ Connected to Polygon.io WebSocket")
+            print("✓ Connected to Polygon.io WebSocket")
 
             # Authenticate
             auth_message = {"action": "auth", "params": self.api_key}

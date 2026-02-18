@@ -15,7 +15,7 @@ Usage:
 """
 
 import time
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 from wrdata.providers.base import BaseProvider
 from wrdata.providers.dexscreener_provider import DexScreenerProvider

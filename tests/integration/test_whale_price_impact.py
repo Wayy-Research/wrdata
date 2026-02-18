@@ -9,11 +9,8 @@ Tests:
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timedelta
-from decimal import Decimal
 import pandas as pd
-import numpy as np
 from typing import List, Dict, Any
 import os
 
@@ -122,7 +119,7 @@ class WhalePriceImpactAnalyzer:
         Returns:
             Dictionary with analysis results
         """
-        print(f"\n🔍 Analyzing price impact of whale transactions")
+        print("\n🔍 Analyzing price impact of whale transactions")
         print(f"   Analysis window: -{window_before}m to +{window_after}m")
 
         results = []
@@ -305,7 +302,7 @@ class WhalePriceImpactAnalyzer:
         print("🐋 WHALE TRANSACTION PRICE IMPACT ANALYSIS REPORT")
         print("=" * 80)
 
-        print(f"\n📊 Overall Statistics:")
+        print("\n📊 Overall Statistics:")
         print(
             f"   Total Whale Transactions Analyzed: {stats['total_whale_transactions']}"
         )
@@ -313,7 +310,7 @@ class WhalePriceImpactAnalyzer:
         print(f"   Median Whale Size: ${stats['median_whale_size_usd']:,.0f}")
         print(f"   Total Whale Volume: ${stats['total_whale_volume_usd']:,.0f}")
 
-        print(f"\n📈 Price Impact:")
+        print("\n📈 Price Impact:")
         print(
             f"   Average Price Change (5m):  {stats['avg_price_change_5m_pct']:+.3f}%"
         )
@@ -327,17 +324,17 @@ class WhalePriceImpactAnalyzer:
             f"   Median Price Change (5m):   {stats['median_price_change_5m_pct']:+.3f}%"
         )
 
-        print(f"\n📊 Directional Impact (5 minutes):")
+        print("\n📊 Directional Impact (5 minutes):")
         print(f"   Positive Impact: {stats['positive_impact_5m_count']} transactions")
         print(f"   Negative Impact: {stats['negative_impact_5m_count']} transactions")
 
-        print(f"\n💹 Market Response:")
+        print("\n💹 Market Response:")
         print(f"   Average Volume Surge: {stats['avg_volume_surge_pct']:+.1f}%")
         print(
             f"   Average Volatility Increase: {stats['avg_volatility_after_pct']:.3f}%"
         )
 
-        print(f"\n🔍 By Transaction Type:")
+        print("\n🔍 By Transaction Type:")
         for tx_type, type_stats in stats["by_transaction_type"].items():
             print(f"   {tx_type.upper()}:")
             print(f"      Count: {type_stats['count']}")
@@ -384,7 +381,7 @@ def test_whale_alert_historical_fetch():
 
     if batch.transactions:
         whale_tx = batch.transactions[0]
-        print(f"\nExample whale transaction:")
+        print("\nExample whale transaction:")
         print(f"  Symbol: {whale_tx.symbol}")
         print(f"  Size: {whale_tx.size}")
         print(f"  USD Value: ${whale_tx.usd_value:,.2f}")

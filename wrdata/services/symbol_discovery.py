@@ -10,11 +10,9 @@ This service provides:
 
 import json
 from typing import Dict, List, Any, Optional, Set
-from datetime import datetime
-from collections import defaultdict
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, or_
 from ..models.database import DataProvider, Symbol
 
 
@@ -130,7 +128,6 @@ class SymbolDiscoveryService:
     def fetch_tradier_symbols(self) -> List[Dict[str, Any]]:
         """Fetch symbols from Tradier - US stocks with options."""
         try:
-            import requests
             import os
 
             api_key = os.getenv("TRADIER_API_KEY")

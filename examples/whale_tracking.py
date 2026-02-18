@@ -6,7 +6,6 @@ Demonstrates how to detect and monitor large volume cryptocurrency transactions
 """
 
 import asyncio
-from datetime import datetime
 from wrdata.streaming.binance_stream import BinanceStreamProvider
 from wrdata.streaming.coinbase_stream import CoinbaseStreamProvider
 
@@ -45,7 +44,9 @@ async def binance_whale_detection():
         print(f"  Size:       {whale_tx.size} BTC")
         print(f"  Price:      ${whale_tx.price:,.2f}")
         print(f"  Value:      ${whale_tx.usd_value:,.2f}")
-        print(f"  Percentile: {whale_tx.percentile:.2f}% (Rank: {whale_tx.volume_rank})")
+        print(
+            f"  Percentile: {whale_tx.percentile:.2f}% (Rank: {whale_tx.volume_rank})"
+        )
         print(f"  Side:       {whale_tx.side}")
         print(f"  Time:       {whale_tx.timestamp}")
         print("-" * 80)
@@ -54,12 +55,12 @@ async def binance_whale_detection():
         symbol="BTCUSDT",
         enable_whale_detection=True,
         percentile_threshold=99.0,  # Top 1%
-        whale_callback=whale_alert
+        whale_callback=whale_alert,
     ):
         total_count += 1
 
         # Print regular trade info (only non-whale trades)
-        if 'whale_metadata' not in (msg.raw_data or {}):
+        if "whale_metadata" not in (msg.raw_data or {}):
             if total_count % 10 == 0:  # Print every 10th trade to avoid spam
                 print(f"Regular trade: {msg.volume:.4f} BTC @ ${msg.price:,.2f}")
 
@@ -68,7 +69,7 @@ async def binance_whale_detection():
 
     await provider.disconnect()
 
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  Total trades processed: {total_count}")
     print(f"  Whale transactions detected: {whale_count}")
     print(f"  Whale percentage: {(whale_count/total_count)*100:.2f}%\n")
@@ -103,19 +104,22 @@ async def multi_symbol_whale_tracking():
     def whale_alert(whale_tx):
         """Callback for whale transactions."""
         whale_counts[whale_tx.symbol] += 1
-        print(f"🐋 {whale_tx.symbol}: {whale_tx.size} @ ${whale_tx.price:,.2f} "
-              f"(${whale_tx.usd_value:,.0f}) - Percentile: {whale_tx.percentile:.1f}%")
+        print(
+            f"🐋 {whale_tx.symbol}: {whale_tx.size} @ ${whale_tx.price:,.2f} "
+            f"(${whale_tx.usd_value:,.0f}) - Percentile: {whale_tx.percentile:.1f}%"
+        )
 
     # Create tasks for each symbol
     tasks = []
     for symbol in symbols:
+
         async def monitor_symbol(sym):
             count = 0
             async for msg in provider.subscribe_aggregate_trades(
                 symbol=sym,
                 enable_whale_detection=True,
                 percentile_threshold=95.0,  # Top 5%
-                whale_callback=whale_alert
+                whale_callback=whale_alert,
             ):
                 count += 1
                 if count >= 50:  # Monitor 50 trades per symbol
@@ -156,7 +160,7 @@ async def coinbase_whale_detection_usd():
 
     min_usd = 100000  # $100k minimum
 
-    print(f"\nMonitoring BTC-USD on Coinbase...")
+    print("\nMonitoring BTC-USD on Coinbase...")
     print(f"Whale criteria: Top 1% AND minimum ${min_usd:,}")
     print("-" * 80)
 
@@ -168,8 +172,8 @@ async def coinbase_whale_detection_usd():
         """Callback for whale transactions."""
         nonlocal whale_count
         whale_count += 1
-        print(f"\n🐋 MAJOR WHALE DETECTED!")
-        print(f"  Exchange:   Coinbase")
+        print("\n🐋 MAJOR WHALE DETECTED!")
+        print("  Exchange:   Coinbase")
         print(f"  Symbol:     {whale_tx.symbol}")
         print(f"  Size:       {whale_tx.size} BTC")
         print(f"  Price:      ${whale_tx.price:,.2f}")
@@ -185,7 +189,7 @@ async def coinbase_whale_detection_usd():
         enable_whale_detection=True,
         percentile_threshold=99.0,  # Top 1%
         min_usd_value=min_usd,  # Minimum $100k
-        whale_callback=whale_alert
+        whale_callback=whale_alert,
     ):
         total_count += 1
 
@@ -197,7 +201,7 @@ async def coinbase_whale_detection_usd():
 
     await provider.disconnect()
 
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  Total trades: {total_count}")
     print(f"  Whale transactions (>{min_usd:,} USD + Top 1%): {whale_count}\n")
 
@@ -223,11 +227,11 @@ async def whale_analytics_dashboard():
 
     # Analytics tracking
     whale_stats = {
-        'total_whales': 0,
-        'total_volume_usd': 0.0,
-        'largest_whale': None,
-        'buy_whales': 0,
-        'sell_whales': 0,
+        "total_whales": 0,
+        "total_volume_usd": 0.0,
+        "largest_whale": None,
+        "buy_whales": 0,
+        "sell_whales": 0,
     }
 
     print("\n📊 Real-time Whale Analytics Dashboard")
@@ -236,30 +240,35 @@ async def whale_analytics_dashboard():
 
     def analyze_whale(whale_tx):
         """Analyze and track whale transaction."""
-        whale_stats['total_whales'] += 1
-        whale_stats['total_volume_usd'] += float(whale_tx.usd_value)
+        whale_stats["total_whales"] += 1
+        whale_stats["total_volume_usd"] += float(whale_tx.usd_value)
 
         # Track largest whale
-        if (whale_stats['largest_whale'] is None or
-            float(whale_tx.usd_value) > float(whale_stats['largest_whale'].usd_value)):
-            whale_stats['largest_whale'] = whale_tx
+        if whale_stats["largest_whale"] is None or float(whale_tx.usd_value) > float(
+            whale_stats["largest_whale"].usd_value
+        ):
+            whale_stats["largest_whale"] = whale_tx
 
         # Track buy/sell
-        if whale_tx.side == 'buy':
-            whale_stats['buy_whales'] += 1
-        elif whale_tx.side == 'sell':
-            whale_stats['sell_whales'] += 1
+        if whale_tx.side == "buy":
+            whale_stats["buy_whales"] += 1
+        elif whale_tx.side == "sell":
+            whale_stats["sell_whales"] += 1
 
         # Print update every 5 whales
-        if whale_stats['total_whales'] % 5 == 0:
-            print(f"\n📈 Dashboard Update (After {whale_stats['total_whales']} whales):")
+        if whale_stats["total_whales"] % 5 == 0:
+            print(
+                f"\n📈 Dashboard Update (After {whale_stats['total_whales']} whales):"
+            )
             print(f"  Total Whale Volume: ${whale_stats['total_volume_usd']:,.0f}")
             print(f"  Buy Whales:  {whale_stats['buy_whales']}")
             print(f"  Sell Whales: {whale_stats['sell_whales']}")
-            if whale_stats['largest_whale']:
-                lw = whale_stats['largest_whale']
-                print(f"  Largest Whale: {lw.size} ETH @ ${lw.price:,.2f} "
-                      f"(${lw.usd_value:,.0f})")
+            if whale_stats["largest_whale"]:
+                lw = whale_stats["largest_whale"]
+                print(
+                    f"  Largest Whale: {lw.size} ETH @ ${lw.price:,.2f} "
+                    f"(${lw.usd_value:,.0f})"
+                )
             print("-" * 80)
 
     count = 0
@@ -267,7 +276,7 @@ async def whale_analytics_dashboard():
         symbol="ETHUSDT",
         enable_whale_detection=True,
         percentile_threshold=98.0,  # Top 2%
-        whale_callback=analyze_whale
+        whale_callback=analyze_whale,
     ):
         count += 1
         if count >= 200:  # Process 200 trades
@@ -281,13 +290,19 @@ async def whale_analytics_dashboard():
     print("=" * 80)
     print(f"Total Whale Transactions: {whale_stats['total_whales']}")
     print(f"Total Whale Volume: ${whale_stats['total_volume_usd']:,.2f}")
-    print(f"Average Whale Size: ${whale_stats['total_volume_usd']/max(whale_stats['total_whales'], 1):,.2f}")
-    print(f"Buy Whales: {whale_stats['buy_whales']} ({whale_stats['buy_whales']/max(whale_stats['total_whales'], 1)*100:.1f}%)")
-    print(f"Sell Whales: {whale_stats['sell_whales']} ({whale_stats['sell_whales']/max(whale_stats['total_whales'], 1)*100:.1f}%)")
+    print(
+        f"Average Whale Size: ${whale_stats['total_volume_usd']/max(whale_stats['total_whales'], 1):,.2f}"
+    )
+    print(
+        f"Buy Whales: {whale_stats['buy_whales']} ({whale_stats['buy_whales']/max(whale_stats['total_whales'], 1)*100:.1f}%)"
+    )
+    print(
+        f"Sell Whales: {whale_stats['sell_whales']} ({whale_stats['sell_whales']/max(whale_stats['total_whales'], 1)*100:.1f}%)"
+    )
 
-    if whale_stats['largest_whale']:
-        lw = whale_stats['largest_whale']
-        print(f"\n🏆 Largest Whale Transaction:")
+    if whale_stats["largest_whale"]:
+        lw = whale_stats["largest_whale"]
+        print("\n🏆 Largest Whale Transaction:")
         print(f"  Size:  {lw.size} ETH")
         print(f"  Price: ${lw.price:,.2f}")
         print(f"  Value: ${lw.usd_value:,.2f}")
@@ -317,9 +332,9 @@ async def compare_thresholds():
     await provider.connect()
 
     thresholds = {
-        'Ultra Whales (Top 0.1%)': 99.9,
-        'Major Whales (Top 1%)': 99.0,
-        'Minor Whales (Top 5%)': 95.0,
+        "Ultra Whales (Top 0.1%)": 99.9,
+        "Major Whales (Top 1%)": 99.0,
+        "Minor Whales (Top 5%)": 95.0,
     }
 
     print("\nComparing whale detection thresholds on BTCUSDT...")
@@ -339,14 +354,16 @@ async def compare_thresholds():
             symbol="BTCUSDT",
             enable_whale_detection=True,
             percentile_threshold=threshold,
-            whale_callback=track_whale
+            whale_callback=track_whale,
         ):
             total_count += 1
             if total_count >= 100:
                 break
 
         print(f"{label} (≥{threshold}th percentile):")
-        print(f"  Whale count: {whale_count}/{total_count} trades ({whale_count/total_count*100:.2f}%)")
+        print(
+            f"  Whale count: {whale_count}/{total_count} trades ({whale_count/total_count*100:.2f}%)"
+        )
         print(f"  Total value: ${total_whale_value:,.0f}")
         print(f"  Avg per whale: ${total_whale_value/max(whale_count, 1):,.0f}\n")
 

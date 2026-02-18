@@ -49,7 +49,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
             self.websocket = await self.session.ws_connect(self.ws_url)
             self._connected = True
             self._reconnect_attempts = 0
-            print(f"✓ Connected to Finnhub WebSocket")
+            print("✓ Connected to Finnhub WebSocket")
             return True
 
         except Exception as e:

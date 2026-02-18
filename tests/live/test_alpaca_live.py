@@ -34,7 +34,7 @@ def test_alpaca_provider():
         return
 
     # Create provider (use paper trading)
-    print(f"\n✓ Alpaca API keys found")
+    print("\n✓ Alpaca API keys found")
     provider = AlpacaProvider(api_key=api_key, api_secret=api_secret, paper=True)
 
     # Test connection
@@ -72,7 +72,7 @@ def test_alpaca_provider():
     print("\n✓ Fetching latest quote for AAPL...")
     quote = provider.get_latest_quote("AAPL")
     if quote:
-        print(f"  ✓ AAPL quote:")
+        print("  ✓ AAPL quote:")
         print(f"    Bid: ${quote.get('bp', 'N/A')} x {quote.get('bs', 'N/A')}")
         print(f"    Ask: ${quote.get('ap', 'N/A')} x {quote.get('as', 'N/A')}")
         print(f"    Time: {quote.get('t', 'N/A')}")

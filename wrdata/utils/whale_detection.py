@@ -6,8 +6,7 @@ Implements percentile-based detection algorithms for real-time whale transaction
 
 from collections import deque
 from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Optional, Dict, List, Tuple, Deque
+from typing import Optional, Dict, Tuple, Deque
 import numpy as np
 from threading import Lock
 

@@ -113,7 +113,7 @@ def test_previous_close():
         data = provider.get_previous_close(symbol)
 
         if data:
-            print(f"✓ Previous close data retrieved:")
+            print("✓ Previous close data retrieved:")
             print(f"  Symbol: {data.get('symbol')}")
             print(f"  Open: ${data.get('open')}")
             print(f"  High: ${data.get('high')}")
@@ -145,7 +145,7 @@ def test_ticker_details():
         data = provider.get_ticker_details(symbol)
 
         if data:
-            print(f"✓ Ticker details retrieved:")
+            print("✓ Ticker details retrieved:")
             print(f"  Symbol: {data.get('symbol')}")
             print(f"  Name: {data.get('name')}")
             print(f"  Market: {data.get('market')}")
@@ -184,17 +184,17 @@ def test_market_status():
         data = provider.get_market_status()
 
         if data:
-            print(f"✓ Market status retrieved:")
+            print("✓ Market status retrieved:")
             print(f"  Market: {data.get('market')}")
             print(f"  Server Time: {data.get('serverTime')}")
 
             if "exchanges" in data:
-                print(f"\n  Exchanges:")
+                print("\n  Exchanges:")
                 for exchange, status in data["exchanges"].items():
                     print(f"    {exchange}: {status}")
 
             if "currencies" in data:
-                print(f"\n  Currencies:")
+                print("\n  Currencies:")
                 for currency, status in data["currencies"].items():
                     print(f"    {currency}: {status}")
 

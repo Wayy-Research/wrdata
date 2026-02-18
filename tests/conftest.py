@@ -4,11 +4,9 @@ Pytest configuration and fixtures for wrdata tests.
 
 import pytest
 from datetime import datetime, timedelta
-from decimal import Decimal
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from wrdata.models.database import Base, DataProvider, Symbol
-from wrdata.core.config import settings
 
 
 @pytest.fixture

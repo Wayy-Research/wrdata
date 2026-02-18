@@ -44,7 +44,7 @@ class KrakenStreamProvider(BaseStreamProvider):
                 self.session = aiohttp.ClientSession()
 
             self.websocket = await self.session.ws_connect(self.ws_url)
-            print(f"✓ Connected to Kraken WebSocket")
+            print("✓ Connected to Kraken WebSocket")
             return True
 
         except Exception as e:

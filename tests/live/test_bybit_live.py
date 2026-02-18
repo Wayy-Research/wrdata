@@ -6,7 +6,6 @@ FREE API - No key required for market data!
 API Docs: https://bybit-exchange.github.io/docs/
 """
 
-import os
 from datetime import datetime, timedelta
 from wrdata.providers.bybit_provider import BybitProvider
 

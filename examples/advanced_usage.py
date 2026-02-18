@@ -34,10 +34,10 @@ print("=" * 60)
 import os
 
 stream = DataStream(
-    binance_key=os.getenv('BINANCE_API_KEY'),
-    binance_secret=os.getenv('BINANCE_API_SECRET'),
-    polygon_key=os.getenv('POLYGON_API_KEY'),
-    alphavantage_key=os.getenv('ALPHAVANTAGE_API_KEY'),
+    binance_key=os.getenv("BINANCE_API_KEY"),
+    binance_secret=os.getenv("BINANCE_API_SECRET"),
+    polygon_key=os.getenv("POLYGON_API_KEY"),
+    alphavantage_key=os.getenv("ALPHAVANTAGE_API_KEY"),
 )
 
 print(f"Stream with custom keys: {stream}")
@@ -54,9 +54,7 @@ stream = DataStream()
 
 # Force YFinance even for crypto
 df = stream.get(
-    "BTC-USD",  # YFinance crypto format
-    provider="yfinance",
-    start="2024-01-01"
+    "BTC-USD", provider="yfinance", start="2024-01-01"  # YFinance crypto format
 )
 print(f"BTC from YFinance: {df.shape}")
 
@@ -99,11 +97,13 @@ for symbol, df in data.items():
     if df.empty:
         continue
 
-    start_price = df['close'].iloc[0]
-    end_price = df['close'].iloc[-1]
+    start_price = df["close"].iloc[0]
+    end_price = df["close"].iloc[-1]
     return_pct = ((end_price - start_price) / start_price) * 100
 
-    print(f"  {symbol:6s}: {return_pct:+6.2f}%  (${start_price:.2f} -> ${end_price:.2f})")
+    print(
+        f"  {symbol:6s}: {return_pct:+6.2f}%  (${start_price:.2f} -> ${end_price:.2f})"
+    )
 
 
 # ============================================================================
@@ -117,7 +117,7 @@ stream = DataStream()
 
 # Get current SPY price
 spy_data = stream.get("SPY", start="2024-11-01")
-current_price = spy_data['close'].iloc[-1]
+current_price = spy_data["close"].iloc[-1]
 print(f"\nSPY current price: ${current_price:.2f}")
 
 # Get options near the money
@@ -125,13 +125,15 @@ atm_calls = stream.options(
     "SPY",
     option_type="call",
     strike_min=current_price - 10,
-    strike_max=current_price + 10
+    strike_max=current_price + 10,
 )
 
 print(f"\nATM Calls ({atm_calls.shape[0]} contracts):")
-if not atm_calls.empty and 'strike' in atm_calls.columns:
+if not atm_calls.empty and "strike" in atm_calls.columns:
     for _, row in atm_calls.head(5).iterrows():
-        print(f"  Strike ${row['strike']}: Last=${row.get('last_price', 'N/A')}, IV={row.get('implied_volatility', 'N/A')}")
+        print(
+            f"  Strike ${row['strike']}: Last=${row.get('last_price', 'N/A')}, IV={row.get('implied_volatility', 'N/A')}"
+        )
 
 
 # ============================================================================
@@ -141,21 +143,22 @@ print("\n" + "=" * 60)
 print("EXAMPLE 7: Complete analysis - stock + options")
 print("=" * 60)
 
+
 def analyze_symbol(symbol: str):
     """Complete analysis of a symbol."""
     print(f"\n--- Analyzing {symbol} ---")
 
     # Get stock data
     df = stream.get(symbol, start="2024-01-01")
-    current_price = df['close'].iloc[-1]
-    ytd_return = ((current_price - df['close'].iloc[0]) / df['close'].iloc[0]) * 100
+    current_price = df["close"].iloc[-1]
+    ytd_return = ((current_price - df["close"].iloc[0]) / df["close"].iloc[0]) * 100
 
     print(f"Current Price: ${current_price:.2f}")
     print(f"YTD Return: {ytd_return:+.2f}%")
 
     # Get volatility (simple 30-day)
-    returns = df['close'].pct_change()
-    volatility = returns.tail(30).std() * (252 ** 0.5) * 100  # Annualized
+    returns = df["close"].pct_change()
+    volatility = returns.tail(30).std() * (252**0.5) * 100  # Annualized
     print(f"30-day volatility: {volatility:.2f}%")
 
     # Get options data

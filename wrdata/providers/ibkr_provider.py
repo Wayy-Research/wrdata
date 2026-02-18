@@ -13,10 +13,9 @@ Setup:
 Docs: https://interactivebrokers.github.io/tws-api/
 """
 
-from typing import Optional, List
-from datetime import datetime, date, timedelta
-import asyncio
-from ib_insync import IB, Stock, Option, Future, Forex, util
+from typing import List
+from datetime import datetime, date
+from ib_insync import IB, Stock, Option
 from wrdata.providers.base import BaseProvider
 from wrdata.models.schemas import (
     DataResponse,

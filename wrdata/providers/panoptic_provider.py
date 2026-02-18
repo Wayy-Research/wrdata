@@ -15,7 +15,7 @@ Subgraph documentation: https://panoptic.xyz/docs/subgraph/schema
 Note: Panoptic options are perpetual (no expiration) and use streamia-based pricing.
 """
 
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta
 from dataclasses import dataclass
 import httpx
