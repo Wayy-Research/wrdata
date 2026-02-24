@@ -219,10 +219,10 @@ def init_providers(db):
 def sync_symbols(db, provider_names=None, force=False):
     """Sync symbols from specified providers or all providers."""
     manager = SymbolManager(db)
-    discovery = SymbolDiscoveryService(db)
+    SymbolDiscoveryService(db)
 
     # Get providers to sync
-    query = db.query(DataProvider).filter(DataProvider.is_active == True)
+    query = db.query(DataProvider).filter(DataProvider.is_active)
 
     if provider_names:
         query = query.filter(DataProvider.name.in_(provider_names))

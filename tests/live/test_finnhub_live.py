@@ -228,7 +228,7 @@ if __name__ == "__main__":
         response = input()
         if response.lower() == "y":
             asyncio.run(test_finnhub_streaming())
-    except:
+    except Exception:
         print("\nSkipping streaming test")
 
     print("\n✅ All Finnhub tests completed!")

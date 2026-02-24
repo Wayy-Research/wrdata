@@ -299,7 +299,7 @@ class CoinbaseAdvancedProvider(BaseProvider):
             path = "/api/v3/brokerage/products/BTC-USD"
             response = self._make_request("GET", path)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

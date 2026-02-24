@@ -233,7 +233,7 @@ class GeckoTerminalProvider(BaseProvider):
         try:
             response = self._make_request("networks")
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

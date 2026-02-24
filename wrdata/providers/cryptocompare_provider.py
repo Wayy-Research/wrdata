@@ -176,7 +176,7 @@ class CryptoCompareProvider(BaseProvider):
             params = {"fsym": "BTC", "tsyms": "USD"}
             response = requests.get(url, headers=self.headers, params=params, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

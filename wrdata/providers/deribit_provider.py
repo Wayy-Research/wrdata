@@ -204,7 +204,6 @@ class DeribitProvider(BaseProvider):
 
                 # Determine option type from name
                 is_call = "-C" in name
-                is_put = "-P" in name
 
                 # Get current quote
                 quote_url = f"{self.base_url}/public/ticker"
@@ -292,7 +291,7 @@ class DeribitProvider(BaseProvider):
 
             return sorted(list(expirations))
 
-        except:
+        except Exception:
             return []
 
     def validate_connection(self) -> bool:
@@ -301,7 +300,7 @@ class DeribitProvider(BaseProvider):
             response = requests.get(url, timeout=5)
             data = response.json()
             return data.get("result", {}).get("version") is not None
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

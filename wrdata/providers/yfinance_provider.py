@@ -127,7 +127,7 @@ class YFinanceProvider(BaseProvider):
             try:
                 info = ticker.info
                 underlying_price = Decimal(str(info.get("currentPrice", 0)))
-            except:
+            except Exception:
                 underlying_price = None
 
             # Parse calls

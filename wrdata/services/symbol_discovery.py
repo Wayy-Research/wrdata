@@ -370,7 +370,7 @@ class SymbolDiscoveryService:
                 func.group_concat(DataProvider.name).label("provider_names"),
             )
             .join(DataProvider)
-            .filter(Symbol.is_active == True)
+            .filter(Symbol.is_active)
         )
 
         if asset_type:
@@ -419,7 +419,7 @@ class SymbolDiscoveryService:
         symbol_instances = (
             self.db.query(Symbol)
             .join(DataProvider)
-            .filter(Symbol.symbol == symbol, Symbol.is_active == True)
+            .filter(Symbol.symbol == symbol, Symbol.is_active)
             .all()
         )
 
@@ -470,7 +470,7 @@ class SymbolDiscoveryService:
             Symbol.symbol,
             Symbol.asset_type,
             func.count(Symbol.provider_id).label("provider_count"),
-        ).filter(Symbol.is_active == True)
+        ).filter(Symbol.is_active)
 
         if asset_type:
             coverage_query = coverage_query.filter(Symbol.asset_type == asset_type)
@@ -510,7 +510,7 @@ class SymbolDiscoveryService:
                 DataProvider.name, func.count(Symbol.id).label("symbol_count")
             )
             .join(Symbol)
-            .filter(Symbol.is_active == True)
+            .filter(Symbol.is_active)
             .group_by(DataProvider.name)
             .all()
         )
@@ -526,7 +526,7 @@ class SymbolDiscoveryService:
         """
         results = (
             self.db.query(Symbol.asset_type, func.count(Symbol.id).label("count"))
-            .filter(Symbol.is_active == True)
+            .filter(Symbol.is_active)
             .group_by(Symbol.asset_type)
             .all()
         )
@@ -556,7 +556,7 @@ class SymbolDiscoveryService:
         search_filter = f"%{query.upper()}%"
 
         symbol_query = self.db.query(Symbol.symbol).filter(
-            Symbol.is_active == True,
+            Symbol.is_active,
             or_(
                 Symbol.symbol.ilike(search_filter),
                 Symbol.name.ilike(search_filter),

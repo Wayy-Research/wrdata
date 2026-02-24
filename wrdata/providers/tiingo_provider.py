@@ -133,7 +133,7 @@ class TiingoProvider(BaseProvider):
             url = f"{self.base_url}/tiingo/daily/aapl"
             response = requests.get(url, headers=self.headers, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

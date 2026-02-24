@@ -151,7 +151,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {"type": "unsubscribe", "symbol": symbol}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
-            except:
+            except Exception:
                 pass
             raise
 
@@ -248,7 +248,7 @@ class FinnhubStreamProvider(BaseStreamProvider):
                 unsubscribe_msg = {"type": "unsubscribe", "symbol": symbol.upper()}
                 try:
                     await self.websocket.send_json(unsubscribe_msg)
-                except:
+                except Exception:
                     pass
             raise
 

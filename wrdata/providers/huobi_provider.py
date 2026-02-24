@@ -158,7 +158,7 @@ class HuobiProvider(BaseProvider):
             response = requests.get(url, timeout=5)
             data = response.json()
             return data.get("status") == "ok"
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

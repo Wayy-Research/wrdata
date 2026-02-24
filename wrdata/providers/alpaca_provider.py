@@ -100,9 +100,9 @@ class AlpacaProvider(BaseProvider):
 
             # Determine endpoint based on timeframe
             if timeframe.endswith("Min") or timeframe.endswith("Hour"):
-                endpoint = "bars"
+                pass
             else:
-                endpoint = "bars"
+                pass
 
             # Build request - using v2 API
             url = f"{self.data_url}/v2/stocks/{symbol}/bars"

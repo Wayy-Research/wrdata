@@ -272,7 +272,7 @@ class TDAmeritradeProvider(BaseProvider):
 
             return sorted(list(expirations))
 
-        except:
+        except Exception:
             return []
 
     def validate_connection(self) -> bool:
@@ -281,7 +281,7 @@ class TDAmeritradeProvider(BaseProvider):
             params = {"apikey": self.api_key, "symbol": "AAPL"}
             response = requests.get(url, params=params, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

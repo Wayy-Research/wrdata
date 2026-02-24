@@ -148,7 +148,7 @@ class DexScreenerProvider(BaseProvider):
                 f"{self.base_url}/latest/dex/search?q=ETH", timeout=10
             )
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

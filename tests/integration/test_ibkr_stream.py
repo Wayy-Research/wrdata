@@ -267,7 +267,7 @@ async def test_reconnection():
     try:
         # Connect
         print("\nConnecting...")
-        connected = await provider.connect()
+        await provider.connect()
         print(f"✓ Connected: {provider.is_connected()}")
 
         # Disconnect
@@ -277,7 +277,7 @@ async def test_reconnection():
 
         # Reconnect
         print("\nReconnecting...")
-        reconnected = await provider.reconnect()
+        await provider.reconnect()
         print(f"✓ Reconnected: {provider.is_connected()}")
 
         await provider.disconnect()

@@ -154,7 +154,7 @@ class BybitProvider(BaseProvider):
             response = requests.get(url, timeout=5)
             data = response.json()
             return data.get("retCode") == 0
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

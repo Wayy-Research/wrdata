@@ -252,7 +252,7 @@ if __name__ == "__main__":
         response = input()
         if response.lower() == "y":
             asyncio.run(test_alpaca_streaming())
-    except:
+    except Exception:
         print("\nSkipping streaming test")
 
     print("\n✅ All Alpaca tests completed!")

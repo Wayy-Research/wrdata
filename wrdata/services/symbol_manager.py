@@ -1145,7 +1145,7 @@ class SymbolManager:
             Summary of all sync operations
         """
         providers = (
-            self.db.query(DataProvider).filter(DataProvider.is_active == True).all()
+            self.db.query(DataProvider).filter(DataProvider.is_active).all()
         )
 
         results = []

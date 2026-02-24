@@ -194,7 +194,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {"action": "unsubscribe", "trades": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
-            except:
+            except Exception:
                 pass
             raise
 
@@ -273,7 +273,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {"action": "unsubscribe", "quotes": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
-            except:
+            except Exception:
                 pass
             raise
 
@@ -353,7 +353,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {"action": "unsubscribe", "bars": [symbol]}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
-            except:
+            except Exception:
                 pass
             raise
 
@@ -454,7 +454,7 @@ class AlpacaStreamProvider(BaseStreamProvider):
             unsubscribe_msg = {"action": "unsubscribe", data_type: symbols}
             try:
                 await self.websocket.send_json(unsubscribe_msg)
-            except:
+            except Exception:
                 pass
             raise
 

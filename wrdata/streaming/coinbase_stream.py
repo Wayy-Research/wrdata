@@ -159,7 +159,7 @@ class CoinbaseStreamProvider(BaseStreamProvider):
 
         # Aggregate trades into candles
         current_candle = None
-        interval_seconds = self._interval_to_seconds(interval)
+        self._interval_to_seconds(interval)
 
         async for message in self._stream_channel(subscribe_message):
             try:

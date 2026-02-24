@@ -182,7 +182,6 @@ def demo_fallback_pattern():
     constructor_key = None  # User didn't pass key to constructor
     env_key = settings.WHALE_ALERT_API_KEY  # From environment
 
-    final_key = constructor_key or env_key
 
     if constructor_key:
         print(f"  ✅ Using constructor key: {constructor_key[:4]}****")

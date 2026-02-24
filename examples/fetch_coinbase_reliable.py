@@ -57,7 +57,7 @@ def main():
         for p in products
         if p["id"].endswith("-USDC")
         and p.get("status") == "online"
-        and p.get("trading_disabled") == False
+        and not p.get("trading_disabled")
     ]
 
     # Also get major USD pairs

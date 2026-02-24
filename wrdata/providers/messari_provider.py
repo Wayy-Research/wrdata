@@ -186,7 +186,7 @@ class MessariProvider(BaseProvider):
             url = f"{self.base_url}/assets/bitcoin/metrics"
             response = requests.get(url, headers=self.headers, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

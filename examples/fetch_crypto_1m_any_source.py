@@ -63,7 +63,7 @@ def main():
 
     # Analyze results
     successful = {k: v for k, v in data.items() if not v.is_empty()}
-    failed = {k: v for k, v in data.items() if v.is_empty()}
+    {k: v for k, v in data.items() if v.is_empty()}
 
     print("\n" + "=" * 80)
     print(f"Results: {len(successful)}/{len(symbols)} successful")

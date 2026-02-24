@@ -95,7 +95,6 @@ class PolygonOptionsProvider(BaseProvider):
         if request.max_strike:
             params["strikePriceLte"] = str(request.max_strike)
 
-        all_contracts: List[Dict] = []
         next_url = f"{self.base_url}/v3/reference/options/contracts"
 
         # Polygon.io options chains require multiple API calls to fetch details for each contract
@@ -177,8 +176,8 @@ class PolygonOptionsProvider(BaseProvider):
 
             for ticker in contract_tickers:
                 parts = ticker.split("2")  # YYYY-MM-DD
-                symbol_part = parts[0]
-                date_part = "2" + parts[1][:7]  # YYYYMMDD
+                parts[0]
+                "2" + parts[1][:7]  # YYYYMMDD
                 strike_type_part = parts[1][7:]  # Strike and type
 
                 contract_type = "call" if strike_type_part.endswith("C") else "put"

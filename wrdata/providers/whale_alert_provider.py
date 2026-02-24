@@ -280,5 +280,5 @@ class WhaleAlertProvider(BaseProvider):
         try:
             status = self.get_status()
             return status.get("success", False)
-        except:
+        except Exception:
             return False

@@ -152,7 +152,7 @@ class BitfinexProvider(BaseProvider):
             data = response.json()
             # Returns [1] when operational, [0] when in maintenance
             return data == [1]
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

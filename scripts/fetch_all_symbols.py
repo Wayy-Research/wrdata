@@ -322,11 +322,8 @@ def fetch_tiingo_symbols() -> Dict[str, Any]:
             }
 
         # Tiingo provides a CSV of all supported tickers
-        url = f"https://api.tiingo.com/iex?token={api_key}"
-        headers = {"Content-Type": "application/json"}
 
         # Get supported tickers list
-        tickers_url = "https://api.tiingo.com/tiingo/daily/meta"
         response = requests.get(
             "https://apimedia.tiingo.com/docs/tiingo/daily/supported_tickers.zip",
             timeout=60,

@@ -147,7 +147,7 @@ class MarketstackProvider(BaseProvider):
             params = {"access_key": self.api_key, "symbols": "AAPL", "limit": 1}
             response = requests.get(url, params=params, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

@@ -147,7 +147,7 @@ class CoinGeckoProvider(BaseProvider):
             url = f"{self.base_url}/ping"
             response = requests.get(url, headers=self.headers, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:

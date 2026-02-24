@@ -145,7 +145,7 @@ class GeminiProvider(BaseProvider):
             url = f"{self.base_url}/ticker/btcusd"
             response = requests.get(url, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def supports_historical_options(self) -> bool:
