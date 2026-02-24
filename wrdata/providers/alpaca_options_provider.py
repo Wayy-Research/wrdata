@@ -23,7 +23,6 @@ import logging
 
 from wrdata.providers.base import BaseProvider
 
-logger = logging.getLogger(__name__)
 from wrdata.models.schemas import (
     DataResponse,
     OptionsChainRequest,
@@ -33,6 +32,9 @@ from wrdata.models.schemas import (
     OptionsTimeseriesRequest,
     OptionsTimeseriesResponse,
 )
+
+logger = logging.getLogger(__name__)
+
 
 
 class AlpacaOptionsProvider(BaseProvider):
