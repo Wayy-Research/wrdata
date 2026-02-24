@@ -36,7 +36,6 @@ from wrdata.models.schemas import (
 logger = logging.getLogger(__name__)
 
 
-
 class AlpacaOptionsProvider(BaseProvider):
     """
     Alpaca Options Data Provider.
