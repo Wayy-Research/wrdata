@@ -224,6 +224,19 @@ class Settings(BaseSettings):
         default=None, description="Kalshi RSA private key (PEM format)"
     )
 
+    # ============================================================================
+    # WEB3 / RESTAKING
+    # ============================================================================
+    ALCHEMY_API_KEY: Optional[str] = Field(
+        default=None,
+        description="Alchemy API key (Free: 300M compute units/month, Ethereum RPC)",
+    )
+
+    THEGRAPH_API_KEY: Optional[str] = Field(
+        default=None,
+        description="The Graph API key (for Symbiotic subgraph queries)",
+    )
+
     # Helper properties
     @property
     def has_alpha_vantage_key(self) -> bool:
@@ -255,6 +268,16 @@ class Settings(BaseSettings):
         return (
             self.WHALE_ALERT_API_KEY is not None and len(self.WHALE_ALERT_API_KEY) > 0
         )
+
+    @property
+    def has_alchemy_key(self) -> bool:
+        """Check if Alchemy API key is configured."""
+        return self.ALCHEMY_API_KEY is not None and len(self.ALCHEMY_API_KEY) > 0
+
+    @property
+    def has_thegraph_key(self) -> bool:
+        """Check if The Graph API key is configured."""
+        return self.THEGRAPH_API_KEY is not None and len(self.THEGRAPH_API_KEY) > 0
 
     @property
     def has_coinbase_advanced_key(self) -> bool:

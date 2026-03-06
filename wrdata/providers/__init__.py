@@ -38,6 +38,12 @@ try:
 except ImportError:
     DexArbProvider = None  # type: ignore[assignment, misc]
 
+# Restaking providers
+try:
+    from wrdata.providers.symbiotic_provider import SymbioticProvider
+except ImportError:
+    SymbioticProvider = None  # type: ignore[assignment, misc]
+
 __all__ = [
     "BaseProvider",
     "YFinanceProvider",
@@ -46,4 +52,5 @@ __all__ = [
     "PanopticProvider",
     "PolymarketProvider",
     "DexArbProvider",
+    "SymbioticProvider",
 ]
