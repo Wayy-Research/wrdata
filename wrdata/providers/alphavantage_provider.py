@@ -113,7 +113,10 @@ class AlphaVantageProvider(BaseProvider):
                 "function": function,
                 "symbol": symbol,
                 "apikey": self.api_key,
-                "outputsize": "full",
+                # "full" is a premium-only value on Alpha Vantage's current free
+                # tier (returns a plain upsell message instead of data) - use
+                # "compact" (last 100 points), which is what free keys can access
+                "outputsize": "compact",
                 "datatype": "json",
             }
 
@@ -143,6 +146,19 @@ class AlphaVantageProvider(BaseProvider):
                     data=[],
                     success=False,
                     error="API call frequency limit reached. Please wait.",
+                )
+
+            # "Information" shows up for things like premium-only parameter
+            # values on an otherwise-valid request - a real error, not just a
+            # missing key, so surface it instead of falling through to a
+            # generic "no data" message below.
+            if "Information" in data:
+                return DataResponse(
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=data["Information"],
                 )
 
             # Extract time series data
@@ -244,7 +260,10 @@ class AlphaVantageProvider(BaseProvider):
                 "from_symbol": from_currency.upper(),
                 "to_symbol": to_currency.upper(),
                 "apikey": self.api_key,
-                "outputsize": "full",
+                # "full" is a premium-only value on Alpha Vantage's current free
+                # tier (returns a plain upsell message instead of data) - use
+                # "compact" (last 100 points), which is what free keys can access
+                "outputsize": "compact",
                 "datatype": "json",
             }
 
@@ -274,6 +293,15 @@ class AlphaVantageProvider(BaseProvider):
                     data=[],
                     success=False,
                     error="API call frequency limit reached. Please wait.",
+                )
+
+            if "Information" in data:
+                return DataResponse(
+                    symbol=symbol,
+                    provider=self.name,
+                    data=[],
+                    success=False,
+                    error=data["Information"],
                 )
 
             # Extract time series
