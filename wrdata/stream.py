@@ -290,7 +290,7 @@ class DataStream:
                 "bybit",  # Fast-growing crypto derivatives exchange
                 "okx",  # Top-tier global exchange
                 "kucoin",  # Wide variety of altcoins
-                "gateio",  # Extensive crypto selection
+                "gate",  # Extensive crypto selection (formerly "gateio" in older CCXT versions)
                 "bitfinex",  # Professional trading platform
             ]
 
@@ -537,7 +537,7 @@ class DataStream:
         - "coinbase": Best for USD pairs (XRP-USD, BTC-USD, ETH-USD) - FASTEST
         - "kraken": Good for USD pairs, limited history
         - "binance": Wide selection, requires non-US IP
-        - "okx", "kucoin", "gateio", "bybit": Additional CCXT exchanges
+        - "okx", "kucoin", "gate", "bybit": Additional CCXT exchanges
 
         Args:
             symbol: Trading pair (e.g., "BTC-USD", "XRP/USDT", "ETHUSDT")
