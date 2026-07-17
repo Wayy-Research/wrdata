@@ -37,20 +37,26 @@ class AlpacaProvider(BaseProvider):
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
         paper: bool = True,
+        oauth_token: Optional[str] = None,
     ):
         super().__init__(name="alpaca", api_key=api_key)
 
-        if not api_key or not api_secret:
+        # Two mutually-exclusive auth modes: a traditional key/secret pair
+        # (APCA-API-KEY-ID/APCA-API-SECRET-KEY headers), or an OAuth access
+        # token issued via Alpaca Connect (Bearer auth). OAuth tokens are
+        # always live-account scoped by Alpaca, regardless of `paper`.
+        if not oauth_token and (not api_key or not api_secret):
             raise ValueError(
-                "Alpaca API key and secret required. "
-                "Get free keys at: https://app.alpaca.markets/signup"
+                "Alpaca requires either an api_key + api_secret pair, or an "
+                "oauth_token. Get free keys at: https://app.alpaca.markets/signup"
             )
 
         self.api_secret = api_secret
-        self.paper = paper
+        self.oauth_token = oauth_token
+        self.paper = paper and not oauth_token
 
         # Use paper trading or live URLs
-        if paper:
+        if self.paper:
             self.base_url = "https://paper-api.alpaca.markets"
             self.data_url = "https://data.alpaca.markets"
         else:
@@ -58,10 +64,13 @@ class AlpacaProvider(BaseProvider):
             self.data_url = "https://data.alpaca.markets"
 
         # Set up auth headers
-        self.headers = {
-            "APCA-API-KEY-ID": self.api_key,
-            "APCA-API-SECRET-KEY": self.api_secret,
-        }
+        if oauth_token:
+            self.headers = {"Authorization": f"Bearer {oauth_token}"}
+        else:
+            self.headers = {
+                "APCA-API-KEY-ID": self.api_key,
+                "APCA-API-SECRET-KEY": self.api_secret,
+            }
 
     def fetch_timeseries(
         self,

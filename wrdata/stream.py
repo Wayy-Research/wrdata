@@ -72,6 +72,7 @@ class DataStream:
         alpaca_key: Optional[str] = None,
         alpaca_secret: Optional[str] = None,
         alpaca_paper: bool = True,  # Use paper trading by default
+        alpaca_oauth_token: Optional[str] = None,  # OAuth (Alpaca Connect) access token, alternative to key/secret
         # Interactive Brokers (TWS/Gateway connection)
         ibkr_host: str = "127.0.0.1",
         ibkr_port: int = 7497,  # 7497 = paper, 7496 = live
@@ -141,10 +142,10 @@ class DataStream:
         finnhub_key = finnhub_key or settings.FINNHUB_API_KEY
         self._add_finnhub_provider(finnhub_key)
 
-        # Add Alpaca if API keys provided (or use from env)
+        # Add Alpaca if API keys or an OAuth token are provided (or use from env)
         alpaca_key = alpaca_key or settings.ALPACA_API_KEY
         alpaca_secret = alpaca_secret or settings.ALPACA_API_SECRET
-        self._add_alpaca_provider(alpaca_key, alpaca_secret, alpaca_paper)
+        self._add_alpaca_provider(alpaca_key, alpaca_secret, alpaca_paper, alpaca_oauth_token)
 
         # Add Interactive Brokers if enabled
         # Note: IBKR requires TWS/Gateway running, so we don't auto-enable
@@ -329,17 +330,21 @@ class DataStream:
             print(f"Warning: Could not initialize Finnhub provider: {e}")
 
     def _add_alpaca_provider(
-        self, api_key: Optional[str], api_secret: Optional[str], paper: bool
+        self,
+        api_key: Optional[str],
+        api_secret: Optional[str],
+        paper: bool,
+        oauth_token: Optional[str] = None,
     ):
-        """Add Alpaca broker provider if API keys available."""
-        if not api_key or not api_secret:
-            return  # Alpaca requires both key and secret
+        """Add Alpaca broker provider if API keys or an OAuth token are available."""
+        if not oauth_token and (not api_key or not api_secret):
+            return  # Alpaca requires either a key+secret pair or an OAuth token
 
         try:
             from wrdata.providers.alpaca_provider import AlpacaProvider
 
             self.providers["alpaca"] = AlpacaProvider(
-                api_key=api_key, api_secret=api_secret, paper=paper
+                api_key=api_key, api_secret=api_secret, paper=paper, oauth_token=oauth_token
             )
         except Exception as e:
             print(f"Warning: Could not initialize Alpaca provider: {e}")
