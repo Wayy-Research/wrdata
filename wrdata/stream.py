@@ -105,6 +105,12 @@ class DataStream:
         self.fallback_enabled = fallback_enabled
         self.default_provider = default_provider
 
+        # Providers that have failed with what looks like an auth/credential
+        # error during this DataStream's lifetime. Once a provider lands here
+        # it's skipped for the rest of this instance instead of being retried
+        # (and failing the same way) on every subsequent symbol.
+        self._disabled_providers: set = set()
+
         # Initialize providers
         self.providers: Dict[str, BaseProvider] = {}
 
@@ -169,30 +175,34 @@ class DataStream:
             "future": ["ibkr"],  # IBKR only for futures
             "index": ["yfinance"],
             "forex": ["ibkr", "alphavantage", "yfinance"],
+            # Reliable, always-free, no-key providers first. The CCXT exchanges
+            # after them are geography-dependent (several block requests from
+            # certain regions with 403/451s), so they're kept as extended
+            # fallback rather than tried ahead of guaranteed-available sources.
             "crypto": [
                 "coinbase",
                 "kraken",
+                "coingecko",
+                "ccxt_gate",
+                "ccxt_bitfinex",
                 "ccxt_kucoin",
                 "ccxt_okx",
-                "ccxt_gateio",
-                "yfinance",
-                "coingecko",
-                "ccxt_bitfinex",
                 "ccxt_binance",
                 "ccxt_bybit",
+                "yfinance",
                 "dex_arb",
             ],
             "cryptocurrency": [
                 "coinbase",
                 "kraken",
+                "coingecko",
+                "ccxt_gate",
+                "ccxt_bitfinex",
                 "ccxt_kucoin",
                 "ccxt_okx",
-                "ccxt_gateio",
-                "yfinance",
-                "coingecko",
-                "ccxt_bitfinex",
                 "ccxt_binance",
                 "ccxt_bybit",
+                "yfinance",
                 "dex_arb",
             ],
             "economic": ["fred"],  # FRED for economic data
@@ -1321,8 +1331,16 @@ class DataStream:
         """
         Fetch data with automatic fallback on failure.
         """
+
+        def _looks_like_auth_error(message: str) -> bool:
+            lowered = (message or "").lower()
+            return any(
+                token in lowered
+                for token in ("401", "unauthorized", "invalid api key", "invalid key", "authentication")
+            )
+
         # Try primary provider
-        if primary_provider in self.providers:
+        if primary_provider in self.providers and primary_provider not in self._disabled_providers:
             provider = self.providers[primary_provider]
             try:
                 response = provider.fetch_timeseries(
@@ -1336,9 +1354,13 @@ class DataStream:
                     return response
 
                 print(f"Primary provider {primary_provider} failed: {response.error}")
+                if _looks_like_auth_error(response.error):
+                    self._disabled_providers.add(primary_provider)
 
             except Exception as e:
                 print(f"Primary provider {primary_provider} error: {e}")
+                if _looks_like_auth_error(str(e)):
+                    self._disabled_providers.add(primary_provider)
 
         # Try fallback providers if enabled
         if self.fallback_enabled:
@@ -1354,6 +1376,9 @@ class DataStream:
                 if provider_name not in self.providers:
                     continue  # Provider not available
 
+                if provider_name in self._disabled_providers:
+                    continue  # Already known to be failing auth this session
+
                 provider = self.providers[provider_name]
 
                 try:
@@ -1368,8 +1393,13 @@ class DataStream:
                     if response.success:
                         return response
 
+                    if _looks_like_auth_error(response.error):
+                        self._disabled_providers.add(provider_name)
+
                 except Exception as e:
                     print(f"Fallback provider {provider_name} error: {e}")
+                    if _looks_like_auth_error(str(e)):
+                        self._disabled_providers.add(provider_name)
                     continue
 
             # If priority list didn't work, try remaining providers
@@ -1378,6 +1408,8 @@ class DataStream:
                     continue
                 if provider_name in priority_list:
                     continue  # Already tried
+                if provider_name in self._disabled_providers:
+                    continue
 
                 try:
                     print(f"Trying fallback provider: {provider_name}")
@@ -1391,8 +1423,13 @@ class DataStream:
                     if response.success:
                         return response
 
+                    if _looks_like_auth_error(response.error):
+                        self._disabled_providers.add(provider_name)
+
                 except Exception as e:
                     print(f"Fallback provider {provider_name} error: {e}")
+                    if _looks_like_auth_error(str(e)):
+                        self._disabled_providers.add(provider_name)
                     continue
 
         # All providers failed
