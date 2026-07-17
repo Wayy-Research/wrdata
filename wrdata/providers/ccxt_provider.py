@@ -137,6 +137,7 @@ class CCXTProvider(BaseProvider):
                 return normalized
 
             # Second: Try common variations
+            variations_to_try = []
             base_quote = normalized.split("/")
             if len(base_quote) == 2:
                 base, quote = base_quote
