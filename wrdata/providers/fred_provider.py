@@ -1,9 +1,9 @@
 from typing import List, Dict, Any
 import requests
-from datetime import datetime
+from datetime import datetime, date
 
 from ..providers.base import BaseProvider
-from ..models.schemas import DataResponse
+from ..models.schemas import DataResponse, OptionsChainRequest, OptionsChainResponse
 
 
 class FredProvider(BaseProvider):
@@ -147,3 +147,15 @@ class FredProvider(BaseProvider):
 
     def supports_historical_options(self) -> bool:
         return False
+
+    def fetch_options_chain(self, request: OptionsChainRequest) -> OptionsChainResponse:
+        return OptionsChainResponse(
+            symbol=request.symbol,
+            provider="fred",
+            snapshot_timestamp=datetime.utcnow(),
+            success=False,
+            error="FRED does not provide options data (economic series only)",
+        )
+
+    def get_available_expirations(self, symbol: str) -> List[date]:
+        return []

@@ -234,9 +234,9 @@ class DataStream:
             return  # FRED requires an API key
 
         try:
-            from wrdata.providers.fred_provider import FREDProvider
+            from wrdata.providers.fred_provider import FredProvider
 
-            self.providers["fred"] = FREDProvider(api_key=api_key)
+            self.providers["fred"] = FredProvider(api_key=api_key)
         except Exception as e:
             print(f"Warning: Could not initialize FRED provider: {e}")
 
